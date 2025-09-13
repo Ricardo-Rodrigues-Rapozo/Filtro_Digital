@@ -1,0 +1,67 @@
+#PRNAME procTest_00
+#NUBITS 23
+#NDSTAC 5
+#SDEPTH 5
+#NUIOIN 1
+#NUIOOU 2
+#NBMANT 16
+#NBEXPO 6
+#PIPELN 3
+#NUGAIN 128
+int tam_buff_input, tam_buff_coeffs, buff_circ_cont, coeffs_cont, head, pos;
+float h[11], y ;//coeficientes {0.100000 , 0.100000 , 0.100000 , 0.100000 , 0.100000 , 0.100000 , 0.100000 , 0.100000 , 0.100000 , 0.100000};
+float x[11]; // Buffer das amostras de entrada
+void main()
+{
+ // Coeficientes
+h[0]    =    0.01363158;
+h[1]    =    0.02947376;
+h[2]    =    0.07149450;
+h[3]    =    0.12460785;
+h[4]    =    0.16825941;
+h[5]    =    0.18506581;
+h[6]    =    0.16825941;
+h[7]    =    0.12460785;
+h[8]    =    0.07149450;
+h[9]    =    0.02947376;
+h[10]   =    0.01363158;
+ //---------------------------- PARAMETROS -------------------------------------------------------------
+tam_buff_input    =    11;  // Tamanho do buffer circular das amostras de entrada
+tam_buff_coeffs    =    11; // Tamanho do vetor de coefs do filtro
+
+ // Contadores para os loops
+    buff_circ_cont    =    0; // Contador do buffer circular
+    coeffs_cont    =    0; // Contador para o numero de coeffs
+    pos    =    0; // Posição no Buffer circular
+
+    while(1)
+    {
+
+        //Buffer circular das amostras de entrada
+        x[buff_circ_cont]    =    in(0) * 0.001;
+        y   =   0;
+        pos   =   buff_circ_cont;
+
+        while(coeffs_cont < tam_buff_coeffs)
+        {
+
+            y    =    y + h[coeffs_cont] * x[pos];
+            coeffs_cont    =    coeffs_cont + 1;
+            pos  =  pos - 1;
+            if(pos<0)
+            {
+                pos   =   pos + tam_buff_input;
+            }
+        }
+        //y = x[buff_circ_cont];
+        out(0, y * 1000);
+        coeffs_cont    =    0;
+        buff_circ_cont   =   buff_circ_cont + 1;
+        if (buff_circ_cont   ==   tam_buff_input)
+        {
+
+            buff_circ_cont    =    0;
+        }
+    }
+
+}

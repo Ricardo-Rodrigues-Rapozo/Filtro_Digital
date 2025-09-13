@@ -1,0 +1,31 @@
+{
+  "metadata": {
+    "projectName": "primeiro",
+    "createdAt": "2025-08-27T21:08:20.463Z",
+    "lastModified": "2025-08-27T21:08:20.464Z",
+    "computerName": "DESKTOP-34MP1I9",
+    "appVersion": "v4.0.0",
+    "projectPath": "C:\\Users\\Ricardo\\Documents\\Codigos_C\\primeiro",
+    "lastOpened": "2025-09-13T02:25:45.971Z"
+  },
+  "structure": {
+    "basePath": "C:\\Users\\Ricardo\\Documents\\Codigos_C\\primeiro",
+    "processors": [
+      {
+        "name": "procTest_00",
+        "config": {
+          "nBits": 23,
+          "nbMantissa": 16,
+          "nbExponent": 6,
+          "dataStackSize": 5,
+          "instructionStackSize": 5,
+          "inputPorts": 1,
+          "outputPorts": 2,
+          "gain": 128
+        },
+        "exists": true
+      }
+    ],
+    "folders": []
+  }
+}

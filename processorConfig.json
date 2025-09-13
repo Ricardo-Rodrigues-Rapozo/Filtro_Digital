@@ -1,0 +1,16 @@
+{
+  "processors": [
+    {
+      "name": "procTest_00",
+      "clk": 10,
+      "numClocks": 100000,
+      "testbenchFile": "standard",
+      "gtkwFile": "standard",
+      "cmmFile": "procTest_00.cmm",
+      "isActive": true,
+      "showArraysInGtkwave": 1
+    }
+  ],
+  "testbenchFile": "standard",
+  "gtkwFile": "standard"
+}
