@@ -10,7 +10,6 @@ from scipy.signal import freqz, lfilter, firls, upfirdn, firwin
 import mplcursors
 import sinaisIEC60255_118
 
-
 # =========================
 # Parâmetros do sinal
 # =========================
@@ -19,7 +18,8 @@ Nppc = 60            # pontos por ciclo
 Fs   = f0 * Nppc     # frequência de amostragem (Hz)
 Nc   = 100           # número de ciclos
 Q    = 1000          # fator de escala para salvar inteiro
-
+M = Fs//f0  # número de amostras por ciclo
+print(f"Usado M = {M}")
 # =========================
 # Função utilitária
 # =========================
@@ -33,16 +33,16 @@ def ler_coluna(arquivo: str | Path, col: int = 0) -> np.ndarray:
         raise ValueError(f"Sem dados numéricos em {arquivo} (coluna {col})")
     return x
 
-
 # =========================
 # Script principal
 # =========================
 if __name__ == "__main__":
     # Caminhos
     dir_base = Path(r"C:\Users\Ricardo\Documents\Dissertação\procTest_00\Simulation")
+    dir_base2 = Path(r"C:\Users\Ricardo\Documents\Dissertação\python")
     arq1 = dir_base / "input_0.txt"
     arq2 = dir_base / "output_0.txt"
-    arq3 = dir_base / "y_python.txt"
+    arq3 = dir_base2 / "y_python.txt"
 
     # Parâmetros
     fs = Fs  # Hz

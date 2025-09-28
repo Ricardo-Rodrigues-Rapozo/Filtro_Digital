@@ -158,6 +158,9 @@ for mm in range(M):
     Eout_fir[mm,:] = FIR(xx_hands[0:100],E[mm])
 n_teste = np.arange(len(xx))  # Índice das amostras
 
+print("Tamanho do filtro polifasico",Eout_fir.shape, "\n M =",M,"\n Nppc =",Nppc,"\n Nc =",Nc)
+
+
 plt.figure(figsize=(10, 4))
 plt.plot(xx, 'r-', marker='o', label='downsample()')
 plt.plot(xx_hands[0:100], 'g--', marker='s', label='downsample_1()')

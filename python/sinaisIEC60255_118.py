@@ -43,7 +43,7 @@ def signal_frequency(f1, N, f0, Fs, Frep, hmax, hmag, SNR):
         ruido = np.sqrt(var_ruido)*np.random.randn(len(t))
 
 
-        phi = np.random.uniform(-np.pi,np.pi)
+        phi = 0 # np.random.uniform(-np.pi,np.pi)
 
         x = np.cos(2*np.pi*f1*t + phi)
 
@@ -56,7 +56,7 @@ def signal_frequency(f1, N, f0, Fs, Frep, hmax, hmag, SNR):
             
             X[hh-1,:] = (hmag/np.sqrt(2))*np.exp(1j*(2*np.pi*hh*(f1-f0)*t + phi))
         
-        x = x + ruido
+        x = x #+ ruido
 
         f = f1*np.ones(len(x))
         ROCOF = np.zeros(len(x))
