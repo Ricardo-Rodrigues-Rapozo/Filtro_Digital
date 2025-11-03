@@ -1,24 +1,12 @@
-
-# Filtro polifásico para decimação
-# int M, n, k, L, m,r;
-# float Mk;
-# float Q;
-# int tam_buff_input, tam_buff_coeffs, buff_circ_cont, coeffs_cont, head, pos;
-# float h[10]; //coeficientes
-# float y;
-# float x[10]; // Buffer das amostras de entrada
-# float xm[10]; // Buffer das amostras decimadas 
-#float hm[10]; // coeficientes por fase 
-#float ym[10][10]; // linhas são as fases(m) e as colunas são os taps(k) sendo que k <= L -1  
 from pathlib import Path
-
 import matplotlib
 import numpy as np
 import matplotlib.pyplot as plt
-
 from scipy.signal import freqz, lfilter, firls, upfirdn, firwin
 
-
+##------------------------------------------------------------------------------------------------------
+## ---------------------------------- ler_coluna -------------------------------------------------------
+##------------------------------------------------------------------------------------------------------
 def ler_coluna(arquivo: str | Path, col: int = 0) -> np.ndarray:
     """Lê uma coluna específica de um arquivo .txt (índice começa em 0)."""
     try:
@@ -29,14 +17,9 @@ def ler_coluna(arquivo: str | Path, col: int = 0) -> np.ndarray:
         raise ValueError(f"Sem dados numéricos em {arquivo} (coluna {col})")
     return x
 
-def downsampling(a,b):
-    if(a % b == 0):
-        return b
-    return 0
-
-
-
-# --------------------------------- Coeficientes --------------------------------------
+##------------------------------------------------------------------------------------------------------
+## ---------------------------------- coeficientes -------------------------------------------------------
+##------------------------------------------------------------------------------------------------------
 h = np.array([
     0.01363158,
     0.02947376,
@@ -47,57 +30,135 @@ h = np.array([
     0.16825941,
     0.12460785,
     0.07149450,
-    0.02947376,
-    0.01363158
+    0.02947376
 ])
-#---------------------------- PARAMETROS -------------------------------------------------------------
+
+##------------------------------------------------------------------------------------------------------
+## ---------------------------------- Caminhos para sinal de entrada -----------------------------------
+##------------------------------------------------------------------------------------------------------
 dir_base = Path(r"C:\Users\Ricardo\Documents\Dissertação\procTest_00\Simulation")
 dir_base2 = Path(r"C:\Users\Ricardo\Documents\Dissertação\python")
 arq1 = dir_base / "input_0.txt"
 x1 = ler_coluna(arq1, col=0) ## entrada multiplicada por 1000
 
-
-Q = 0.001 #; // Fator de decimação 
-L = 10# ; // Tamanho do filtro 
-M = 10# ; // Número de fases do filtro polifásico
-Mk = 1/M #; // usado para iterar os taps do filtro polifásico
-k = 0 #; // Percorre os taps da fase m
-tam_buff_input = L #;  // Tamanho do buffer circular das amostras de entrada
-tam_buff_coeffs = L #; // Tamanho do vetor de coefs do filtro
-x = np.array(np.zeros(tam_buff_input)) #; // Buffer circular das amostras de entrada
-
-# -------------------------- Contadores para os loops ------------------------------------------------
-buff_circ_cont = 0 #; // Contador do buffer circular
-coeffs_cont = 0 #; // Contador para o numero de coeffs
-pos = 0 #; // Posição no Buffer circular
-n = 0 #; // Índice de saída do filtro 
-m = 0 #; // Índice que percorre qual fase esta sendo utilizada (0<= m <= M -1)
-tam = len(x1) #; // Tamanho do sinal de entrada
-real_time = 0 #; // Contador do tempo real (número de amostras processadas)
-y = np.array(np.zeros(tam)) #; // Saída do filtro
-y_prev = 0 #; // Saída anterior do filtro
-for real_time in range(tam):
-    # Buffer circular das amostras de entrada
-    x[buff_circ_cont]    =  x1[real_time] * Q
-    #y[real_time]   =   0
-    pos   =   buff_circ_cont
-
-    while(coeffs_cont < tam_buff_coeffs):
-        y[real_time]    =    y_prev + h[coeffs_cont] * x[pos]
-        y_prev  =   y[real_time]
-        # Atualiza os contadores
-        coeffs_cont    =    coeffs_cont + 1
-        pos  =  pos - 1
-        if(pos<0):
-        
-            pos   =   pos + tam_buff_input
-        
-    real_time   =   real_time + 1
-    coeffs_cont    =    0
-    buff_circ_cont   =   buff_circ_cont + 1
-    if (buff_circ_cont   ==   tam_buff_input):
-        buff_circ_cont    =    0
-
-plt.plot(y ,'b')
-plt.plot(x1 * Q,'r--')
+plt.figure()
+plt.plot(x1)
 plt.show()
+##------------------------------------------------------------------------------------------------------
+## ---------------------------------- PARAMETROS -------------------------------------------------------
+##------------------------------------------------------------------------------------------------------
+Q = 0.001 #; // Fator de decimação
+M = 5 #; // Decimação e numero e numero de fases
+L = len(h) #; // Tamanho do filtro
+buffer_circular = np.zeros(int(np.ceil((M * L)/M))) #; // Buffer circular 
+tamanho_buffer_circular = len(buffer_circular) #; // Tamanho do buffer circular
+
+contador_IDFT = 0 #; // Contador de IDFTs realizadas
+contador_posicao_buffer_circular = 0 #; // Cabeça do buffer circular
+contador_tempo_real = 0 #; // Tempo real (índice de leitura do sinal de entrada)
+contador_amostra_subfiltro_Exx = 0 #; // Contador de amostras do subfiltro
+contador_posicao_buffer_taps = 0 #; // Contador de posição do buffer de taps
+contador_taps = 0 #; // Contador de taps do subfiltro
+m = 0 #; // Contador de fases do subfiltro
+n = 0 #; // Contador de taps do subfiltro
+cont_n = 0 #; // Contador auxiliar
+P = int(np.ceil(L / M))
+Exx = np.zeros((M, P))#; //  (// divisao inteira)Matriz que armazena as fases do filtro polifásico
+y = np.zeros(M) ## Matriz de saida filtrada
+yy = np.zeros((M, len(x1) // M)) ## Sinal de saída final
+##------------------------------------------------------------------------------------------------------
+## ---------------------------------- Funções -------------------------------------------------------
+##------------------------------------------------------------------------------------------------------
+
+def downsampling(a,b): 
+    '''
+    Função que verifica se a é multiplo de b
+    '''
+    if(a % b == 0):
+        return b
+    return 0
+
+#FASES DO FILTRO
+def matriz_coeficientes(h, M):      
+    m = 0
+    c = 0   
+    L = len(h) 
+    P = int(np.ceil(L / M)) 
+    Ehh = np.zeros((M,P))#; //  (// divisao inteira)Matriz que armazena as fases do filtro polifásico
+    while(m < M):
+        c = 0
+        while(c < P):
+            r = m + c * M
+            Ehh[m, c] = h[r] if r < L else 0.0
+            c = c + 1
+        m = m + 1
+        
+    return Ehh
+    
+Enn = matriz_coeficientes(h, M)
+
+##------ Loop principal --------------
+while(contador_tempo_real < len(x1)):
+    # Se amostra for multiplo de M, armazena no buffer circular
+    if(downsampling(contador_tempo_real, M)):
+        # Armazena no buffer circular a amostra atual 
+        buffer_circular[contador_posicao_buffer_circular] = x1[contador_tempo_real] * Q
+        Pb = 0 ## Varre o buffer circular 
+        m = 0 # Varre as fases da matriz de subfiltros 
+
+        n = 0 # Varre os taps da matriz de subfiltros 
+        while(m < M):
+            while(n < P):    
+                Exx[m,n] = buffer_circular[Pb]
+                ##Logica do filtro abaixo  
+                y[m] += Exx[m,n] * Enn[m,n]
+                # Faz IDFT
+                n = n + 1
+                Pb = Pb + 1
+            
+            m = m + 1
+            n = 0
+        yy[:,contador_IDFT] = np.fft.ifft(y[:])
+        y[:] = 0 ### zera o y para proxima fase 
+        # Contadores 
+        contador_IDFT = contador_IDFT + 1
+        contador_posicao_buffer_circular = (contador_posicao_buffer_circular + 1) % tamanho_buffer_circular
+
+        # Incrementa contador do subfiltro apenas quando a cabeça do buffer circular voltar para 0
+        if(contador_posicao_buffer_circular == 0):
+            contador_amostra_subfiltro_Exx = (contador_amostra_subfiltro_Exx + 1) % P
+
+
+
+    contador_tempo_real = contador_tempo_real + 1
+
+# Sinal de saída final
+# plt.figure()
+# plt.plot(yy[0,:])
+# plt.plot(yy[1,:])
+# plt.plot(yy[2,:])
+# plt.plot(yy[3,:])
+# plt.plot(yy[4,:])
+# plt.show()
+for i in range(contador_IDFT):
+    plt.plot(abs(yy[:,i])*2/np.sqrt(2), label = 'Estimado %d' %i)
+plt.show()
+
+
+plt.figure()
+plt.suptitle('Fase Fasores')
+for hh in range(1200):
+    plt.plot(np.unwrap(np.angle(yy[:,hh])), label = 'Estimado %d' %hh)
+    #plt.plot(np.angle(Xref[hh-1,:]), label = 'Referência %d' %hh)
+    # plt.ylim(-np.pi-1, np.pi+1)
+    # plt.xlabel('Tempo (s)')
+    # plt.ylabel('Fases (rad)')
+    # plt.legend()
+    # plt.grid()
+#mplcursors.cursor(hover=True)
+plt.show()
+
+### Tarefa: Entender como funciona a IDFT do python para aplicar direito aqui
+
+print(len(x1), "Numero de saidas que o meu vetor deve ter: ,",len(x1)/M)
+print(yy.shape)

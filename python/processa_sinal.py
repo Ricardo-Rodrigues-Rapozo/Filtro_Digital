@@ -63,7 +63,8 @@ if __name__ == "__main__":
 #===================================================
 # Filtro FIR (ordem 10) - LOWPASS
 #===================================================
-    order = 10
+
+    order = 99 ## antes era 10
     numtaps = order + 1
     fc = 80.0  # Hz (ajuste conforme desejado)
     h = firwin(numtaps=numtaps, cutoff=fc, fs=Fs, window='hamming', pass_zero='lowpass')
