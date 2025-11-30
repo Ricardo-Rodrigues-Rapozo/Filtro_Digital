@@ -48,13 +48,13 @@ def signal_frequency(f1, N, f0, Fs, Frep, hmax, hmag, SNR):
         x = np.cos(2*np.pi*f1*t + phi)
 
         X = np.zeros((hmax,len(t))) + 1j*np.zeros((hmax,len(t)))
-        X[0,:] = np.exp(1j*(2*np.pi*(f1-f0)*t + phi))
+        X[0,:] = (1/np.sqrt(2))*np.exp(1j*(2*np.pi*(f1-f0)*t + phi))
 
         for hh in range(2,hmax+1):
             phi = np.random.uniform(-np.pi,np.pi)
             x = x + hmag*np.cos(2*np.pi*hh*f1*t + phi)
             
-            X[hh-1,:] = (hmag)*np.exp(1j*(2*np.pi*hh*(f1-f0)*t + phi))
+            X[hh-1,:] = (hmag/np.sqrt(2))*np.exp(1j*(2*np.pi*hh*(f1-f0)*t + phi))
         
         x = x #+ ruido
 
@@ -202,23 +202,3 @@ def modulation(fm, kx, ka, N, f0, Fs, Frep, hmax, hmag, SNR):
     ROCOF = - ka*2*np.pi*(fm**2)*np.cos(2*np.pi*t - np.pi)
     
     return (x, X, f, ROCOF)
-
-
-
-def FlatTopFilterBase(N):    
-    # ================================================
-    # Calculo do Filtro Base
-    # ================================================
-    
-    c5 = [1.0005967, 1.9991048, 1.9097925, 1.4448987, 0.66403725, 0.1304229]
-
-    M = len(c5)
-    n = np.arange(-(N - 1) / 2, 1 + (N - 1) / 2, 1)
-
-    wM = np.zeros(N)
-    for m in range(M):
-        wM = wM + c5[m] * np.cos(m * (2 * np.pi / N) * n)
-
-    wM = wM / np.sum(wM)
-    
-    return wM
