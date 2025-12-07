@@ -1,5 +1,5 @@
 import numpy as np
-from sinaisIEC60255_118 import signal_frequency
+from filtros_polifasicos_ref_Manso.sinaisIEC60255_118 import signal_frequency
 import plotly.express as px
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots

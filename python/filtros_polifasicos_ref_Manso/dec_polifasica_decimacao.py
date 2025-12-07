@@ -2,7 +2,7 @@ import numpy as np
 from scipy.signal import freqz, lfilter, firls, upfirdn
 import matplotlib.pyplot as plt
 import mplcursors
-import sinaisIEC60255_118
+import filtros_polifasicos_ref_Manso.sinaisIEC60255_118 as sinaisIEC60255_118
 from scipy.signal import firwin
 
 def TVE(X, Xr):

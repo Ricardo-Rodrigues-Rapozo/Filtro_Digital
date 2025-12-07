@@ -8,7 +8,7 @@ import matplotlib.pyplot as plt
 
 from scipy.signal import freqz, lfilter, firls, upfirdn, firwin
 import mplcursors
-import sinaisIEC60255_118
+import filtros_polifasicos_ref_Manso.sinaisIEC60255_118 as sinaisIEC60255_118
 
 # =========================
 # Parâmetros do sinal
