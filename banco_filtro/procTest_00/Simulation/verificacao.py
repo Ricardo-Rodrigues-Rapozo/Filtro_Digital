@@ -2,7 +2,9 @@ import numpy as np
 import matplotlib.pyplot as plt
 import mplcursors
 import os
-os.chdir(r'c:\Users\Ricardo\Desktop\Dissertacao\banco_filtro\procTest_00\Simulation')
+
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+os.chdir(BASE_DIR)
 
 N = 128
 Nppc = 128
