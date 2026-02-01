@@ -1,0 +1,167 @@
+#PRNAME procTest_00
+#NUBITS 32
+#NDSTAC 5
+#SDEPTH 5
+#NUIOIN 1
+#NUIOOU 7
+#NBMANT 23
+#NBEXPO 8
+#FFTSIZ 7
+#NUGAIN 128
+
+comp E0[128];
+comp wpv[64] "wpv.txt"; // N/2
+
+
+void ifft(int N)
+{
+    comp temp;
+
+    int mmax = 1;
+
+    while (mmax < N)
+    {
+        int istep = mmax*2;
+        int    m  = 0;
+        int  ind  = 0;
+        int sind  = 0;
+        while (m < mmax)
+        {
+            int k = m;
+            while (k < N)
+            {
+                int j   = k+mmax;
+                temp    = wpv[sind]*E0[j);
+                E0[j) =   E0[k) - temp;
+                E0[k) =   E0[k) + temp;
+                k       = k+istep;
+                ind++;
+            }
+            sind = ind;
+            m++;
+        }
+        mmax = istep;
+    }
+}
+
+
+void main()
+{   
+    
+
+    int sample_count = 0;
+    int output_count = 0;
+    float output_buffer_real[128];
+    float output_buffer_imag[128];
+
+    float buffer[128];
+    float E[128][4];
+
+    int M;
+    int idx;
+    int k;
+    int test_idx;
+    int reset_idx;
+    int oo;
+    int out_idx;
+    int mm;   
+    float x;
+    float acc;
+    float norm_factor;
+
+    
+    int fft_limit;
+
+    // 
+    //comp temp;
+    //int mmax;
+    //int istep;
+    //int m;
+    //int ind;
+    //int sind;
+    //int j_ifft;
+    //int k_ifft;
+    
+    
+    float Ehh[128][4] "Ehh.txt";
+    
+
+    M = 128;
+    fft_limit=M;
+    sample_count = (M - 1);
+    output_count = 0;
+
+    //
+    
+    // ===== LOOP PRINCIPAL =====
+    while (1) {
+        //x = in(0) / 32768.0;
+        
+        k = M - 1;
+        while (k > 0) {
+            buffer[k] = buffer[k - 1];
+            k = k - 1;
+        }
+        buffer[0] = in(0) / 16384.0;
+
+        
+        if(sample_count == (M - 1))
+        {
+         sample_count=0;
+         mm = 0;
+         while(mm<M)
+         {  
+
+           
+
+            E[mm][3] = E[mm][2];
+            //fout(12,(1000000*E[3][0]));
+            E[mm][2] = E[mm][1];
+            //fout(11,(1000000*E[2][0]));
+            E[mm][1] = E[mm][0];
+            //fout(10,(1000000*E[1][0]));
+            E[mm][0] = buffer[mm];
+            //fout(9,(1000000*E[0][0]));
+
+            
+
+            E0[mm] =  Ehh[mm][0] * E[mm][0] + 
+                      Ehh[mm][1] * E[mm][1] + 
+                      Ehh[mm][2] * E[mm][2] + 
+                      Ehh[mm][3] * E[mm][3];
+            mm = mm + 1;
+
+
+         }
+
+          ifft(M);
+
+            fout(1,real (1000000*E0[1)));
+            fout(2,imag (1000000*E0[1)));
+            fout(3,real (1000000*E0[3)));
+            fout(4,imag (1000000*E0[3)));
+            fout(5,real (1000000*E0[5)));
+            fout(6,imag (1000000*E0[5)));
+//          fout(7,real (10000000*E0[13)));
+//          fout(8,imag (10000000*E0[13)));
+//          fout(9,real (10000000*E0[19)));
+//          fout(10,imag(10000000*E0[19)));
+//          fout(11,real(10000000*E0[29)));
+//          fout(12,imag(10000000*E0[29)));
+//          fout(13,real(10000000*E0[49)));
+//          fout(14,imag(10000000*E0[49)));
+//          fout(15,real(10000000*E0[50)));
+//          fout(16,imag(10000000*E0[50)));
+        }
+        else
+        {
+            sample_count = sample_count + 1;
+        }
+
+        // 
+        //mm = 0;
+        //mmax = 1;
+        //oo = 0;
+        //reset_idx = 0;   
+    }
+}

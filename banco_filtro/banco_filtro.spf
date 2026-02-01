@@ -1,0 +1,31 @@
+{
+  "metadata": {
+    "projectName": "banco_filtro",
+    "createdAt": "2025-12-19T16:24:09.039Z",
+    "lastModified": "2025-12-19T16:24:09.039Z",
+    "computerName": "BLOELHOMORT",
+    "appVersion": "v4.0.0",
+    "projectPath": "C:\\Users\\Ricardo\\Desktop\\Dissertacao\\banco_filtro",
+    "lastOpened": "2026-01-27T23:50:05.435Z"
+  },
+  "structure": {
+    "basePath": "C:\\Users\\Ricardo\\Desktop\\Dissertacao\\banco_filtro",
+    "processors": [
+      {
+        "name": "procTest_00",
+        "config": {
+          "nBits": 23,
+          "nbMantissa": 16,
+          "nbExponent": 6,
+          "dataStackSize": 5,
+          "instructionStackSize": 5,
+          "inputPorts": 1,
+          "outputPorts": 1,
+          "gain": 128
+        },
+        "exists": true
+      }
+    ],
+    "folders": []
+  }
+}
