@@ -6,7 +6,6 @@ import os
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 os.chdir(BASE_DIR)
 
-N = 128
 Nppc = 128
 
 # ===================================================
@@ -20,7 +19,7 @@ Ts = 1/Fs
 Nc = 10
 t = np.arange(Nc*Nppc)*Ts
 
-x = np.cos(2*np.pi* f0 * t)# + 0.5*np.cos(2*np.pi* 3*f0 * t) + 0.5*np.cos(2*np.pi*5*f0 * t)
+x = np.cos(2*np.pi* f0 * t) + 0.5*np.cos(2*np.pi* 3*f0 * t) + 0.5*np.cos(2*np.pi*5*f0 * t)
 
 
 np.savetxt('input_0.txt', x*(2**14), fmt='%d')
@@ -73,7 +72,7 @@ M = 128
 
 c5 = [1.0005967, 1.9991048, 1.9097925, 1.4448987, 0.66403725, 0.1304229]
 
-N = 4 * (Fs//f0)
+N = 8 * (Fs//f0)
 
 n1 = np.arange(-(N - 1) / 2, 1 + (N - 1) / 2, 1)
 
