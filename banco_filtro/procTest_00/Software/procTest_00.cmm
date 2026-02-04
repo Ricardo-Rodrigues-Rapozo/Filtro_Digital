@@ -55,7 +55,7 @@ void main()
     float output_buffer_imag[128];
 
     float buffer[128];
-    float E[128][4];
+    float E[128][8];
 
     int M;
     int idx;
@@ -83,7 +83,7 @@ void main()
     //int k_ifft;
     
     
-    float Ehh[128][4] "Ehh.txt";
+    float Ehh[128][8] "Ehh.txt";
     
 
     M = 128;
@@ -113,6 +113,13 @@ void main()
          {  
 
            
+            E[mm][7] = E[mm][6];
+
+            E[mm][6] = E[mm][5];
+
+            E[mm][5] = E[mm][4];
+
+            E[mm][4] = E[mm][3];
 
             E[mm][3] = E[mm][2];
             //fout(12,(1000000*E[3][0]));
@@ -124,13 +131,15 @@ void main()
             //fout(9,(1000000*E[0][0]));
 
             
-
             E0[mm] =  Ehh[mm][0] * E[mm][0] + 
                       Ehh[mm][1] * E[mm][1] + 
                       Ehh[mm][2] * E[mm][2] + 
-                      Ehh[mm][3] * E[mm][3];
+                      Ehh[mm][3] * E[mm][3] + 
+                      Ehh[mm][4] * E[mm][4] + 
+                      Ehh[mm][5] * E[mm][5] + 
+                      Ehh[mm][6] * E[mm][6] + 
+                      Ehh[mm][7] * E[mm][7];
             mm = mm + 1;
-
 
          }
 

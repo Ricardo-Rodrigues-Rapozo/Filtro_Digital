@@ -13,17 +13,17 @@ wire [2:0] addr_out;
 
 `ifdef __ICARUS__
 wire mem_wr;
-wire [10:0] mem_addr_wr;
+wire [11:0] mem_addr_wr;
 wire [8:0] pc_sim_val;
 `endif
 
 processor#(.NUBITS(32),
 .NBMANT(23),
 .NBEXPO(8),
-.NBOPER(11),
+.NBOPER(12),
 .NUGAIN(128),
-.MDATAS(1824),
-.MINSTS(324),
+.MDATAS(2851),
+.MINSTS(396),
 .SDEPTH(5),
 .DDEPTH(5),
 .NBIOIN(1),
@@ -59,8 +59,8 @@ processor#(.NUBITS(32),
 .POP(1),
 .F2I(1),
 .OUT(1),
-.DFILE("C:/Users/Ricardo/Desktop/Dissertacao/banco_filtro/procTest_00/Hardware/procTest_00_data.mif"),
-.IFILE("C:/Users/Ricardo/Desktop/Dissertacao/banco_filtro/procTest_00/Hardware/procTest_00_inst.mif"))
+.DFILE("C:/Users/Ricardo/Documents/Dissertacao/banco_filtro/procTest_00/Hardware/procTest_00_data.mif"),
+.IFILE("C:/Users/Ricardo/Documents/Dissertacao/banco_filtro/procTest_00/Hardware/procTest_00_inst.mif"))
 
 `ifdef __ICARUS__
 p_procTest_00 (clk, rst, in, out, addr_in, addr_out, proc_req_in, proc_out_en, itr, mem_wr, mem_addr_wr,pc_sim_val);
@@ -147,10 +147,10 @@ always @ (posedge clk) begin
    if (mem_addr_wr == 400 && mem_wr) me3_f_ifft_v_temp_e_ <= out;
    if (mem_addr_wr == 401 && mem_wr) me1_f_main_v_sample_count_e_ <= out;
    if (mem_addr_wr == 402 && mem_wr) me1_f_main_v_output_count_e_ <= out;
-   if (mem_addr_wr == 1815 && mem_wr) me1_f_main_v_M_e_ <= out;
-   if (mem_addr_wr == 1816 && mem_wr) me1_f_main_v_fft_limit_e_ <= out;
-   if (mem_addr_wr == 1817 && mem_wr) me1_f_main_v_k_e_ <= out;
-   if (mem_addr_wr == 1819 && mem_wr) me1_f_main_v_mm_e_ <= out;
+   if (mem_addr_wr == 2839 && mem_wr) me1_f_main_v_M_e_ <= out;
+   if (mem_addr_wr == 2840 && mem_wr) me1_f_main_v_fft_limit_e_ <= out;
+   if (mem_addr_wr == 2841 && mem_wr) me1_f_main_v_k_e_ <= out;
+   if (mem_addr_wr == 2843 && mem_wr) me1_f_main_v_mm_e_ <= out;
 end
 
 wire [16+32*2-1:0] comp_me3_f_ifft_v_temp_e_ = {8'd23, 8'd8, me3_f_ifft_v_temp_e_, me3_f_ifft_v_temp_i_e_};
@@ -1905,7 +1905,7 @@ reg [31:0] valr8=0;
 reg [31:0] valr9=0;
 reg [31:0] valr10=0;
 
-reg [19:0] min [0:324-1];
+reg [19:0] min [0:396-1];
 
 reg signed [19:0] linetab =-1;
 reg signed [19:0] linetabs=-1;
@@ -1913,7 +1913,7 @@ reg signed [19:0] linetabs=-1;
 initial	$readmemb("pc_procTest_00_mem.txt",min);
 
 always @ (posedge clk) begin
-if (pc_sim_val < 324) linetab <= min[pc_sim_val];
+if (pc_sim_val < 396) linetab <= min[pc_sim_val];
 linetabs <= linetab;   
 valr1    <= pc_sim_val;
 valr2    <= valr1;

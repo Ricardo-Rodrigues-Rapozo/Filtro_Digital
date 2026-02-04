@@ -122,11 +122,11 @@ SET main_output_count
 #array main_output_buffer_real 2 128
 #array main_output_buffer_imag 2 128
 #array main_buffer 2 128
-#array main_E 2 512
-LOD 4
+#array main_E 2 1024
+LOD 8
 SET main_E_arr_size
-#arrays main_Ehh 2 512 "Ehh.txt"
-LOD 4
+#arrays main_Ehh 2 1024 "Ehh.txt"
+LOD 8
 SET main_Ehh_arr_size
 LOD 128
 SET main_M
@@ -171,6 +171,38 @@ SET main_mm
 @L7 LOD main_M
 LES main_mm
 JIZ L7end
+LOD  main_mm
+MLT  main_E_arr_size
+ADD  7
+P_LOD main_mm
+MLT main_E_arr_size
+ADD 6
+LDI main_E
+STI main_E
+LOD  main_mm
+MLT  main_E_arr_size
+ADD  6
+P_LOD main_mm
+MLT main_E_arr_size
+ADD 5
+LDI main_E
+STI main_E
+LOD  main_mm
+MLT  main_E_arr_size
+ADD  5
+P_LOD main_mm
+MLT main_E_arr_size
+ADD 4
+LDI main_E
+STI main_E
+LOD  main_mm
+MLT  main_E_arr_size
+ADD  4
+P_LOD main_mm
+MLT main_E_arr_size
+ADD 3
+LDI main_E
+STI main_E
 LOD  main_mm
 MLT  main_E_arr_size
 ADD  3
@@ -238,6 +270,46 @@ LDI main_Ehh
 P_LOD main_mm
 MLT main_E_arr_size
 ADD 3
+LDI main_E
+SF_MLT
+SF_ADD
+P_LOD main_mm
+MLT main_Ehh_arr_size
+ADD 4
+LDI main_Ehh
+P_LOD main_mm
+MLT main_E_arr_size
+ADD 4
+LDI main_E
+SF_MLT
+SF_ADD
+P_LOD main_mm
+MLT main_Ehh_arr_size
+ADD 5
+LDI main_Ehh
+P_LOD main_mm
+MLT main_E_arr_size
+ADD 5
+LDI main_E
+SF_MLT
+SF_ADD
+P_LOD main_mm
+MLT main_Ehh_arr_size
+ADD 6
+LDI main_Ehh
+P_LOD main_mm
+MLT main_E_arr_size
+ADD 6
+LDI main_E
+SF_MLT
+SF_ADD
+P_LOD main_mm
+MLT main_Ehh_arr_size
+ADD 7
+LDI main_Ehh
+P_LOD main_mm
+MLT main_E_arr_size
+ADD 7
 LDI main_E
 SF_MLT
 SF_ADD

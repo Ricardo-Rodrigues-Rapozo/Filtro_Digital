@@ -33,7 +33,7 @@ reg req_in_0 = 0;
 
 // abre um arquivo para leitura em cada porta
 initial begin
-    data_in_0 = $fopen("C:/Users/Ricardo/Desktop/Dissertacao/banco_filtro/procTest_00/Simulation/input_0.txt", "r"); // coloque os seus dados de entrada neste arquivo
+    data_in_0 = $fopen("C:/Users/Ricardo/Documents/Dissertacao/banco_filtro/procTest_00/Simulation/input_0.txt", "r"); // coloque os seus dados de entrada neste arquivo
 end
 
 // decodifica portas de entrada
@@ -84,12 +84,12 @@ reg out_en_6 = 0;
 
 // abre um arquivo para escrita de cada porta
 initial begin
-    data_out_1 = $fopen("C:/Users/Ricardo/Desktop/Dissertacao/banco_filtro/procTest_00/Simulation/output_1.txt", "w"); // veja os dados de saida neste arquivo
-    data_out_2 = $fopen("C:/Users/Ricardo/Desktop/Dissertacao/banco_filtro/procTest_00/Simulation/output_2.txt", "w"); // veja os dados de saida neste arquivo
-    data_out_3 = $fopen("C:/Users/Ricardo/Desktop/Dissertacao/banco_filtro/procTest_00/Simulation/output_3.txt", "w"); // veja os dados de saida neste arquivo
-    data_out_4 = $fopen("C:/Users/Ricardo/Desktop/Dissertacao/banco_filtro/procTest_00/Simulation/output_4.txt", "w"); // veja os dados de saida neste arquivo
-    data_out_5 = $fopen("C:/Users/Ricardo/Desktop/Dissertacao/banco_filtro/procTest_00/Simulation/output_5.txt", "w"); // veja os dados de saida neste arquivo
-    data_out_6 = $fopen("C:/Users/Ricardo/Desktop/Dissertacao/banco_filtro/procTest_00/Simulation/output_6.txt", "w"); // veja os dados de saida neste arquivo
+    data_out_1 = $fopen("C:/Users/Ricardo/Documents/Dissertacao/banco_filtro/procTest_00/Simulation/output_1.txt", "w"); // veja os dados de saida neste arquivo
+    data_out_2 = $fopen("C:/Users/Ricardo/Documents/Dissertacao/banco_filtro/procTest_00/Simulation/output_2.txt", "w"); // veja os dados de saida neste arquivo
+    data_out_3 = $fopen("C:/Users/Ricardo/Documents/Dissertacao/banco_filtro/procTest_00/Simulation/output_3.txt", "w"); // veja os dados de saida neste arquivo
+    data_out_4 = $fopen("C:/Users/Ricardo/Documents/Dissertacao/banco_filtro/procTest_00/Simulation/output_4.txt", "w"); // veja os dados de saida neste arquivo
+    data_out_5 = $fopen("C:/Users/Ricardo/Documents/Dissertacao/banco_filtro/procTest_00/Simulation/output_5.txt", "w"); // veja os dados de saida neste arquivo
+    data_out_6 = $fopen("C:/Users/Ricardo/Documents/Dissertacao/banco_filtro/procTest_00/Simulation/output_6.txt", "w"); // veja os dados de saida neste arquivo
 end
 
 // decodifica portas de saida

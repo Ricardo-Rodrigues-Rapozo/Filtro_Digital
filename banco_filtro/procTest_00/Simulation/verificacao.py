@@ -97,14 +97,9 @@ for kk in range(M):
 # ===================================================
 # SAVA salva Ehh em formato coluna
 # ===================================================
-Ehh_col = Ehh.reshape(-1)
-
-# salva em txt, um valor por linha
-np.savetxt(
-    "Ehh_flat.txt",
-    Ehh_col,
-    fmt="%.15f"
-)
+Ehh = Ehh.astype(np.float64)
+Ehh_col = Ehh.reshape(-1, order="C")     # row-major
+np.savetxt("Ehh_flat.txt", Ehh_col, fmt="%.18e", newline="\n")
 
 # ===================================================
 # Polyphase Implementation
