@@ -3,12 +3,12 @@
     {
       "name": "procTest_00",
       "clk": 1,
-      "numClocks": 2000000,
+      "numClocks": 8000000,
       "testbenchFile": "standard",
       "gtkwFile": "standard",
       "cmmFile": "procTest_00.cmm",
       "isActive": true,
-      "showArraysInGtkwave": 1
+      "showArraysInGtkwave": 0
     }
   ],
   "testbenchFile": "standard",

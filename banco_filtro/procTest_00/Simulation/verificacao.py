@@ -6,7 +6,7 @@ import os
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 os.chdir(BASE_DIR)
 
-Nppc = 128
+#Nppc = 128
 
 # ===================================================
 # Basic Parameters
@@ -16,7 +16,7 @@ f0 = 60
 Nppc = 256
 Fs = f0 * Nppc
 Ts = 1/Fs
-Nc = 60  # Numero de ciclos da senoide fundamental
+Nc = 10  # Numero de ciclos da senoide fundamental
 t = np.arange(Nc*Nppc)*Ts
 
 x = np.cos(2*np.pi* f0 * t) + 0.5*np.cos(2*np.pi* 3*f0 * t) + 0.5*np.cos(2*np.pi*5*f0 * t)
