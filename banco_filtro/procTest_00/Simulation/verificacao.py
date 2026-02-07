@@ -19,16 +19,14 @@ Ts = 1/Fs
 Nc = 60  # Numero de ciclos da senoide fundamental
 t = np.arange(Nc*Nppc)*Ts
 
-x = np.cos(2*np.pi* f0 * t) + 0.5*np.cos(2*np.pi* 3*f0 * t) + 0.5*np.cos(2*np.pi*5*f0 * t)
-
-
-np.savetxt('input_0.txt', x*(2**14), fmt='%d')
+#x = np.cos(2*np.pi* f0 * t) + 0.5*np.cos(2*np.pi* 3*f0 * t) + 0.5*np.cos(2*np.pi*5*f0 * t)
+#np.savetxt('input_0.txt', x*(2**14), fmt='%d')
 
 # ===================================================
-# Leitura dados SAPHO
+# Leitura dados de arquivo txt
 # ===================================================
 
-# x = np.loadtxt('input_0.txt')/32768.0
+x = np.loadtxt('55HZ.txt')/32768.0
 
 plt.figure()
 plt.plot(x)     
