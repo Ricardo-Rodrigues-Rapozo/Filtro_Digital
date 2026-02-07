@@ -16,8 +16,7 @@ f0 = 60
 Nppc = 256
 Fs = f0 * Nppc
 Ts = 1/Fs
-Nc = 60  # Numero de ciclos da senoide fundamental
-t = np.arange(Nc*Nppc)*Ts
+
 
 #x = np.cos(2*np.pi* f0 * t) + 0.5*np.cos(2*np.pi* 3*f0 * t) + 0.5*np.cos(2*np.pi*5*f0 * t)
 #np.savetxt('input_0.txt', x*(2**14), fmt='%d')
@@ -26,7 +25,13 @@ t = np.arange(Nc*Nppc)*Ts
 # Leitura dados de arquivo txt
 # ===================================================
 
-x = np.loadtxt('55HZ.txt')/32768.0
+x = np.loadtxt('55HZ.txt')
+Nc = len(x) // Nppc  # Numero de ciclos da senoide fundamental
+t = np.arange(Nc*Nppc)*Ts
+
+print(Nc)
+print(f"Tamanho de x: {len(x)}")
+print(f"Tamanho esperado: {Nc*Nppc}")
 
 plt.figure()
 plt.plot(x)     
@@ -105,7 +110,7 @@ np.savetxt("Ehh_flat.txt", Ehh_col, fmt="%.18e", newline="\n")
 buffer= np.zeros(M)
 E = np.zeros((M, Nf))
 E0 = np.zeros(M)
-v = np.zeros((M,len(x)//M), dtype=complex)
+v = np.zeros((M, len(x)//M + 1), dtype=complex)
 jj = 0
 
 for nn in range(len(x)):
