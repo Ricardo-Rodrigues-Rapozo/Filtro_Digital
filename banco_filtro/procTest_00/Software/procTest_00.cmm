@@ -82,10 +82,8 @@ void main()
     //int j_ifft;
     //int k_ifft;
     
-    
     float Ehh[256][8] "Ehh.txt";
     
-
     M = 256;
     fft_limit=M;
     sample_count = (M - 1);
@@ -98,6 +96,7 @@ void main()
         //x = in(0) / 32768.0;
         
         k = M - 1;
+        
         while (k > 0) {
             buffer[k] = buffer[k - 1];
             k = k - 1;
