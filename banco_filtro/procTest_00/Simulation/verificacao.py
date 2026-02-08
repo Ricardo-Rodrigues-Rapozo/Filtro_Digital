@@ -7,14 +7,14 @@ BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 os.chdir(BASE_DIR)
 
 # ===================================================
-#                   Basic Parameters
+#            Basic Parameters of the signal 
 # ===================================================
 
 f0 = 60
 Nppc = 256
 Fs = f0 * Nppc
 Ts = 1/Fs
-Ganho_saida_sapho = 1000000
+Ganho_saida_sapho = 1000000    ## ganho usado inicialmente 1000000
 #Nc = 60
 #t = np.arange(Nc * Nppc) * Ts
 #x = np.cos(2*np.pi* f0 * t) + 0.5*np.cos(2*np.pi* 3*f0 * t) + 0.5*np.cos(2*np.pi*5*f0 * t)
@@ -31,6 +31,8 @@ t = np.arange(len(x)) * Ts
 zc = np.where(np.diff(np.sign(x)))[0]
 Ns_cycle = np.mean(np.diff(zc))*2
 print(Ns_cycle)
+
+x / np.max(np.abs(x))
 np.savetxt('input_0.txt', x*(2**14), fmt='%d')
 
 print(Nc)
@@ -49,7 +51,7 @@ v5i = np.loadtxt('output_6.txt') / Ganho_saida_sapho
 
 
 # ========================================================
-#                   Base Filter
+#                   Base Filter flat top 
 #=========================================================
 M = 256
 
@@ -170,7 +172,10 @@ plt.show(block=False)
 
 plt.figure()
 
-# ------------------------ Fundamental -------------------------- #
+# ============================================================== #
+#                      Fundamental                               #
+# ============================================================== #
+
 plt.subplot(4,2,1)
 plt.plot(v1r, label='SAPHO Real', marker='o', linestyle='-')
 plt.plot(v[1,:].real, label='Polyphase Real', marker='o', linestyle='--')
@@ -183,7 +188,11 @@ plt.plot(v[1,:].imag, label='Polyphase Imag', marker='o', linestyle='--')
 plt.title('Fundamental - Imaginary Component')
 plt.legend()
 
-# -------------------------- 3rd Harmonic ----------------------- #
+
+# ============================================================== #
+#                            3rd Harmonic                        #
+# ============================================================== #
+
 plt.subplot(4,2,3)
 plt.plot(v3r, label='SAPHO Real', marker='o', linestyle='-')
 plt.plot(v[3,:].real, label='Polyphase Real', marker='o', linestyle='--')
@@ -196,7 +205,11 @@ plt.plot(v[3,:].imag, label='Polyphase Imag', marker='o', linestyle='--')
 plt.title('3rd Harmonic - Imaginary Component')
 plt.legend()
 
-# -------------------------- 5th Harmonic ----------------------- #
+# ============================================================== #
+#                         5th Harmonic                           #
+# ============================================================== #
+
+
 plt.subplot(4,2,5)
 plt.plot(v5r, label='SAPHO Real', marker='o', linestyle='-')
 plt.plot(v[5,:].real, label='Polyphase Real', marker='o', linestyle='--')
@@ -235,21 +248,30 @@ v_poly5abs = np.sqrt(v[5,:].real**2 + v[5,:].imag**2)
 
 plt.figure()
 
-# ------------------------ Fundamental -------------------------- #
+# ============================================================== #
+#                      Fundamental                               #
+# ============================================================== #
+
 plt.subplot(2,2,1)  
 plt.plot(v1abs, label='SAPHO Abs', marker='o', linestyle='-')
 plt.plot(v_poly1abs, label='Polyphase Abs', marker='o', linestyle='--')
 plt.title('Fundamental Magnitude')
 plt.legend()
 
-# -------------------------- 3rd Harmonic ----------------------- #
+# ============================================================== #
+#                            3rd Harmonic                        #
+# ============================================================== #
+
 plt.subplot(2,2,2)  
 plt.plot(v3abs, label='SAPHO Abs', marker='o', linestyle='-')
 plt.plot(v_poly3abs, label='Polyphase Abs', marker='o', linestyle='--')
 plt.title('3rd Harmonic Magnitude')
 plt.legend()
 
-# -------------------------- 5th Harmonic ----------------------- #
+# ============================================================== #
+#                         5th Harmonic                           #
+# ============================================================== #
+
 plt.subplot(2,2,3)  
 plt.plot(v5abs, label='SAPHO Abs', marker='o', linestyle='-')
 plt.plot(v_poly5abs, label='Polyphase Abs', marker='o', linestyle='--')
