@@ -14,8 +14,8 @@ f0 = 60
 Nppc = 256
 Fs = f0 * Nppc
 Ts = 1/Fs
-Ganho_saida_sapho = 1    ## ganho usado inicialmente 1000000
-
+Ganho_saida_sapho = 1000000    ## ganho usado inicialmente 1000000
+Ganho_saida_interpolador = 10000
 #Nc = 60
 #t = np.arange(Nc * Nppc) * Ts
 #x = np.cos(2*np.pi* f0 * t) + 0.5*np.cos(2*np.pi* 3*f0 * t) + 0.5*np.cos(2*np.pi*5*f0 * t)
@@ -35,8 +35,9 @@ t = np.arange(len(x)) * Ts
 # print(Ns_cycle)
 
 #x = x / np.max(np.abs(x))
-np.savetxt('input_0.txt', x*(2**14), fmt='%d')
-x = x * (2**14) 
+np.savetxt('input_0.txt', x, fmt='%d')
+
+x = x/ Ganho_saida_interpolador 
 
 print(Nc)
 print(f"Tamanho de x: {len(x)}")
@@ -72,8 +73,6 @@ for m in range(len(c5)):
 wM = wM / np.sum(wM)   ## Normaliza
 
 h = wM
-
-
 
 Nf = int(np.ceil(len(h)/M))  # aqui esta arredondando para cima 5 ao inves de 4
 Ehh = np.zeros((M, Nf))
