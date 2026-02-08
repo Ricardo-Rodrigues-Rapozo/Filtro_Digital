@@ -181,7 +181,7 @@ initial begin
 
     progress = $fopen("progress.txt", "w");
     for (chrys = 10; chrys <= 100; chrys = chrys + 10) begin
-        #800000000.000000;
+        #2000000000.000000;
         $fdisplay(progress,"%0d",chrys);
         $fflush(progress);
     end

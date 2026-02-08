@@ -3,7 +3,7 @@
     {
       "name": "procTest_00",
       "clk": 1,
-      "numClocks": 8000000,
+      "numClocks": 20000000,
       "testbenchFile": "standard",
       "gtkwFile": "standard",
       "cmmFile": "procTest_00.cmm",
