@@ -3,7 +3,7 @@
 #NDSTAC 5
 #SDEPTH 5
 #NUIOIN 1
-#NUIOOU 7
+#NUIOOU 7  // numero de saídas do sapho para analisar
 #NBMANT 23
 #NBEXPO 8
 #FFTSIZ 8
