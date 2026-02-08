@@ -103,7 +103,7 @@ void main()
             k = k - 1;
         }
         buffer[0] = in(0) / 10000.0;
-
+        //buffer[0] = in(0) / 16384.0;
         if(sample_count == (M - 1))
         {
          sample_count=0;

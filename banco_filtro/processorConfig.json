@@ -8,7 +8,7 @@
       "gtkwFile": "standard",
       "cmmFile": "procTest_00.cmm",
       "isActive": true,
-      "showArraysInGtkwave": 0
+      "showArraysInGtkwave": 1
     }
   ],
   "testbenchFile": "standard",
