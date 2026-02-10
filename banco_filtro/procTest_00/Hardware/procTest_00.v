@@ -22,8 +22,8 @@ processor#(.NUBITS(32),
 .NBEXPO(8),
 .NBOPER(13),
 .NUGAIN(128),
-.MDATAS(5667),
-.MINSTS(396),
+.MDATAS(5669),
+.MINSTS(357),
 .SDEPTH(5),
 .DDEPTH(5),
 .NBIOIN(1),
@@ -47,6 +47,7 @@ processor#(.NUBITS(32),
 .ISI(1),
 .F_ADD(1),
 .NEG_M(1),
+.I2F_M(1),
 .GRE(1),
 .P_NEG_M(1),
 .STI(1),
@@ -56,6 +57,9 @@ processor#(.NUBITS(32),
 .EQU(1),
 .SF_MLT(1),
 .P_I2F_M(1),
+.SF_GRE(1),
+.LIN(1),
+.F2I_M(1),
 .POP(1),
 .F2I(1),
 .OUT(1),
@@ -84,16 +88,6 @@ reg req_in_sim_0 = 0;
 
 reg signed [31:0] out_sig_1 = 0;
 reg out_en_sim_1 = 0;
-reg signed [31:0] out_sig_2 = 0;
-reg out_en_sim_2 = 0;
-reg signed [31:0] out_sig_3 = 0;
-reg out_en_sim_3 = 0;
-reg signed [31:0] out_sig_4 = 0;
-reg out_en_sim_4 = 0;
-reg signed [31:0] out_sig_5 = 0;
-reg out_en_sim_5 = 0;
-reg signed [31:0] out_sig_6 = 0;
-reg out_en_sim_6 = 0;
 
 always @ (*) begin
    if (req_in == 1) in_sim_0 = in;
@@ -103,16 +97,6 @@ end
 always @ (*) begin
    if (out_en == 2) out_sig_1 <= out;
    out_en_sim_1 = out_en == 2;
-   if (out_en == 4) out_sig_2 <= out;
-   out_en_sim_2 = out_en == 4;
-   if (out_en == 8) out_sig_3 <= out;
-   out_en_sim_3 = out_en == 8;
-   if (out_en == 16) out_sig_4 <= out;
-   out_en_sim_4 = out_en == 16;
-   if (out_en == 32) out_sig_5 <= out;
-   out_en_sim_5 = out_en == 32;
-   if (out_en == 64) out_sig_6 <= out;
-   out_en_sim_6 = out_en == 64;
 end
 
 // variaveis ------------------------------------------------------------------
@@ -131,6 +115,9 @@ reg [31:0] me1_f_main_v_sample_count_e_ = 0;
 reg [31:0] me1_f_main_v_output_count_e_ = 0;
 reg [31:0] me1_f_main_v_M_e_ = 0;
 reg [31:0] me1_f_main_v_fft_limit_e_ = 0;
+integer sm_me2; always @ (*) sm_me2 = (out[31]) ? -out[22:0] : out[22:0];
+integer  e_me2; always @ (*)  e_me2 = $signed(out[30:23]);
+real me2_f_main_v_vector_count_e_ = 0.0;
 reg [31:0] me1_f_main_v_k_e_ = 0;
 reg [31:0] me1_f_main_v_mm_e_ = 0;
 
@@ -149,8 +136,9 @@ always @ (posedge clk) begin
    if (mem_addr_wr == 786 && mem_wr) me1_f_main_v_output_count_e_ <= out;
    if (mem_addr_wr == 5655 && mem_wr) me1_f_main_v_M_e_ <= out;
    if (mem_addr_wr == 5656 && mem_wr) me1_f_main_v_fft_limit_e_ <= out;
-   if (mem_addr_wr == 5657 && mem_wr) me1_f_main_v_k_e_ <= out;
-   if (mem_addr_wr == 5659 && mem_wr) me1_f_main_v_mm_e_ <= out;
+   if (mem_addr_wr == 5657 && mem_wr) me2_f_main_v_vector_count_e_ <= sm_me2*$pow(2.0,e_me2);
+   if (mem_addr_wr == 5658 && mem_wr) me1_f_main_v_k_e_ <= out;
+   if (mem_addr_wr == 5660 && mem_wr) me1_f_main_v_mm_e_ <= out;
 end
 
 wire [16+32*2-1:0] comp_me3_f_ifft_v_temp_e_ = {8'd23, 8'd8, me3_f_ifft_v_temp_e_, me3_f_ifft_v_temp_i_e_};
@@ -168,7 +156,7 @@ reg [31:0] valr8=0;
 reg [31:0] valr9=0;
 reg [31:0] valr10=0;
 
-reg [19:0] min [0:396-1];
+reg [19:0] min [0:357-1];
 
 reg signed [19:0] linetab =-1;
 reg signed [19:0] linetabs=-1;
@@ -176,7 +164,7 @@ reg signed [19:0] linetabs=-1;
 initial	$readmemb("pc_procTest_00_mem.txt",min);
 
 always @ (posedge clk) begin
-if (pc_sim_val < 396) linetab <= min[pc_sim_val];
+if (pc_sim_val < 357) linetab <= min[pc_sim_val];
 linetabs <= linetab;   
 valr1    <= pc_sim_val;
 valr2    <= valr1;

@@ -137,6 +137,8 @@ ADD main_M
 SET main_sample_count
 LOD 0
 SET main_output_count
+I2F_M 0
+SET main_vector_count
 @L4 LOD 1
 JIZ L4end
 NEG_M 1
@@ -326,9 +328,15 @@ SET main_mm
 JMP L7
 @L7end LOD main_M
 CAL ifft
-LOD 1
+@L8 LOD main_vector_count
+P_I2F_M 50
+SF_GRE
+LIN
+JIZ L8end
+F2I_M main_vector_count
+SET   aux_var
 ILI E0
-P_LOD 1
+P_LOD aux_var
 ILI E0_i
 SET_P aux_var
 P_I2F_M 1000000
@@ -339,9 +347,10 @@ SF_MLT
 POP
 F2I
 OUT 1
-LOD 1
+F2I_M main_vector_count
+SET   aux_var
 ILI E0
-P_LOD 1
+P_LOD aux_var
 ILI E0_i
 SET_P aux_var
 P_I2F_M 1000000
@@ -352,61 +361,13 @@ SF_MLT
 SET_P aux_var
 LOD   aux_var
 F2I
-OUT 2
-LOD 3
-ILI E0
-P_LOD 3
-ILI E0_i
-SET_P aux_var
-P_I2F_M 1000000
-SF_MLT
-P_LOD aux_var
-P_I2F_M 1000000
-SF_MLT
-POP
-F2I
-OUT 3
-LOD 3
-ILI E0
-P_LOD 3
-ILI E0_i
-SET_P aux_var
-P_I2F_M 1000000
-SF_MLT
-P_LOD aux_var
-P_I2F_M 1000000
-SF_MLT
-SET_P aux_var
-LOD   aux_var
-F2I
-OUT 4
-LOD 5
-ILI E0
-P_LOD 5
-ILI E0_i
-SET_P aux_var
-P_I2F_M 1000000
-SF_MLT
-P_LOD aux_var
-P_I2F_M 1000000
-SF_MLT
-POP
-F2I
-OUT 5
-LOD 5
-ILI E0
-P_LOD 5
-ILI E0_i
-SET_P aux_var
-P_I2F_M 1000000
-SF_MLT
-P_LOD aux_var
-P_I2F_M 1000000
-SF_MLT
-SET_P aux_var
-LOD   aux_var
-F2I
-OUT 6
+OUT 1
+I2F_M 2
+F_ADD main_vector_count
+SET main_vector_count
+JMP L8
+@L8end I2F_M 0
+SET main_vector_count
 JMP L6end
 @L6else LOD main_sample_count
 ADD 1
