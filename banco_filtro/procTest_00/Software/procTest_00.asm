@@ -330,8 +330,7 @@ JMP L7
 CAL ifft
 @L8 LOD main_vector_count
 P_I2F_M 50
-SF_GRE
-LIN
+SF_LES
 JIZ L8end
 F2I_M main_vector_count
 SET   aux_var
@@ -362,7 +361,7 @@ SET_P aux_var
 LOD   aux_var
 F2I
 OUT 1
-I2F_M 2
+I2F_M 1
 F_ADD main_vector_count
 SET main_vector_count
 JMP L8

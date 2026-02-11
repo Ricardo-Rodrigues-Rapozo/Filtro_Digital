@@ -23,7 +23,7 @@ processor#(.NUBITS(32),
 .NBOPER(13),
 .NUGAIN(128),
 .MDATAS(5669),
-.MINSTS(357),
+.MINSTS(356),
 .SDEPTH(5),
 .DDEPTH(5),
 .NBIOIN(1),
@@ -57,14 +57,13 @@ processor#(.NUBITS(32),
 .EQU(1),
 .SF_MLT(1),
 .P_I2F_M(1),
-.SF_GRE(1),
-.LIN(1),
+.SF_LES(1),
 .F2I_M(1),
 .POP(1),
 .F2I(1),
 .OUT(1),
-.DFILE("C:/Users/Ricardo/Documents/Dissertacao/banco_filtro/procTest_00/Hardware/procTest_00_data.mif"),
-.IFILE("C:/Users/Ricardo/Documents/Dissertacao/banco_filtro/procTest_00/Hardware/procTest_00_inst.mif"))
+.DFILE("G:/Meu Drive/Profissional/PPEE/Alunos/Ricardo/validacao/Filtro_Digital/banco_filtro/procTest_00/Hardware/procTest_00_data.mif"),
+.IFILE("G:/Meu Drive/Profissional/PPEE/Alunos/Ricardo/validacao/Filtro_Digital/banco_filtro/procTest_00/Hardware/procTest_00_inst.mif"))
 
 `ifdef __ICARUS__
 p_procTest_00 (clk, rst, in, out, addr_in, addr_out, proc_req_in, proc_out_en, itr, mem_wr, mem_addr_wr,pc_sim_val);
@@ -156,7 +155,7 @@ reg [31:0] valr8=0;
 reg [31:0] valr9=0;
 reg [31:0] valr10=0;
 
-reg [19:0] min [0:357-1];
+reg [19:0] min [0:356-1];
 
 reg signed [19:0] linetab =-1;
 reg signed [19:0] linetabs=-1;
@@ -164,7 +163,7 @@ reg signed [19:0] linetabs=-1;
 initial	$readmemb("pc_procTest_00_mem.txt",min);
 
 always @ (posedge clk) begin
-if (pc_sim_val < 357) linetab <= min[pc_sim_val];
+if (pc_sim_val < 356) linetab <= min[pc_sim_val];
 linetabs <= linetab;   
 valr1    <= pc_sim_val;
 valr2    <= valr1;
