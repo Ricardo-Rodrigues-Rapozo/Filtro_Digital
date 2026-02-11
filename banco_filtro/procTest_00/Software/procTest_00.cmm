@@ -142,11 +142,11 @@ void main()
 
         ifft(M);
             //iterar o valor que esta dentro do E0 ate o 50 
-        while(vector_count < 50)
+        while(vector_count <= 50)
         {
             fout(1,real (1000000*E0[vector_count)));
             fout(1,imag (1000000*E0[vector_count)));
-            vector_count = vector_count + 1; // somente os impares 
+            vector_count = vector_count + 1; 
         }
         vector_count = 0;
 //          fout(1,real (1000000*E0[3)));
