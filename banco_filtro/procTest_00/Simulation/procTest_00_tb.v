@@ -33,7 +33,7 @@ reg req_in_0 = 0;
 
 // abre um arquivo para leitura em cada porta
 initial begin
-    data_in_0 = $fopen("G:/Meu Drive/Profissional/PPEE/Alunos/Ricardo/validacao/Filtro_Digital/banco_filtro/procTest_00/Simulation/input_0.txt", "r"); // coloque os seus dados de entrada neste arquivo
+    data_in_0 = $fopen("C:/Users/Ricardo/Documents/Dissertacao/banco_filtro/procTest_00/Simulation/input_0.txt", "r"); // coloque os seus dados de entrada neste arquivo
 end
 
 // decodifica portas de entrada
@@ -59,7 +59,7 @@ reg out_en_1 = 0;
 
 // abre um arquivo para escrita de cada porta
 initial begin
-    data_out_1 = $fopen("G:/Meu Drive/Profissional/PPEE/Alunos/Ricardo/validacao/Filtro_Digital/banco_filtro/procTest_00/Simulation/output_1.txt", "w"); // veja os dados de saida neste arquivo
+    data_out_1 = $fopen("C:/Users/Ricardo/Documents/Dissertacao/banco_filtro/procTest_00/Simulation/output_1.txt", "w"); // veja os dados de saida neste arquivo
 end
 
 // decodifica portas de saida
