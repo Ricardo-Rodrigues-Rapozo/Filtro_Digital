@@ -16,6 +16,7 @@ Fs = f0 * Nppc
 Ts = 1/Fs
 Ganho_saida_sapho = 1000000    ## ganho usado inicialmente 1000000
 Ganho_saida_interpolador = 10000
+
 #Nc = 60
 #t = np.arange(Nc * Nppc) * Ts
 #x = np.cos(2*np.pi* f0 * t) + 0.5*np.cos(2*np.pi* 3*f0 * t) + 0.5*np.cos(2*np.pi*5*f0 * t)
@@ -26,7 +27,7 @@ Ganho_saida_interpolador = 10000
 #               Leitura dados de arquivo txt
 # ===================================================
 
-x = np.loadtxt('64Hz.txt')
+x = np.loadtxt('65Hz.txt')
 Nc = len(x) // Nppc
 t = np.arange(len(x)) * Ts
 
