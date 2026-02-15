@@ -27,7 +27,7 @@ Ganho_saida_interpolador = 10000
 #               Leitura dados de arquivo txt
 # ===================================================
 
-x = np.loadtxt('saida_am.txt')
+x = np.loadtxt('saida_pm.txt')
 Nc = len(x) // Nppc
 t = np.arange(len(x)) * Ts
 
