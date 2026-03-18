@@ -13,16 +13,16 @@ wire [2:0] addr_out;
 
 `ifdef __ICARUS__
 wire mem_wr;
-wire [12:0] mem_addr_wr;
+wire [13:0] mem_addr_wr;
 wire [8:0] pc_sim_val;
 `endif
 
 processor#(.NUBITS(32),
 .NBMANT(23),
 .NBEXPO(8),
-.NBOPER(13),
+.NBOPER(14),
 .NUGAIN(128),
-.MDATAS(5669),
+.MDATAS(11301),
 .MINSTS(357),
 .SDEPTH(5),
 .DDEPTH(5),
@@ -122,23 +122,23 @@ reg [31:0] me1_f_main_v_k_e_ = 0;
 reg [31:0] me1_f_main_v_mm_e_ = 0;
 
 always @ (posedge clk) begin
-   if (mem_addr_wr == 768 && mem_wr) me1_f_ifft_v_N_e_ <= out;
-   if (mem_addr_wr == 770 && mem_wr) me1_f_ifft_v_mmax_e_ <= out;
-   if (mem_addr_wr == 772 && mem_wr) me1_f_ifft_v_istep_e_ <= out;
-   if (mem_addr_wr == 774 && mem_wr) me1_f_ifft_v_m_e_ <= out;
-   if (mem_addr_wr == 775 && mem_wr) me1_f_ifft_v_ind_e_ <= out;
-   if (mem_addr_wr == 776 && mem_wr) me1_f_ifft_v_sind_e_ <= out;
-   if (mem_addr_wr == 777 && mem_wr) me1_f_ifft_v_k_e_ <= out;
-   if (mem_addr_wr == 778 && mem_wr) me1_f_ifft_v_j_e_ <= out;
-   if (mem_addr_wr == 783 && mem_wr) me3_f_ifft_v_temp_i_e_ <= out;
-   if (mem_addr_wr == 784 && mem_wr) me3_f_ifft_v_temp_e_ <= out;
-   if (mem_addr_wr == 785 && mem_wr) me1_f_main_v_sample_count_e_ <= out;
-   if (mem_addr_wr == 786 && mem_wr) me1_f_main_v_output_count_e_ <= out;
-   if (mem_addr_wr == 5655 && mem_wr) me1_f_main_v_M_e_ <= out;
-   if (mem_addr_wr == 5656 && mem_wr) me1_f_main_v_fft_limit_e_ <= out;
-   if (mem_addr_wr == 5657 && mem_wr) me2_f_main_v_vector_count_e_ <= sm_me2*$pow(2.0,e_me2);
-   if (mem_addr_wr == 5658 && mem_wr) me1_f_main_v_k_e_ <= out;
-   if (mem_addr_wr == 5660 && mem_wr) me1_f_main_v_mm_e_ <= out;
+   if (mem_addr_wr == 1536 && mem_wr) me1_f_ifft_v_N_e_ <= out;
+   if (mem_addr_wr == 1538 && mem_wr) me1_f_ifft_v_mmax_e_ <= out;
+   if (mem_addr_wr == 1540 && mem_wr) me1_f_ifft_v_istep_e_ <= out;
+   if (mem_addr_wr == 1542 && mem_wr) me1_f_ifft_v_m_e_ <= out;
+   if (mem_addr_wr == 1543 && mem_wr) me1_f_ifft_v_ind_e_ <= out;
+   if (mem_addr_wr == 1544 && mem_wr) me1_f_ifft_v_sind_e_ <= out;
+   if (mem_addr_wr == 1545 && mem_wr) me1_f_ifft_v_k_e_ <= out;
+   if (mem_addr_wr == 1546 && mem_wr) me1_f_ifft_v_j_e_ <= out;
+   if (mem_addr_wr == 1551 && mem_wr) me3_f_ifft_v_temp_i_e_ <= out;
+   if (mem_addr_wr == 1552 && mem_wr) me3_f_ifft_v_temp_e_ <= out;
+   if (mem_addr_wr == 1553 && mem_wr) me1_f_main_v_sample_count_e_ <= out;
+   if (mem_addr_wr == 1554 && mem_wr) me1_f_main_v_output_count_e_ <= out;
+   if (mem_addr_wr == 11287 && mem_wr) me1_f_main_v_M_e_ <= out;
+   if (mem_addr_wr == 11288 && mem_wr) me1_f_main_v_fft_limit_e_ <= out;
+   if (mem_addr_wr == 11289 && mem_wr) me2_f_main_v_vector_count_e_ <= sm_me2*$pow(2.0,e_me2);
+   if (mem_addr_wr == 11290 && mem_wr) me1_f_main_v_k_e_ <= out;
+   if (mem_addr_wr == 11292 && mem_wr) me1_f_main_v_mm_e_ <= out;
 end
 
 wire [16+32*2-1:0] comp_me3_f_ifft_v_temp_e_ = {8'd23, 8'd8, me3_f_ifft_v_temp_e_, me3_f_ifft_v_temp_i_e_};

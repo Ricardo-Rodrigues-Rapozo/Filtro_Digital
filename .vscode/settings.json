@@ -1,0 +1,5 @@
+{
+  "python.analysis.extraPaths": [
+    "./banco_filtro/procTest_00/Simulation/src"
+  ]
+}

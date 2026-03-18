@@ -9,10 +9,10 @@ NOP
 #NBEXPO 8
 #FFTSIZ 8
 #NUGAIN 128
-#array E0 3 256
-#array E0_i 4 256
-#arrays wpv 3 128 "wpv.txt"
-#arrays wpv_i 4 128 "wpv.txt"
+#array E0 3 512
+#array E0_i 4 512
+#arrays wpv 3 256 "wpv.txt"
+#arrays wpv_i 4 256 "wpv.txt"
 CAL main
 @fim JMP fim
 @ifft SET ifft_N
@@ -119,13 +119,13 @@ JMP L1
 SET main_sample_count
 LOD 0
 SET main_output_count
-#array main_output_buffer_real 2 256
-#array main_output_buffer_imag 2 256
-#array main_buffer 2 256
-#array main_E 2 2048
+#array main_output_buffer_real 2 512
+#array main_output_buffer_imag 2 512
+#array main_buffer 2 512
+#array main_E 2 4096
 LOD 8
 SET main_E_arr_size
-#arrays main_Ehh 2 2048 "Ehh.txt"
+#arrays main_Ehh 2 4096 "Ehh.txt"
 LOD 8
 SET main_Ehh_arr_size
 LOD 256

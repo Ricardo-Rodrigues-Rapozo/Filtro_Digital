@@ -9,8 +9,8 @@
 #FFTSIZ 8
 #NUGAIN 128
 
-comp E0[256];
-comp wpv[128] "wpv.txt"; // N/2
+comp E0[512];
+comp wpv[256] "wpv.txt"; // N/2
 
 
 void ifft(int N)
@@ -51,11 +51,11 @@ void main()
 
     int sample_count = 0;
     int output_count = 0;
-    float output_buffer_real[256];
-    float output_buffer_imag[256];
+    float output_buffer_real[512];
+    float output_buffer_imag[512];
 
-    float buffer[256];
-    float E[256][8];
+    float buffer[512];
+    float E[512][8];
 
     int M;
     int idx;
@@ -82,7 +82,7 @@ void main()
     //int j_ifft;
     //int k_ifft;
     
-    float Ehh[256][8] "Ehh.txt";
+    float Ehh[512][8] "Ehh.txt";
     
     M = 256;
     fft_limit=M;
@@ -106,8 +106,8 @@ void main()
         //buffer[0] = in(0) / 16384.0;
         if(sample_count == (M - 1))
         {
-         sample_count=0;
-         mm = 0;
+            sample_count=0;
+            mm = 0;
          while(mm<M)
          {  
            
@@ -149,12 +149,12 @@ void main()
             vector_count = vector_count + 1; 
         }
         vector_count = 0;
-//          fout(1,real (1000000*E0[3)));
+        //fout(1,real (1000000*E0[3)));
 //          fout(4,imag (1000000*E0[3)));
 //          fout(5,real (1000000*E0[5)));
 //          fout(6,imag (1000000*E0[5)));
-//          fout(7,real (10000000*E0[13)));
-//          fout(8,imag (10000000*E0[13)));
+//          fout(7,real (10000000*E0[13)));1000000
+//          fout(8,imag (10000000*E0[13)));10000000
 //          fout(9,real (10000000*E0[19)));
 //          fout(10,imag(10000000*E0[19)));
 //          fout(11,real(10000000*E0[29)));
@@ -168,11 +168,5 @@ void main()
         {
             sample_count = sample_count + 1;
         }
-
-        // 
-        //mm = 0;
-        //mmax = 1;
-        //oo = 0;
-        //reset_idx = 0;   
     }
 }
