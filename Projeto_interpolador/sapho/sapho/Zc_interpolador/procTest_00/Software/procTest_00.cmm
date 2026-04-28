@@ -1,0 +1,333 @@
+#PRNAME procTest_00
+
+#NUBITS 32
+
+#NDSTAC 5
+
+#SDEPTH 5
+
+#NUIOIN 1
+
+#NUIOOU 6
+
+#NBMANT 23
+
+#NBEXPO 8
+
+#NUGAIN 128
+
+
+
+void main()
+{
+    // ----- Globais ----------
+    int cont_global = 0;
+    // ----- FIR b (para ZC) -----
+    float b_coeffs[1025] "b_coeffs";
+    float b_buffer[1025];
+    int b_index = 0;
+
+   // ----- Zero-Crossing -----
+    float va              = 0.0;                            //amostra anterior do filtro 
+    float Tsc             = 1/60.0;                        // 
+    float T1              = 0.0;                          //
+    float fzc             = 0.0;                         //
+    float freq_amostragem = 15360.0;                    // Frequencia de amostragem do sapho 
+    float sig             = 0.0;                       //
+    float Nb              = 0.0;                      //
+    float T2              = 0.0;                     //  
+    float Ts;
+    int atraso_amotras_filtro_pre_zc = 512;
+
+
+    // ----- Media movel 256 -----
+    float w_coeffs[1024] "w_coeffs";
+    int w_index = 0;
+    float w_sum = 0.0;
+    float buffer_media_movel[1025];              // buffer que recebe os valores da frequencia para fazer o media movel 
+    int buffer_media_movel_idex = 0;            // iterador para trabalhar com o buffer da media movel 
+    float fcc = 0.0;                           //saida filtrada do media movel 
+    int w_media = 1024;                       // numero de coeficientes do filtro media movel 
+    int read_idx_mean = 0;                   // iterador 
+    int w_index_mean = 0;                   // iterador 
+    int p = 0;              
+    int b_index_mean = 0;
+    int atraso_amotras_media_movel = 512;
+    // ----- Interpolador -----
+ 
+
+    // ----- Temporarias -----
+    int j = 0;
+    int read_idx = 0;
+    float acc = 0.0;
+    float freq_instant = 60.0;
+    //float Nb = 0.0;
+    //float T2 = 0.0;
+    float Tsc_total = 0.0;
+    float denom = 0.0;
+    float ESCALA = 1000.0;
+    float x;
+    float y;
+    float x_atrasado = 0.0;
+
+    // ------  atraso de amostras do sinal ---------
+    int c_index = 0;
+    int read_c_idx = 0; 
+    int k;
+    float buffer_atraso_x[1152];
+
+
+    // ----- Prefiltro - B- Spline -----
+    float num_pre_BSP[6];
+    float den_pre_BSP[2];
+    float buffer_entrada_prefiltro[6];
+    float buffer_saida_prefiltro[2];
+    float dot_result;
+    float freq_smoothed;
+    int atraso_geral;
+    atraso_geral = 1152;//atraso_amotras_filtro_pre_zc + atraso_amotras_media_movel;
+    
+    // ----- Farrow -----
+    float buffer_entrada_farrow[4];
+    float H0, H1, H2, H3;
+
+    // ----- Interpolador -----
+    float lambda_val;
+    float alfa = 0.0;
+    int cnt = 0;
+    float buffer_freq[7]; // Tamanho 7 gera 6 amostras de atraso
+    buffer_freq[0] = 0.0;
+    buffer_freq[1] = 0.0;
+    buffer_freq[2] = 0.0;
+    buffer_freq[3] = 0.0;
+    buffer_freq[4] = 0.0;
+    buffer_freq[5] = 0.0;
+    buffer_freq[6] = 0.0;
+    float freq_atrasada;
+    num_pre_BSP[5] = -0.00222058;
+    num_pre_BSP[4] =  0.00828731;
+    num_pre_BSP[3] = -0.03092866;
+    num_pre_BSP[2] =  0.11542732;
+    num_pre_BSP[1] = -0.43078062;
+    num_pre_BSP[0] =  1.60769515;
+    den_pre_BSP[0]= 1.0;
+    den_pre_BSP[1]= 0.26794919;
+
+    // ----- Loop principal -----
+    while (1)
+    {
+        x = in(0) / 32768.0;
+
+        // ========== PRE- FILTER ZERO-CROSSING ==========
+        b_buffer[b_index] = x;
+        acc = 0.0;
+        j = 0;
+        while (j < 1025) 
+        {
+            read_idx = b_index - j;
+            if (read_idx < 0) {
+                read_idx = read_idx + 1025;
+            }
+            acc = acc + b_coeffs[j] * b_buffer[read_idx]; // sinal filtrado 
+            j = j + 1;
+        }
+        fout(0, acc * 1000000);
+
+        b_index = b_index + 1;
+        if (b_index >= 1025) 
+        {
+            b_index = 0;
+        }
+
+
+
+         // ========== ZERO-CROSSING ==========
+        Ts = (1.0 / freq_amostragem);
+        sig = va * acc;
+        Tsc = Ts + Tsc;
+
+        if(sig < 0)
+        {
+            Nb = acc / (acc - va);
+            T2 = Nb * Ts;
+            Tsc = Tsc + T1 - T2;
+            fzc = 1 / (2*Tsc);
+            T1 = T2;
+            Tsc = 0;
+        }
+        va = acc;
+        fout(1,fzc*1000000); // frequência do zc 
+
+
+
+
+
+        // ========== FILTRO MÉDIA MOVEL  ==========
+
+        buffer_media_movel[buffer_media_movel_idex] = fzc;
+        fcc = 0.0;
+        p = 0;
+        while (p < w_media) 
+        {
+            read_idx_mean = buffer_media_movel_idex - p;
+            if (read_idx_mean < 0) {
+                read_idx_mean = read_idx_mean + w_media;
+            }
+            fcc = fcc + w_coeffs[p] * buffer_media_movel[read_idx_mean]; // sinal filtrado 
+            p = p + 1;
+        }
+        fout(2, fcc * 1000000);  // frequência so zc após média movel 
+
+        // 3. Avança o índice do buffer para a próxima iteração do 'while(1)' principal
+        buffer_media_movel_idex = buffer_media_movel_idex + 1;
+        
+        // 4. Se bater no limite (1024), volta pro começo
+        if (buffer_media_movel_idex >= w_media) 
+        {
+            buffer_media_movel_idex = 0;
+        }
+
+
+
+
+
+
+
+         // ============================== Estrutura B-Spline ====================================== //
+
+
+        //#INTERPOINT
+        //1° teste da rampa 
+        //2° teste fm =0.2 e fm=5
+        //3° teste pm 
+        //4° teste am 
+        //substituir nos arquivos de entrada input_0 pelo arquivo de sinal e input_1 pelo arquivo da frequencia do sinal
+        
+        // ============================== atraso sinal x ============================== //
+
+    if (atraso_geral > 0)
+    {
+        x_atrasado = buffer_atraso_x[c_index];
+
+        buffer_atraso_x[c_index] = x;
+
+        c_index = c_index + 1;
+
+        if (c_index >= atraso_geral)
+        {
+            c_index = 0;
+        }
+    }
+    else
+    {
+        x_atrasado = x;
+    }
+
+    fout(3, x_atrasado*1000000);
+
+
+
+        // ============================ DESCARTE DE AMOSTRAS ================= //
+
+
+        
+        if(cont_global > 1023)
+        {
+            // ============================ PREFILTRO ============================ //
+            buffer_entrada_prefiltro[0] = buffer_entrada_prefiltro[1];
+            buffer_entrada_prefiltro[1] = buffer_entrada_prefiltro[2];
+            buffer_entrada_prefiltro[2] = buffer_entrada_prefiltro[3];
+            buffer_entrada_prefiltro[3] = buffer_entrada_prefiltro[4];
+            buffer_entrada_prefiltro[4] = buffer_entrada_prefiltro[5];
+            buffer_entrada_prefiltro[5] = x_atrasado;
+
+            dot_result = buffer_entrada_prefiltro[0] * num_pre_BSP[0] +
+                        buffer_entrada_prefiltro[1] * num_pre_BSP[1] +
+                        buffer_entrada_prefiltro[2] * num_pre_BSP[2] +
+                        buffer_entrada_prefiltro[3] * num_pre_BSP[3] +
+                        buffer_entrada_prefiltro[4] * num_pre_BSP[4] +
+                        buffer_entrada_prefiltro[5] * num_pre_BSP[5];
+            
+            buffer_saida_prefiltro[1] = dot_result - den_pre_BSP[1]*buffer_saida_prefiltro[0];
+            buffer_saida_prefiltro[0] = buffer_saida_prefiltro[1];
+
+            // ============================ FARROW ============================ //
+            buffer_entrada_farrow[0] = buffer_entrada_farrow[1];
+            buffer_entrada_farrow[1] = buffer_entrada_farrow[2];
+            buffer_entrada_farrow[2] = buffer_entrada_farrow[3];
+            buffer_entrada_farrow[3] = buffer_saida_prefiltro[1];
+
+            freq_smoothed = fcc;
+
+            // ============================== atraso freq_mean ============================== //
+            buffer_freq[0] = buffer_freq[1];
+            buffer_freq[1] = buffer_freq[2];
+            buffer_freq[2] = buffer_freq[3];
+            buffer_freq[3] = buffer_freq[4];
+            buffer_freq[4] = buffer_freq[5];
+            buffer_freq[5] = buffer_freq[6];
+            buffer_freq[6] = freq_smoothed; // A frequência nova entra no fim
+
+            // Pegamos a frequência que entrou 6 rodadas atrás!
+            freq_atrasada = buffer_freq[0]; 
+
+            // Calcula o lambda_val com a frequência certa e evita divisão por zero
+            if(freq_atrasada != 0.0) 
+            {
+            lambda_val = 60.0 / freq_atrasada;
+            } 
+            else
+            {
+            lambda_val = 0.0;
+            }
+
+            //lambda_val = 60.0 / freq_smoothed;
+            fout(4, freq_smoothed*1000000); 
+
+            y = 0.0;
+            if (cnt > 6) 
+            {
+                while(alfa < 1.0)
+                {
+                    H0 = (-0.1666666667*buffer_entrada_farrow[0]) 
+                    + (0.5*buffer_entrada_farrow[1]) 
+                    + (-0.5*buffer_entrada_farrow[2]) 
+                    + (0.1666666667*buffer_entrada_farrow[3]);
+                    
+                    
+                    H1 = (0.5*buffer_entrada_farrow[0]) 
+                    - (buffer_entrada_farrow[1]) 
+                    + (0.5*buffer_entrada_farrow[2]);
+
+
+                    H2 = (-0.5*buffer_entrada_farrow[0]) 
+                    + (0.5*buffer_entrada_farrow[2]);
+
+
+                    H3 = (0.1666666667*buffer_entrada_farrow[0]) 
+                    + (0.6666666667*buffer_entrada_farrow[1]) 
+                    + (0.1666666667*buffer_entrada_farrow[2]);
+
+
+                    y = ((H0 * alfa + H1) * alfa + H2) * alfa + H3;
+
+                    
+                    fout(5, y * 1000000);  //           
+
+                    alfa = alfa + lambda_val;
+                }
+                alfa = alfa - 1.0;            
+            } 
+            else 
+            {
+                cnt = cnt + 1;
+            }
+        }
+
+        // -------------- evitando overflow -------------
+        if(cont_global < 10000)
+        {
+            cont_global = cont_global + 1;
+        }
+    }
+}

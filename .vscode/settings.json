@@ -1,5 +1,28 @@
 {
   "python.analysis.extraPaths": [
     "./banco_filtro/procTest_00/Simulation/src"
-  ]
+  ],
+  "latex-workshop.latex.outDir": "%DIR%",
+  "latex-workshop.latex.tools": [
+    {
+      "name": "texify",
+      "command": "C:\\Users\\Ricardo\\AppData\\Local\\Programs\\MiKTeX\\miktex\\bin\\x64\\texify.exe",
+      "args": [
+        "--pdf",
+        "--synctex=1",
+        "--tex-option=-interaction=nonstopmode",
+        "--tex-option=-file-line-error",
+        "%DOC_EXT%"
+      ]
+    }
+  ],
+  "latex-workshop.latex.recipes": [
+    {
+      "name": "texify",
+      "tools": [
+        "texify"
+      ]
+    }
+  ],
+  "latex-workshop.latex.recipe.default": "first"
 }

@@ -19,6 +19,10 @@ f0 = 60
 Nppc = 256
 Fs = Nppc * f0
 
+inicio = 100 * Nppc
+final = 101 * Nppc
+
+
 x = np.loadtxt(INPUT_DIR / "interpolador_entrada_59.txt") / (2**14) ## Entrada interpolador Python 
 xiS = np.loadtxt(OUTPUT_DIR / "saida_59hz_interpolador_sapho.txt") / 10000 ## Saida interpolador SAPHO
 out = np.loadtxt(OUTPUT_DIR / "saida_banco_59hz.txt") ## Saida Banco polifasico SAPHO (real e imaginaria intercalados)
@@ -26,10 +30,10 @@ sinal_60 = np.loadtxt(INPUT_DIR / "input_0.txt")  ## Entrada interpolador Python
 
 ### input_0 foi gerado no gerainput do python
 
-plt.plot(sinal_60, "+-", label="Entrada Interp Sapho")
-cursor = mplcursors.cursor(hover=True)
-plt.show(block=True)
-xiS = xiS[253:509]
+# plt.plot(sinal_60, "+-", label="Entrada Interp Sapho")
+# cursor = mplcursors.cursor(hover=True)
+# plt.show(block=True)
+xiS = xiS[inicio:final]
 
 real = out[0::2] / 1000000
 imag = out[1::2] / 1000000
@@ -48,15 +52,25 @@ PFT = np.rad2deg(np.angle(fasor_h))
 MBSP = 5
 freq = 59 * np.ones(len(x))
 
+
+
 xi = BSplineInterp(x, f0, freq, MBSP, Fs)
 
-# plt.plot(xi[253:509], "+-", label="Entrada Interp Sapho")
+x1 = np.loadtxt(INPUT_DIR / "sinal_teste_59_python_00.txt", dtype=complex) / (2**14) ## Entrada interpolador Python 
+x_teste = BSplineInterp(x1, f0, freq, MBSP, Fs)
+np.savetxt(OUTPUT_DIR / "xteste.txt", x_teste, fmt="%.18e")
+
+# plt.plot(xi, "+-", label="Entrada Interp Sapho")
 # cursor = mplcursors.cursor(hover=True)
 # plt.show(block=True)
-xi = xi[253:509]
-sinal_60 = sinal_60[253:509] / np.max(np.abs(sinal_60[253:509]))
-xi = xi / np.max(np.abs(xi[253:509]))
-xiS = xiS / np.max(np.abs(xiS[253:509]))
+
+
+
+
+xi = xi[inicio:final]
+sinal_60 = sinal_60[inicio:final] / np.max(np.abs(sinal_60[inicio:final]))
+xi = xi / np.max(np.abs(xi))
+xiS = xiS / np.max(np.abs(xiS))
 
 
 freq_eixo = np.arange(0, len(xi)) * (Fs / Nppc)

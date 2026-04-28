@@ -20,6 +20,7 @@ Ganho_saida_sapho = 1000000
 Ganho_saida_interpolador = 10000
 
 x = np.loadtxt(INPUT_DIR / "saida_59hz_interpolador.txt")
+
 x = x // 10 ## POR CONTA DAS 
 Nc = len(x) // Nppc
 t = np.arange(len(x)) * Ts
@@ -54,7 +55,7 @@ for m in range(len(c5)):
 
 wM = wM / np.sum(wM)
 h = wM
-
+h_filtro = h
 Nf = int(np.ceil(len(h) / M))
 Ehh = np.zeros((M, Nf))
 
@@ -94,6 +95,9 @@ print("TAMANHO DE V :",v.shape)
 v = v[:, Delay:]
 print("TAMANHO DE V :",v.shape)
 np.savetxt(OUTPUT_DIR / "ifft.csv", v, fmt="%.18e", delimiter=",")
+
+
+
 AFT = 2*np.abs(v[1:50,:])
 PFT = np.unwrap(np.angle(v[1:50,:]))
 delta_f = (59 - 60) * np.ones(len(v[0]))
@@ -107,30 +111,65 @@ for nn in range(1, len(delta_f)):
     if(nn >= 1):
         correc[nn] = correc[nn-1] + np.pi*(delta_f[nn] + delta_f[nn-1])*(M*Ts)
 
-h = np.arange(1, 50).reshape(-1, 1)   # shape (50, 1)
+
+
+h = np.arange(1, 50).reshape(-1, 1) #shape(50, 1)
 correcH = h*correc
 
 PFTc = np.unwrap((PFT) + np.unwrap(correcH))
 Xc = AFT*np.exp(1j*PFTc)
 
-# plt.plot(Xc[0:3,:], marker='o', linestyle='-',label = 'Fasores Xc')
 
 np.savetxt(OUTPUT_DIR / "Xc.csv", Xc, fmt="%.18e", delimiter=",")
 print(f"Matriz AFT salva em: {OUTPUT_DIR / 'AFT_59Hz.csv'}")
 
 
-np.savetxt(OUTPUT_DIR / "output_python_polifasico_59Hz_real.txt", np.real(v[:50, :]), fmt="%.18e")
-np.savetxt(OUTPUT_DIR / "output_python_polifasico_59Hz_imag.txt", np.imag(v[:50, :]), fmt="%.18e")
 
+
+
+
+###======================================================================##
+###               RESPOSTA EM MAGNITUDE E FASE DO FILTRO                 ##
+###======================================================================##
+
+Nfft = 16384
+H = np.fft.fft(h_filtro, Nfft)              # resposta em frequencia
+f = np.fft.fftfreq(Nfft, d=1/Fs)            # vetor de frequencia
+
+# manter somente a parte positiva
+idx = f >= 0
+f_pos = f[idx]
+H_pos = H[idx]
+
+mag = np.abs(H_pos)
+mag_db = 20*np.log10(np.maximum(mag, 1e-12))
+fase = np.unwrap(np.angle(H_pos))
+
+fig, axs = plt.subplots(3, 1, figsize=(10, 10), sharex=True)
+
+axs[0].plot(f_pos, mag)
+axs[0].set_title("Magnitude do filtro")
+axs[0].set_ylabel("|H(f)|")
+axs[0].grid(True)
+
+axs[1].plot(f_pos, mag_db)
+axs[1].set_title("Magnitude do filtro em dB")
+axs[1].set_ylabel("Magnitude (dB)")
+axs[1].grid(True)
+
+axs[2].plot(f_pos, fase)
+axs[2].set_title("Fase do filtro")
+axs[2].set_xlabel("Frequencia (Hz)")
+axs[2].set_ylabel("Fase (rad)")
+axs[2].grid(True)
+
+plt.tight_layout()
+plt.show()
 
 
 ###======================================================================##
 ###======================================================================##
 ###======================================================================##
-
-
-
-
 
 
 X_real = np.loadtxt(REFERENCE_DIR / 'X_ref_real_59.txt')
@@ -144,9 +183,15 @@ angref = np.unwrap(np.angle(X_ref[:,:len(X_ref[0])]))
 
 
 
-plt.plot(AFT[37,:], marker='o', linestyle='-')
-plt.plot(magref[37,:], marker='o', linestyle='-')
-plt.title('37th Harmonic Magnitude')
+plt.plot(AFT[46,:], marker='o', linestyle='-',label = 'Fasores AFT')
+plt.plot(magref[46,:], marker='o', linestyle='-',label = 'Fasores X_ref')
+plt.title('47th Harmonic Magnitude')
+plt.show()
+
+plt.plot(np.rad2deg(PFTc[46,:]), marker='o', linestyle='-',label = 'Fasores PFTc')
+plt.plot(np.rad2deg(angref[46,:]), marker='o', linestyle='-',label = 'Fasores X_ref')
+plt.title('47th Harmonic Phase')
+plt.legend()
 plt.show()
 
 
@@ -157,53 +202,60 @@ np.savetxt(OUTPUT_DIR / "AFT.csv", AFT, fmt="%.18e", delimiter=",")
 np.savetxt(OUTPUT_DIR / "magref.csv", magref, fmt="%.18e", delimiter=",")
 
 
+
+
+
 plt.figure()
 plt.subplot(2,2,1)
-plt.plot(AFT[0,:], marker='o', linestyle='-')
-plt.plot(magref[0,:], marker='o', linestyle='-')
-plt.title('Fundamental Magnitude')
+plt.plot(AFT[46,:], marker='o', linestyle='-')
+plt.plot(magref[46,:], marker='o', linestyle='-')
+plt.title('47th Harmonic Magnitude')
 
 plt.subplot(2,2,2)
-plt.plot(AFT[2,:], marker='o', linestyle='-')
-plt.plot(magref[2,:], marker='o', linestyle='-')
-plt.title('3rd Harmonic Magnitude')
+plt.plot(AFT[44,:], marker='o', linestyle='-',label = 'Fasores AFT')
+plt.plot(magref[44,:], marker='o', linestyle='-',label = 'Fasores X_ref')
+plt.title('45th Harmonic Magnitude')
+plt.legend()
 
 plt.subplot(2,2,3)
-plt.plot(AFT[4,:], marker='o', linestyle='-')
-plt.plot(magref[4,:], marker='o', linestyle='-')
-plt.title('5th Harmonic Magnitude')
+plt.plot(AFT[40,:], marker='o', linestyle='-',label = 'Fasores AFT')
+plt.plot(magref[40,:], marker='o', linestyle='-',label = 'Fasores X_ref')
+plt.title('41st Harmonic Magnitude')
+plt.legend()
 
 plt.subplot(2,2,4)
-plt.plot(AFT[6,:], marker='o', linestyle='-')
-plt.plot(magref[6,:], marker='o', linestyle='-')
-plt.title('7th Harmonic Magnitude')
+plt.plot(AFT[38,:], marker='o', linestyle='-',label = 'Fasores AFT')
+plt.plot(magref[38,:], marker='o', linestyle='-',label = 'Fasores X_ref')
+plt.title('39th Harmonic Magnitude')
+plt.legend()
 
 plt.show(block=False)
 
 plt.figure()
 plt.subplot(2,2,1)
-# plt.plot(np.rad2deg(PFT[0,:]), marker='o', linestyle='-')
-plt.plot(np.rad2deg(PFTc[0,:]), marker='o', linestyle='-')
-plt.plot(np.rad2deg(angref[0,:]), marker='o', linestyle='-')
-plt.title('Fundamental Phase')
+plt.plot(np.rad2deg(PFTc[46,:]), marker='o', linestyle='-',label = 'Fasores PFTc')
+plt.plot(np.rad2deg(angref[46,:]), marker='o', linestyle='-',label = 'Fasores X_ref')
+plt.title('47th Harmonic Phase')
+plt.legend()
 
 plt.subplot(2,2,2)
-# plt.plot(np.rad2deg(PFT[2,:]), marker='o', linestyle='-')
-plt.plot(np.rad2deg(PFTc[2,:]), marker='o', linestyle='-')
-plt.plot(np.rad2deg(angref[2,:]), marker='o', linestyle='-')
-plt.title('3rd Harmonic Phase')
+plt.plot(np.rad2deg(PFTc[44,:]), marker='o', linestyle='-',label = 'Fasores PFTc')
+plt.plot(np.rad2deg(angref[44,:]), marker='o', linestyle='-',label = 'Fasores X_ref')
+plt.title('45th Harmonic Phase')
+plt.legend()
 
 plt.subplot(2,2,3)
-# plt.plot(np.rad2deg(PFT[4,:]), marker='o', linestyle='-')
-plt.plot(np.rad2deg(PFTc[4,:]), marker='o', linestyle='-')
-plt.plot(np.rad2deg(angref[4,:]), marker='o', linestyle='-')
-plt.title('5th Harmonic Phase')
+plt.plot(np.rad2deg(PFTc[38,:]), marker='o', linestyle='-',label = 'Fasores PFTc')
+plt.plot(np.rad2deg(angref[38,:]), marker='o', linestyle='-',label = 'Fasores X_ref')
+plt.title('39th Harmonic Phase')
+plt.legend()
 
 plt.subplot(2,2,4)
-# plt.plot(np.rad2deg(PFT[6,:]), marker='o', linestyle='-')
-plt.plot(np.rad2deg(PFTc[6,:]), marker='o', linestyle='-')
-plt.plot(np.rad2deg(angref[6,:]), marker='o', linestyle='-')
-plt.title('7th Harmonic Phase')
+plt.plot(np.rad2deg(PFTc[40,:]), marker='o', linestyle='-',label = 'Fasores PFTc')
+plt.plot(np.rad2deg(angref[40,:]), marker='o', linestyle='-',label = 'Fasores X_ref')
+plt.title('41st Harmonic Phase')
+plt.legend()
+
 
 cursor = mplcursors.cursor(hover=True)
 plt.show()
@@ -287,31 +339,35 @@ fig.show()
 
 
 
-# H = np.fft.rfft(h, 16384)
-# fh = np.fft.rfftfreq(16384, d=1 / Fs)
+H = np.fft.rfft(h, 16384)
+fh = np.fft.rfftfreq(16384, d=1 / Fs)
 
-# plt.figure()
-# plt.plot(fh, np.abs(H))
-# plt.title("FFT do filtro")
-# plt.xlabel("Frequencia (Hz)")
-# plt.ylabel("Magnitude")
-# plt.grid()
-# plt.show()
+plt.figure()
+plt.plot(fh, np.abs(H))
+plt.title("FFT do filtro")
+plt.xlabel("Frequencia (Hz)")
+plt.ylabel("Magnitude")
+plt.grid()
+plt.show()
 
-# X = np.fft.rfft(x)
-# f = np.fft.rfftfreq(len(x), d=1 / Fs)
+X = np.fft.rfft(x)
+f = np.fft.rfftfreq(len(x), d=1 / Fs)
 
-# plt.figure()
-# plt.plot(f, np.abs(X))
-# plt.title("FFT do sinal")
-# plt.xlabel("Frequencia (Hz)")
-# plt.ylabel("Magnitude")
-# plt.grid()
-# plt.show()
+plt.figure()
+plt.plot(f, np.abs(X))
+plt.title("FFT do sinal")
+plt.xlabel("Frequencia (Hz)")
+plt.ylabel("Magnitude")
+plt.grid()
+plt.show()
 
-# plt.figure()
-# plt.plot(t, x)
-# plt.title("Input Signal")
-# plt.show(block=False)
+plt.figure()
+plt.plot(t, x)
+plt.title("Input Signal")
+plt.show(block=False)
 
-# plt.figure()
+plt.figure()
+
+
+
+
