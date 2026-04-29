@@ -1,0 +1,174 @@
+#PRNAME proc_banco
+#NUBITS 32
+#NDSTAC 5
+#SDEPTH 5
+#NUIOIN 1
+#NUIOOU 2 // numero de saídas do sapho para analisar
+#NBMANT 23
+#NBEXPO 8
+#FFTSIZ 8
+#NUGAIN 128
+
+comp E0[256];
+comp wpv[128] "wpv.txt"; // N/2
+
+/*
+void ifft(int N)
+{
+    comp temp;
+
+    int mmax = 1;
+
+    while (mmax < N)
+    {
+        int istep = mmax*2;
+        int    m  = 0;
+        int  ind  = 0;
+        int sind  = 0;
+        while (m < mmax)
+        {
+            int k = m;
+            while (k < N)
+            {
+                int j   = k+mmax;
+                temp    = wpv[sind]*E0[j);
+                E0[j) =   E0[k) - temp;
+                E0[k) =   E0[k) + temp;
+                k       = k+istep;
+                ind++;
+            }
+            sind = ind;
+            m++;
+        }
+        mmax = istep;
+    }
+//} */
+
+
+void main()
+{   
+
+    comp temp; // variavel da ifft
+
+    int sample_count = 0;
+    int output_count = 0;
+    float output_buffer_real[256];
+    float output_buffer_imag[256];
+
+    float buffer[256];
+    float E[256][8];
+
+    int M;
+    int idx;
+    int k;
+    int test_idx;
+    int reset_idx;
+    int oo;
+    int out_idx;
+    int mm;   
+    float x;
+    float acc;
+    float norm_factor;
+    float vector_count;
+    
+    int fft_limit;
+    
+    float Ehh[256][8] "Ehh.txt";
+    
+    M = 256;
+    fft_limit=M;
+    sample_count = (M - 1);
+    output_count = 0;
+    vector_count = 0;
+
+    return;
+	
+	// ===== LOOP PRINCIPAL =====
+    #INTERPOINT
+    
+	fout(1,1);
+        
+	k = M - 1;
+	
+	while (k > 0) {
+		buffer[k] = buffer[k - 1];
+		k = k - 1;
+	}
+	buffer[0] = in(0) / 100000.0;
+    //fout(0,(100000*buffer[0]));
+	//buffer[0] = in(0) / 16384.0;
+	if(sample_count == (M - 1))
+	{
+		sample_count=0;
+		mm = 0;
+		while(mm<M)
+		{  
+			E[mm][7] = E[mm][6];
+
+			E[mm][6] = E[mm][5];
+
+			E[mm][5] = E[mm][4];
+
+			E[mm][4] = E[mm][3];
+
+			E[mm][3] = E[mm][2];
+			//fout(12,(1000000*E[3][0]));
+			E[mm][2] = E[mm][1];
+			//fout(11,(1000000*E[2][0]));
+			E[mm][1] = E[mm][0];
+			//fout(10,(1000000*E[1][0]));
+			E[mm][0] = buffer[mm];
+			//fout(9,(1000000*E[0][0]));
+
+			E0[mm] =  Ehh[mm][0] * E[mm][0] + 
+					  Ehh[mm][1] * E[mm][1] + 
+					  Ehh[mm][2] * E[mm][2] + 
+					  Ehh[mm][3] * E[mm][3] + 
+					  Ehh[mm][4] * E[mm][4] + 
+					  Ehh[mm][5] * E[mm][5] + 
+					  Ehh[mm][6] * E[mm][6] + 
+					  Ehh[mm][7] * E[mm][7];
+			mm = mm + 1;
+
+		}
+        // calculo ifft
+		 int mmax = 1;
+        while (mmax < M)
+        {
+            int istep = mmax * 2;
+            int m     = 0;
+            int ind   = 0;
+            int sind  = 0;
+            while (m < mmax)
+            {
+                int q = m;
+                while (q < M)
+                {
+                int j   = q+mmax;
+                temp    = wpv[sind]*E0[j);
+                E0[j) =   E0[q) - temp;
+                E0[q) =   E0[q) + temp;
+                q       = q+istep;
+                ind++;
+                }
+                sind = ind;
+                m++;
+            }
+            mmax = istep;
+        }
+
+		//iterar o valor que esta dentro do E0 ate o 50 
+		while(vector_count <= 50)
+		{
+			fout(0,real (1000000*E0[vector_count)));
+			fout(0,imag (1000000*E0[vector_count)));
+			vector_count = vector_count + 1; 
+		}
+		vector_count = 0;
+	}
+	else
+	{
+		sample_count = sample_count + 1;
+	}
+    fout(1,0);
+}

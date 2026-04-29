@@ -1,0 +1,45 @@
+{
+  "metadata": {
+    "projectName": "Projeto_banco",
+    "createdAt": "2026-03-11T18:24:53.697Z",
+    "lastModified": "2026-03-11T18:24:53.697Z",
+    "computerName": "BLOELHOMORT",
+    "appVersion": "v4.0.0",
+    "projectPath": "C:\\Users\\Ricardo\\Documents\\projeto_quartus\\Projeto_banco\\Projeto_banco",
+    "lastOpened": "2026-04-29T13:31:10.761Z"
+  },
+  "structure": {
+    "basePath": "C:\\Users\\Ricardo\\Documents\\projeto_quartus\\Projeto_banco\\Projeto_banco",
+    "processors": [
+      {
+        "name": "proc_interp",
+        "config": {
+          "nBits": 23,
+          "nbMantissa": 16,
+          "nbExponent": 6,
+          "dataStackSize": 5,
+          "instructionStackSize": 5,
+          "inputPorts": 1,
+          "outputPorts": 1,
+          "gain": 128
+        },
+        "exists": true
+      },
+      {
+        "name": "proc_banco",
+        "config": {
+          "nBits": 23,
+          "nbMantissa": 16,
+          "nbExponent": 6,
+          "dataStackSize": 5,
+          "instructionStackSize": 5,
+          "inputPorts": 1,
+          "outputPorts": 1,
+          "gain": 128
+        },
+        "exists": true
+      }
+    ],
+    "folders": []
+  }
+}

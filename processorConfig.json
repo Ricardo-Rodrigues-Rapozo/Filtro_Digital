@@ -1,0 +1,26 @@
+{
+  "processors": [
+    {
+      "name": "proc_interp",
+      "clk": 1,
+      "numClocks": 30000000,
+      "testbenchFile": "standard",
+      "gtkwFile": "standard",
+      "cmmFile": "proc_interp.cmm",
+      "isActive": false,
+      "showArraysInGtkwave": 0
+    },
+    {
+      "name": "proc_banco",
+      "clk": 1,
+      "numClocks": 30000000,
+      "testbenchFile": "standard",
+      "gtkwFile": "standard",
+      "cmmFile": "proc_banco.cmm",
+      "isActive": true,
+      "showArraysInGtkwave": 0
+    }
+  ],
+  "testbenchFile": "standard",
+  "gtkwFile": "standard"
+}

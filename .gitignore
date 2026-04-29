@@ -1,1 +1,20 @@
 ICHQP2026_Ricardo/
+
+# Python cache
+__pycache__/
+*.py[cod]
+
+# Backup and temporary files
+*.bak
+*.tmp
+*.temp
+
+# Quartus session/generated artifacts
+*.qws
+quartus/*.rpt
+quartus/db/
+quartus/incremental_db/
+quartus/output_files/
+
+# ModelSim generated files
+quartus/simulation/modelsim/

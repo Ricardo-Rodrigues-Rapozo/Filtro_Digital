@@ -1,0 +1,58 @@
+{
+  "topLevelFile": "C:\\Users\\S\\Documents\\Projeto_banco_quartus\\Projeto_banco\\TopLevel\\top_level.v",
+  "testbenchFile": "C:\\Users\\S\\Documents\\Projeto_banco_quartus\\Projeto_banco\\TopLevel\\top_level_tb.v",
+  "gtkwaveFile": "",
+  "synthesizableFiles": [
+    {
+      "name": "maq_estados.v",
+      "path": "C:\\Users\\S\\Documents\\Projeto_banco_quartus\\Projeto_banco\\TopLevel\\maq_estados.v",
+      "starred": false
+    },
+    {
+      "name": "top_level.v",
+      "path": "C:\\Users\\S\\Documents\\Projeto_banco_quartus\\Projeto_banco\\TopLevel\\top_level.v",
+      "starred": true
+    },
+    {
+      "name": "top_proc_banco.v",
+      "path": "C:\\Users\\S\\Documents\\Projeto_banco_quartus\\Projeto_banco\\TopLevel\\top_proc_banco.v",
+      "starred": false
+    },
+    {
+      "name": "top_proc_interp.v",
+      "path": "C:\\Users\\S\\Documents\\Projeto_banco_quartus\\Projeto_banco\\TopLevel\\top_proc_interp.v",
+      "starred": false
+    },
+    {
+      "name": "proc_interp.v",
+      "path": "C:\\Users\\S\\Documents\\Projeto_banco_quartus\\Projeto_banco\\proc_interp\\Hardware\\proc_interp.v",
+      "starred": false
+    },
+    {
+      "name": "proc_banco.v",
+      "path": "C:\\Users\\S\\Documents\\Projeto_banco_quartus\\Projeto_banco\\proc_banco\\Hardware\\proc_banco.v",
+      "starred": false
+    }
+  ],
+  "testbenchFiles": [
+    {
+      "name": "top_level_tb.v",
+      "path": "C:\\Users\\S\\Documents\\Projeto_banco_quartus\\Projeto_banco\\TopLevel\\top_level_tb.v",
+      "starred": true
+    }
+  ],
+  "gtkwFiles": [],
+  "processors": [
+    {
+      "type": "proc_interp",
+      "instance": "proc_interp_inst"
+    },
+    {
+      "type": "proc_banco",
+      "instance": "proc_banco_inst"
+    }
+  ],
+  "iverilogFlags": "",
+  "simuDelay": "200000",
+  "showArraysInGtkwave": 0
+}
