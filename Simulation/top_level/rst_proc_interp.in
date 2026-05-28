@@ -1,0 +1,6 @@
+# rst_proc_interp (1 bit) — um valor hex por linha, um por ciclo de clock.
+# Linhas em branco e iniciadas por '#' sao ignoradas.
+# Quando o arquivo acaba, o ultimo valor e mantido.
+# Handshake (opcional): pra ler so quando um pino de request
+# estiver em 1, adicione como PRIMEIRA linha: "# @gate=NOME".
+0

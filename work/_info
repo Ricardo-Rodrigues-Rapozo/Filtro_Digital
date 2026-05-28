@@ -1,0 +1,172 @@
+m255
+K4
+z2
+!s11f MIXED_VERSIONS
+13
+!s112 1.1
+!i10d 8192
+!i10e 25
+!i10f 100
+cModel Technology
+Z0 dC:/Users/Ricardo/Documents/projeto_completo/projeto_completo
+vmaq_estados
+Z1 !s110 1779973313
+!i10b 1
+!s100 C7cZYcI=4:5LUoz0X0hR43
+Z2 !s11b Dg1SIo80bB@j0V0VzS_@n1
+IXHY4]VVXac[4]92^LCMjD1
+Z3 VDg1SIo80bB@j0V0VzS_@n1
+R0
+Z4 w1779385559
+8maq_estados.v
+Fmaq_estados.v
+!i122 1
+L0 1 66
+Z5 OV;L;2020.1;71
+r1
+!s85 0
+31
+Z6 !s108 1779973312.000000
+!s107 proc_banco\Hardware\proc_banco.v|proc_interp\Hardware\proc_interp.v|maq_estados.v|top_proc_banco.v|top_proc_interp.v|top_level.v|top_level_tb.v|
+Z7 !s90 -work|work|top_level_tb.v|top_level.v|top_proc_interp.v|top_proc_banco.v|maq_estados.v|proc_interp\Hardware\proc_interp.v|proc_banco\Hardware\proc_banco.v|
+!i113 1
+Z8 o-work work
+Z9 tCvgOpt 0
+vproc_banco
+R1
+!i10b 1
+!s100 hQ^1`hT]=HL<ZelfZbmSI0
+R2
+If1BEhi0O<]i4FX?`boRSY3
+R3
+R0
+w1779923604
+8proc_banco\Hardware\proc_banco.v
+Fproc_banco\Hardware\proc_banco.v
+!i122 1
+L0 1 185
+R5
+r1
+!s85 0
+31
+R6
+Z10 !s107 proc_banco\Hardware\proc_banco.v|proc_interp\Hardware\proc_interp.v|maq_estados.v|top_proc_banco.v|top_proc_interp.v|top_level.v|top_level_tb.v|
+R7
+!i113 1
+R8
+R9
+vproc_interp
+R1
+!i10b 1
+!s100 Zhz@L6Naa8Nodhe5@mJPi0
+R2
+I<kT_edJL]DfVOPI9:GaFW1
+R3
+R0
+w1779923603
+8proc_interp\Hardware\proc_interp.v
+Fproc_interp\Hardware\proc_interp.v
+!i122 1
+L0 1 256
+R5
+r1
+!s85 0
+31
+R6
+R10
+R7
+!i113 1
+R8
+R9
+vtop_level
+Z11 !s110 1779973312
+!i10b 1
+!s100 lzlK2Vj6m][Cz5zM49fWn0
+R2
+IU<;oXj6MW5<O[O[AKTT:L1
+R3
+R0
+w1779973297
+8top_level.v
+Ftop_level.v
+!i122 1
+L0 1 68
+R5
+r1
+!s85 0
+31
+R6
+R10
+R7
+!i113 1
+R8
+R9
+vtop_level_tb
+R11
+!i10b 1
+!s100 dD9coZk?iUinRM4XFDGe]2
+R2
+IgTG;DRO@>hFHf^BBDW`Ta1
+R3
+R0
+w1779973181
+8top_level_tb.v
+Ftop_level_tb.v
+!i122 1
+L0 3 108
+R5
+r1
+!s85 0
+31
+R6
+R10
+R7
+!i113 1
+R8
+R9
+vtop_proc_banco
+R1
+!i10b 1
+!s100 GONC5<?nbi=9:XoPFe?j=0
+R2
+I`[5iKNfHj[<l:HXE6Nn:X2
+R3
+R0
+R4
+8top_proc_banco.v
+Ftop_proc_banco.v
+!i122 1
+L0 1 51
+R5
+r1
+!s85 0
+31
+R6
+R10
+R7
+!i113 1
+R8
+R9
+vtop_proc_interp
+R1
+!i10b 1
+!s100 49KfUWM_3CDZS24B;BQlJ3
+R2
+IdCKfG2eCJKA8RA59e7z5:1
+R3
+R0
+w1779971624
+8top_proc_interp.v
+Ftop_proc_interp.v
+!i122 1
+L0 1 52
+R5
+r1
+!s85 0
+31
+R6
+R10
+R7
+!i113 1
+R8
+R9

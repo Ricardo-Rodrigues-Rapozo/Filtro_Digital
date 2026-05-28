@@ -1,0 +1,17 @@
+# vsim -c -do "quit -f" top_level_tb 
+# Start time: 10:02:11 on May 28,2026
+# Loading work.top_level_tb
+# Loading work.top_level
+# Loading work.top_proc_interp
+# Loading work.proc_interp
+# ** Error: (vsim-3033) Instantiation of 'processor' failed. The design unit was not found.
+#    Time: 0 ps  Iteration: 0  Instance: /top_level_tb/top_level_inst/top_proc_interp_inst/proc_interp_inst File: proc_interp/Hardware/proc_interp.v Line: 69
+#         Searched libraries:
+#             C:/Users/Ricardo/Documents/projeto_completo/projeto_completo/work
+# ** Error: (vsim-3033) Instantiation of 'addr_dec' failed. The design unit was not found.
+#    Time: 0 ps  Iteration: 0  Instance: /top_level_tb/top_level_inst/top_proc_interp_inst/proc_interp_inst File: proc_interp/Hardware/proc_interp.v Line: 73
+#         Searched libraries:
+#             C:/Users/Ricardo/Documents/projeto_completo/projeto_completo/work
+# Error loading design
+# End time: 10:02:11 on May 28,2026, Elapsed time: 0:00:00
+# Errors: 2, Warnings: 0

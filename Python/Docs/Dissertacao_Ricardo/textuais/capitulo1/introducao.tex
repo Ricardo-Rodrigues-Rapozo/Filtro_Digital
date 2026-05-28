@@ -1,0 +1,67 @@
+\chapter{Introdução}\label{cap:intro}
+
+A operação de redes elétricas modernas envolve sinais cada vez menos próximos do modelo senoidal ideal. Conversores eletrônicos, cargas não lineares, geração distribuída, sistemas de armazenamento e fontes renováveis conectadas por eletrônica de potência alteram a forma de onda de tensões e correntes, introduzindo componentes harmônicas, variações de amplitude, desvios de frequência e ruído. Nesse cenário, a análise apenas da componente fundamental pode ser insuficiente para caracterizar o estado do sistema e para apoiar aplicações de qualidade de energia, diagnóstico de distorções e monitoramento em tempo real.
+
+A estimação fasorial sincronizada tornou-se uma ferramenta importante para a observação de Sistemas Elétricos de Potência, pois associa grandezas elétricas medidas em diferentes pontos a uma base temporal comum. As PMUs (\textit{Phasor Measurement Units}) são capazes de estimar fasores, frequência e ROCOF da componente fundamental, permitindo comparar medições obtidas em locais distintos da rede \cite{phadke2008,ieee2011}. Entretanto, a extensão desse conceito para componentes harmônicas ainda é menos consolidada. Enquanto os sincrofasores da fundamental possuem requisitos normativos bem definidos, a estimação sincronizada de fasores harmônicos ainda carece de padronização completa, especialmente no que diz respeito a ensaios, limites de erro e condições dinâmicas \cite{iec60255}.
+
+Essa lacuna é relevante porque os harmônicos não apenas acrescentam componentes espectrais ao sinal; eles também tornam mais sensível o problema de sincronismo temporal. Quando a frequência fundamental se afasta da nominal, filtros e janelas projetados para uma grade fixa passam a observar o sinal em instantes ligeiramente desalinhados. Esse desalinhamento produz erro de magnitude e, principalmente, erro de fase. Em componentes harmônicas, o efeito angular se torna mais crítico, pois a fase associada à ordem $h$ evolui $h$ vezes mais rapidamente que a fase da fundamental. Assim, pequenas imprecisões na frequência estimada, nos atrasos de processamento ou nos instantes de amostragem podem gerar erros expressivos nas ordens mais elevadas.
+
+Outro aspecto importante é o custo computacional. Bancos de filtros são atrativos para estimação harmônica por permitirem extrair simultaneamente várias componentes, mas a implementação direta de um filtro para cada harmônico pode exigir grande número de operações. Esse custo se torna um obstáculo quando se deseja monitorar muitas ordens harmônicas ou quando a implementação deve operar em plataformas embarcadas. A decomposição polifásica oferece uma forma de reorganizar o banco de filtros e reduzir a carga computacional, preservando a interpretação de filtragem multicanal \cite{mk06}. Em paralelo, filtros Flat-Top são interessantes por apresentarem resposta de magnitude plana ao redor da frequência central, característica útil para reduzir a sensibilidade da estimação a pequenos desvios de frequência \cite{duda2019}.
+
+Além da extração harmônica propriamente dita, é necessário lidar com a variação da frequência fundamental antes que o sinal chegue ao banco de filtros. Uma alternativa é reprojetar ou selecionar filtros de acordo com a frequência estimada, mas essa estratégia pode aumentar a complexidade da implementação. Outra possibilidade é reamostrar dinamicamente o sinal, gerando amostras em instantes compatíveis com o período elétrico estimado. Nesse caso, o banco posterior continua operando em uma base nominal, enquanto a adaptação à frequência real ocorre na etapa de interpolação. A interpolação B-Spline, implementada por estrutura de Farrow, é uma alternativa adequada para esse tipo de reamostragem por permitir a geração de amostras em posições fracionárias com coeficientes fixos \cite{aleixo2022}.
+
+Este trabalho investiga uma metodologia de estimação de fasores harmônicos que combina três elementos principais: estimação da frequência fundamental por cruzamento por zero, reamostragem dinâmica por interpolação B-Spline e extração harmônica por banco de filtros Flat-Top com decomposição polifásica. A proposta é formulada com foco em uma implementação futura em FPGA com processadores \textit{soft-core}, mas a validação final em hardware e os resultados completos de desempenho não são tratados como concluídos nesta etapa. A dissertação, portanto, concentra-se na fundamentação, na organização metodológica e na preparação da cadeia de processamento que será avaliada experimentalmente em etapa posterior.
+
+\section{Motivação}
+
+A motivação deste trabalho surge da necessidade de estimadores harmônicos que sejam, ao mesmo tempo, precisos e viáveis para implementação embarcada. Em um cenário prático, o sinal medido pode apresentar ruído, distorção, desvio de frequência, rampas e modulações. Um estimador útil não deve depender apenas de condições estacionárias ideais; ele precisa preservar coerência de fase e magnitude mesmo quando a frequência fundamental se desloca da nominal.
+
+O uso de reamostragem dinâmica é motivado por esse ponto. Se o sinal está, por exemplo, em frequência diferente da nominal, uma janela fixa deixa de representar exatamente o mesmo intervalo elétrico. A etapa de interpolação busca corrigir essa incompatibilidade temporal antes da extração dos fasores, reduzindo o erro causado por analisar o sinal em uma grade inadequada. Com isso, o banco de filtros pode ser mantido em uma estrutura nominal, simplificando o processamento posterior.
+
+A segunda motivação está ligada ao custo computacional da estimação multiharmônica. Monitorar várias ordens harmônicas por filtros independentes pode ser custoso, especialmente quando se considera uma implementação em tempo real. A decomposição polifásica é adotada como estratégia para tornar o banco de filtros mais eficiente, enquanto o filtro Flat-Top é empregado pela sua característica de baixa sensibilidade de magnitude nas proximidades da frequência de interesse. O interesse central do trabalho está na integração dessas técnicas em uma mesma cadeia de estimação.
+
+\section{Objetivos}
+
+O objetivo geral deste trabalho é desenvolver uma metodologia para estimação de fasores harmônicos em sinais com frequência fundamental variável, combinando estimação de frequência por cruzamento por zero, reamostragem por interpolação B-Spline e banco de filtros Flat-Top com decomposição polifásica, com direcionamento para implementação futura em FPGA.
+
+\subsection{Objetivos específicos}
+
+Os objetivos específicos deste trabalho são:
+
+\begin{itemize}
+    \item estudar a representação de fasores, sincrofasores e fasores harmônicos no contexto de sinais elétricos com frequência variável;
+    \item discutir métricas e ensaios usados em PMUs, utilizando a IEC/IEEE 60255-118-1 como referência metodológica para a construção de cenários de teste;
+    \item formular a etapa de estimação de frequência por cruzamento por zero, incluindo filtragem preliminar, interpolação do instante de cruzamento e suavização da estimativa;
+    \item explicar o papel do alinhamento temporal entre sinal, frequência estimada, filtros e interpolador;
+    \item aplicar interpolação B-Spline em estrutura de Farrow para realizar a reamostragem dinâmica do sinal;
+    \item organizar a extração dos fasores harmônicos por meio de um banco de filtros Flat-Top;
+    \item empregar decomposição polifásica para reduzir o custo computacional associado ao banco de filtros;
+    \item definir as métricas que serão usadas na validação posterior, incluindo TVE, erro de magnitude, erro de fase, erro de frequência e erro de ROCOF;
+    \item estruturar a metodologia de forma compatível com uma implementação futura em FPGA com processadores \textit{soft-core}.
+\end{itemize}
+
+\section{Contribuições esperadas}
+
+As principais contribuições esperadas deste trabalho são:
+
+\begin{itemize}
+    \item a organização de uma cadeia de estimação harmônica que integra rastreamento de frequência, reamostragem B-Spline e banco Flat-Top polifásico;
+    \item a explicação do papel da reamostragem dinâmica na redução do desalinhamento temporal provocado por frequência fora da nominal;
+    \item a formulação das etapas de atraso e alinhamento necessárias para manter coerência entre a frequência estimada e o trecho de sinal reamostrado;
+    \item a adaptação de sinais de teste inspirados na IEC/IEEE 60255-118-1 para análise de componentes harmônicas;
+    \item a preparação de uma descrição metodológica adequada para implementação e validação em FPGA em etapa posterior.
+\end{itemize}
+
+Como a implementação em FPGA ainda está em desenvolvimento, as contribuições desta etapa não são apresentadas como resultados finais de desempenho. O foco está na construção consistente do método, na conexão entre os blocos de processamento e na definição das condições que permitirão avaliar o estimador de forma organizada quando a implementação estiver consolidada.
+
+\section{Divisão do trabalho}
+
+O restante desta dissertação está organizado da seguinte forma.
+
+O Capítulo~\ref{cap:cap2} apresenta a revisão bibliográfica e a fundamentação teórica. São discutidos fasores, sincrofasores, estimação fasorial, fasores harmônicos, normas e métricas de avaliação, interpolação, B-Splines, estrutura de Farrow, filtros Flat-Top e decomposição polifásica.
+
+O Capítulo~\ref{cap:tres} descreve a metodologia proposta. Nesse capítulo, os conceitos apresentados separadamente na fundamentação são integrados em uma cadeia composta por estimação de frequência, suavização, alinhamento temporal, reamostragem dinâmica, banco de filtros polifásico, correção de fase e métricas de avaliação.
+
+O Capítulo~\ref{cap:quatro} é reservado para resultados e discussões. Essa etapa deverá reunir, quando consolidados, os ensaios em condições estacionárias e dinâmicas, bem como a análise dos erros obtidos na estimação dos fasores harmônicos.
+
+Por fim, a conclusão sintetiza os principais pontos desenvolvidos, discute limitações da etapa atual e indica os próximos passos relacionados à implementação em FPGA e à validação experimental do método.
