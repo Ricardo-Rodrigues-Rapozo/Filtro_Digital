@@ -33,7 +33,7 @@ reg req_in_0 = 0;
 
 // open a file for reading on each port
 initial begin
-    data_in_0 = $fopen("C:/Users/Ricardo/Documents/projeto_completo/projeto_completo/proc_banco/Simulation/input_0.txt", "r"); // place your input data in this file
+    data_in_0 = $fopen("C:/Users/Ricardo/Documents/Dissertacao/proc_banco/Simulation/input_0.txt", "r"); // place your input data in this file
 end
 
 // decode input ports
@@ -64,8 +64,8 @@ reg out_en_1 = 0;
 
 // open a file for writing on each port
 initial begin
-    data_out_0 = $fopen("C:/Users/Ricardo/Documents/projeto_completo/projeto_completo/proc_banco/Simulation/output_0.txt", "w"); // check the output data in this file
-    data_out_1 = $fopen("C:/Users/Ricardo/Documents/projeto_completo/projeto_completo/proc_banco/Simulation/output_1.txt", "w"); // check the output data in this file
+    data_out_0 = $fopen("C:/Users/Ricardo/Documents/Dissertacao/proc_banco/Simulation/output_0.txt", "w"); // check the output data in this file
+    data_out_1 = $fopen("C:/Users/Ricardo/Documents/Dissertacao/proc_banco/Simulation/output_1.txt", "w"); // check the output data in this file
 end
 
 // decode output ports

@@ -115,7 +115,7 @@ void main()
     den_pre_BSP[1] = 0.26794919;
     //return;
     while (1)
-    //#PRACA
+    //#PRACA jhlkj
     {
         x = in(0) / 32768.0; // req_in
 

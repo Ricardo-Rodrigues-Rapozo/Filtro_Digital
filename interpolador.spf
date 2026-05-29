@@ -5,11 +5,11 @@
     "lastModified": "2026-05-28T16:29:26.137Z",
     "computerName": "VINICIUS",
     "appVersion": "5.0.0",
-    "projectPath": "C:\\Users\\Ricardo\\Documents\\projeto_completo\\projeto_completo",
-    "lastOpened": "2026-05-28T16:24:15.116Z"
+    "projectPath": "C:\\Users\\Ricardo\\Documents\\Dissertacao",
+    "lastOpened": "2026-05-29T14:00:59.551Z"
   },
   "structure": {
-    "basePath": "C:\\Users\\Ricardo\\Documents\\projeto_completo\\projeto_completo",
+    "basePath": "C:\\Users\\Ricardo\\Documents\\Dissertacao",
     "folders": [],
     "processors": [
       {
@@ -23,64 +23,54 @@
         "exists": true
       }
     ],
-    "topLevelFile": "C:\\Users\\Ricardo\\Documents\\projeto_completo\\projeto_completo\\top_level.v",
-    "testbenchFile": "C:\\Users\\Ricardo\\Documents\\projeto_completo\\projeto_completo\\top_level_tb.v",
+    "topLevelFile": "C:\\Users\\Ricardo\\Documents\\Dissertacao\\top_level.v",
+    "testbenchFile": "C:\\Users\\Ricardo\\Documents\\Dissertacao\\top_level_tb.v",
     "synthesizableFiles": [
       {
-        "name": "procTest_00.v",
-        "path": "C:\\Users\\Ricardo\\Documents\\Teste_interpolador\\procTest_00\\Hardware\\procTest_00.v",
-        "isTopLevel": false
-      },
-      {
         "name": "proc_banco.v",
-        "path": "C:\\Users\\Ricardo\\Documents\\projeto_completo\\projeto_completo\\proc_banco\\Hardware\\proc_banco.v",
+        "path": "C:\\Users\\Ricardo\\Documents\\Dissertacao\\proc_banco\\Hardware\\proc_banco.v",
         "isTopLevel": false
       },
       {
         "name": "proc_interp.v",
-        "path": "C:\\Users\\Ricardo\\Documents\\projeto_completo\\projeto_completo\\proc_interp\\Hardware\\proc_interp.v",
+        "path": "C:\\Users\\Ricardo\\Documents\\Dissertacao\\proc_interp\\Hardware\\proc_interp.v",
         "isTopLevel": false
       },
       {
         "name": "maq_estados.v",
-        "path": "C:\\Users\\Ricardo\\Documents\\projeto_completo\\projeto_completo\\maq_estados.v",
+        "path": "C:\\Users\\Ricardo\\Documents\\Dissertacao\\maq_estados.v",
         "isTopLevel": false
       },
       {
         "name": "top_level.v",
-        "path": "C:\\Users\\Ricardo\\Documents\\projeto_completo\\projeto_completo\\top_level.v",
+        "path": "C:\\Users\\Ricardo\\Documents\\Dissertacao\\top_level.v",
         "isTopLevel": true
       },
       {
         "name": "top_proc_banco.v",
-        "path": "C:\\Users\\Ricardo\\Documents\\projeto_completo\\projeto_completo\\top_proc_banco.v",
+        "path": "C:\\Users\\Ricardo\\Documents\\Dissertacao\\top_proc_banco.v",
         "isTopLevel": false
       },
       {
         "name": "top_proc_interp.v",
-        "path": "C:\\Users\\Ricardo\\Documents\\projeto_completo\\projeto_completo\\top_proc_interp.v",
+        "path": "C:\\Users\\Ricardo\\Documents\\Dissertacao\\top_proc_interp.v",
         "isTopLevel": false
       }
     ],
     "testbenchFiles": [
       {
-        "name": "procTest_00_tb.v",
-        "path": "C:\\Users\\Ricardo\\Documents\\Teste_interpolador\\procTest_00\\Simulation\\procTest_00_tb.v",
-        "isTopLevel": false
-      },
-      {
         "name": "proc_banco_tb.v",
-        "path": "C:\\Users\\Ricardo\\Documents\\projeto_completo\\projeto_completo\\proc_banco\\Simulation\\proc_banco_tb.v",
+        "path": "C:\\Users\\Ricardo\\Documents\\Dissertacao\\proc_banco\\Simulation\\proc_banco_tb.v",
         "isTopLevel": false
       },
       {
         "name": "proc_interp_tb.v",
-        "path": "C:\\Users\\Ricardo\\Documents\\projeto_completo\\projeto_completo\\proc_interp\\Simulation\\proc_interp_tb.v",
+        "path": "C:\\Users\\Ricardo\\Documents\\Dissertacao\\proc_interp\\Simulation\\proc_interp_tb.v",
         "isTopLevel": false
       },
       {
         "name": "top_level_tb.v",
-        "path": "C:\\Users\\Ricardo\\Documents\\projeto_completo\\projeto_completo\\top_level_tb.v",
+        "path": "C:\\Users\\Ricardo\\Documents\\Dissertacao\\top_level_tb.v",
         "isTopLevel": true
       }
     ]

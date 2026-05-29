@@ -33,7 +33,7 @@ reg req_in_0 = 0;
 
 // open a file for reading on each port
 initial begin
-    data_in_0 = $fopen("C:/Users/Ricardo/Documents/projeto_completo/projeto_completo/proc_interp/Simulation/input_0.txt", "r"); // place your input data in this file
+    data_in_0 = $fopen("C:/Users/Ricardo/Documents/Dissertacao/proc_interp/Simulation/input_0.txt", "r"); // place your input data in this file
 end
 
 // decode input ports
@@ -79,11 +79,11 @@ reg out_en_4 = 0;
 
 // open a file for writing on each port
 initial begin
-    data_out_0 = $fopen("C:/Users/Ricardo/Documents/projeto_completo/projeto_completo/proc_interp/Simulation/output_0.txt", "w"); // check the output data in this file
-    data_out_1 = $fopen("C:/Users/Ricardo/Documents/projeto_completo/projeto_completo/proc_interp/Simulation/output_1.txt", "w"); // check the output data in this file
-    data_out_2 = $fopen("C:/Users/Ricardo/Documents/projeto_completo/projeto_completo/proc_interp/Simulation/output_2.txt", "w"); // check the output data in this file
-    data_out_3 = $fopen("C:/Users/Ricardo/Documents/projeto_completo/projeto_completo/proc_interp/Simulation/output_3.txt", "w"); // check the output data in this file
-    data_out_4 = $fopen("C:/Users/Ricardo/Documents/projeto_completo/projeto_completo/proc_interp/Simulation/output_4.txt", "w"); // check the output data in this file
+    data_out_0 = $fopen("C:/Users/Ricardo/Documents/Dissertacao/proc_interp/Simulation/output_0.txt", "w"); // check the output data in this file
+    data_out_1 = $fopen("C:/Users/Ricardo/Documents/Dissertacao/proc_interp/Simulation/output_1.txt", "w"); // check the output data in this file
+    data_out_2 = $fopen("C:/Users/Ricardo/Documents/Dissertacao/proc_interp/Simulation/output_2.txt", "w"); // check the output data in this file
+    data_out_3 = $fopen("C:/Users/Ricardo/Documents/Dissertacao/proc_interp/Simulation/output_3.txt", "w"); // check the output data in this file
+    data_out_4 = $fopen("C:/Users/Ricardo/Documents/Dissertacao/proc_interp/Simulation/output_4.txt", "w"); // check the output data in this file
 end
 
 // decode output ports

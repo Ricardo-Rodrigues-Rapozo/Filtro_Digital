@@ -24,7 +24,7 @@ fork
 	rst_proc_interp <= 1'b0;
 	rst_geral <= 1'b1;
 	#40 rst_geral <= 1'b0;
-	#4000000 $finish;
+	#2000000 $finish;
 	$display ("termionou");
 join
 
