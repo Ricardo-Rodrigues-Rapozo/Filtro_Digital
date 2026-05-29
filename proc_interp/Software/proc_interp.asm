@@ -207,8 +207,8 @@ STI main_den_pre_BSP
 LOD 1
 P_LOD 0.26794919
 STI main_den_pre_BSP
-@Lwh1 LOD 1
-JIZ Lwh1end
+@fim JMP fim
+#ITRAD
 INN 0
 I2F
 P_LOD 32768.0
@@ -599,10 +599,10 @@ SET main_y
 LOD 6
 GRE main_cnt
 JIZ Lif7else
-@Lwh2 LOD main_alfa
+@Lwh1 LOD main_alfa
 P_LOD 1.0
 SF_LES
-JIZ Lwh2end
+JIZ Lwh1end
 LOD 0
 LDI main_buffer_entrada_farrow
 F_MLT 0.1666666667
@@ -668,8 +668,8 @@ OUT 0
 LOD main_alfa
 F_ADD main_lambda_val
 SET main_alfa
-JMP Lwh2
-@Lwh2end LOD main_alfa
+JMP Lwh1
+@Lwh1end LOD main_alfa
 F_SU1 1.0
 SET main_alfa
 JMP Lif7end
@@ -682,5 +682,4 @@ JIZ Lif8else
 LOD main_cont_global
 ADD 1
 SET main_cont_global
-@Lif8else JMP Lwh1
-@Lwh1end @fim JMP fim
+@Lif8else @fim JMP fim

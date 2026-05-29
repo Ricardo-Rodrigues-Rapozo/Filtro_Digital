@@ -24,7 +24,8 @@ fork
 	rst_proc_interp <= 1'b0;
 	rst_geral <= 1'b1;
 	#40 rst_geral <= 1'b0;
-	#2000000 $finish;
+	#5000000 $finish;
+	
 	$display ("termionou");
 join
 
@@ -59,7 +60,7 @@ begin
 	
 	else 
 	begin
-		if(cont_rst_proc < 32'd60000)
+		if(cont_rst_proc < 32'd700)   // tempo de processamento do código interp.cmm
 			cont_rst_proc <= cont_rst_proc + 32'd1;
 		else
 			cont_rst_proc <= 32'd0;
@@ -69,7 +70,7 @@ end
 
 always@(posedge clk)
 begin
-	if (cont_rst_proc == 32'd1)
+	if (cont_rst_proc == 32'd699)   // tempo para gerar a inicialização dos parametros do .cmm
 	begin
 		rst_proc_interp <= 1'b1;
 	end

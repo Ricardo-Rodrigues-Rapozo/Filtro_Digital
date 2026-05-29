@@ -4,9 +4,9 @@ input  clk, rst,
 input  signed [31:0] in ,
 output signed [31:0] out,
 output [0:0] req_in,
-output [4:0] out_en);
+output [4:0] out_en,
+input  itr);
 
-wire itr = 1'b0;
 wire cheguei;
 wire proc_req_in, proc_out_en;
 wire [0:0] addr_in;
@@ -24,12 +24,13 @@ processor#(.NUBITS(32),
 .NBOPER(10),
 .NUGAIN(128),
 .MDATAS(917),
-.MINSTS(661),
+.MINSTS(659),
 .SDEPTH(5),
 .DDEPTH(5),
 .NBIOIN(1),
 .NBIOOU(3),
 .FFTSIZ(8),
+.ITRADD(185),
 .LOD(1),
 .SET(1),
 .P_LOD(1),
@@ -37,7 +38,6 @@ processor#(.NUBITS(32),
 .I2F_M(1),
 .SF_DIV(1),
 .PF_NEG_M(1),
-.JIZ(1),
 .INN(1),
 .I2F(1),
 .LDI(1),
@@ -49,6 +49,7 @@ processor#(.NUBITS(32),
 .F_ADD(1),
 .P_I2F_M(1),
 .SF_LES(1),
+.JIZ(1),
 .F_SU1(1),
 .F2I(1),
 .OUT(1),
@@ -236,7 +237,7 @@ reg [31:0] valr8=0;
 reg [31:0] valr9=0;
 reg [31:0] valr10=0;
 
-reg [19:0] min [0:661-1];
+reg [19:0] min [0:659-1];
 
 reg signed [19:0] linetab =-1;
 reg signed [19:0] linetabs=-1;
@@ -244,7 +245,7 @@ reg signed [19:0] linetabs=-1;
 initial	$readmemb("pc_proc_interp_mem.txt",min);
 
 always @ (posedge clk) begin
-if (pc_sim_val < 661) linetab <= min[pc_sim_val];
+if (pc_sim_val < 659) linetab <= min[pc_sim_val];
 linetabs <= linetab;   
 valr1    <= pc_sim_val;
 valr2    <= valr1;

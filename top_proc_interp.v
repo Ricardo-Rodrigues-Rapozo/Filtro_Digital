@@ -31,8 +31,8 @@ proc_interp proc_interp_inst(
 								 .in(in_proc),
 								 .out(out_proc),
 								 .req_in(req_in),
-								 .out_en(out_en)
-								 //.itr(rst_proc)
+								 .out_en(out_en),
+								 .itr(rst_proc)
 								 );
 always @(posedge clk)
 begin

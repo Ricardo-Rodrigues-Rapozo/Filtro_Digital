@@ -22,7 +22,7 @@ wire signed [31:0] proc_io_out;
 wire [0:0] proc_req_in;
 wire [4:0] proc_out_en;
 
-proc_interp proc(clk,rst,proc_io_in,proc_io_out,proc_req_in,proc_out_en);
+proc_interp proc(clk,rst,proc_io_in,proc_io_out,proc_req_in,proc_out_en,1'b0);
 
 // input ports ----------------------------------------------------------------
 
@@ -121,7 +121,7 @@ end
 
 integer progress, chrys;
 
-always @ (posedge clk) if (proc.valr10 == 660) begin
+always @ (posedge clk) if (proc.valr10 == 658) begin
     $display("Info: end of program!");
     $fclose(progress);
     $finish;

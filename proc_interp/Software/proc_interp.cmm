@@ -113,10 +113,10 @@ void main()
     num_pre_BSP[0] =  1.60769515;
     den_pre_BSP[0] = 1.0;
     den_pre_BSP[1] = 0.26794919;
-    //return;
-    while (1)
-    //#PRACA jhlkj
-    {
+    return;
+    //while (1)
+    #PRACA
+    //{
         x = in(0) / 32768.0; // req_in
 
         // ========== IIR PRE-FILTER ZERO-CROSSING ==========
@@ -297,5 +297,5 @@ void main()
         {
             cont_global = cont_global + 1;
         }
-    }
+    //}
 }
