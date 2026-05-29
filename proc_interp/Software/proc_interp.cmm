@@ -45,7 +45,7 @@ void main()
     int atraso_amotras_filtro_pre_zc = 127; // atraso de grupo do IIR em 60 Hz
 
     // ----- Media movel 256 -----
-    float w_coeffs[256] "w_coeffs";        // coeficientes do filtro de media movel
+    float w_coeff = 0.00390625;        // coeficientes do filtro de media movel
     int w_index = 0;                       // indice auxiliar mantido do molde antigo
     float w_sum = 0.0;                     // soma auxiliar mantida do molde antigo
     float buffer_media_movel[256];         // buffer circular com amostras de fzc
@@ -57,6 +57,7 @@ void main()
     int p = 0;                             // contador do loop da media movel
     int b_index_mean = 0;                  // indice auxiliar mantido do molde antigo
     int atraso_amotras_media_movel = 128;  // atraso aproximado da media movel de 512 amostras
+    float fvelho = 0.0;                    //  
 
     // ----- Temporarias -----
     int j = 0;                             // contador auxiliar mantido do molde antigo
@@ -116,7 +117,7 @@ void main()
     while (1)
     //#PRACA
     {
-        x = in(0) / 32768.0;
+        x = in(0) / 32768.0; // req_in
 
         // ========== IIR PRE-FILTER ZERO-CROSSING ==========
         x1[0] = x;
@@ -166,22 +167,12 @@ void main()
         fout(1, fzc * 1000000);
 
         // ========== FILTRO MEDIA MOVEL ==========
+        
+        fvelho = buffer_media_movel[buffer_media_movel_idex];
         buffer_media_movel[buffer_media_movel_idex] = fzc;
-        fcc = 0.0;
-        p = 0;
-
-        while (p < w_media)
-        {
-            read_idx_mean = buffer_media_movel_idex - p;
-            if (read_idx_mean < 0) {
-                read_idx_mean = read_idx_mean + w_media;
-            }
-
-            fcc = fcc + w_coeffs[p] * buffer_media_movel[read_idx_mean];
-            p = p + 1;
-        }
-
-        fout(2, fcc * 1000000);
+        
+        fcc = fcc + (fzc - fvelho)*w_coeff;
+        
 
         buffer_media_movel_idex = buffer_media_movel_idex + 1;
 
@@ -189,6 +180,8 @@ void main()
         {
             buffer_media_movel_idex = 0;
         }
+
+        fout(2, fcc * 1000000);
 
         // ============================== Estrutura B-Spline ====================================== //
 
@@ -262,7 +255,7 @@ void main()
                 lambda_val = 0.0;
             }
 
-            fout(4, freq_smoothed * 1000000);
+            fout(4, freq_atrasada * 1000000);
 
             y = 0.0;
             if (cnt > 6)

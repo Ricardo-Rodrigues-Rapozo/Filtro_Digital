@@ -104,7 +104,8 @@ LOD 0.0
 SET main_T2
 LOD 127
 SET main_atraso_amotras_filtro_pre_zc
-#arrays main_w_coeffs 2 256 "w_coeffs"
+LOD 0.00390625
+SET main_w_coeff
 LOD 0
 SET main_w_index
 LOD 0.0
@@ -126,6 +127,8 @@ LOD 0
 SET main_b_index_mean
 LOD 128
 SET main_atraso_amotras_media_movel
+LOD 0.0
+SET main_fvelho
 LOD 0
 SET main_j
 LOD 0
@@ -407,51 +410,32 @@ F_MLT main_fzc
 F2I
 OUT 1
 LOD main_buffer_media_movel_idex
+LDI main_buffer_media_movel
+SET main_fvelho
+LOD main_buffer_media_movel_idex
 P_LOD main_fzc
 STI main_buffer_media_movel
-LOD 0.0
-SET main_fcc
-LOD 0
-SET main_p
-@Lwh2 LOD main_w_media
-LES main_p
-JIZ Lwh2end
-NEG_M main_p
-ADD main_buffer_media_movel_idex
-SET main_read_idx_mean
-LOD 0
-LES main_read_idx_mean
-JIZ Lif2else
-LOD main_read_idx_mean
-ADD main_w_media
-SET main_read_idx_mean
-@Lif2else LOD main_p
-LDI main_w_coeffs
-P_LOD main_read_idx_mean
-LDI main_buffer_media_movel
-SF_MLT
+LOD main_fzc
+F_SU1 main_fvelho
+F_MLT main_w_coeff
 F_ADD main_fcc
 SET main_fcc
-LOD main_p
-ADD 1
-SET main_p
-JMP Lwh2
-@Lwh2end I2F_M 1000000
-F_MLT main_fcc
-F2I
-OUT 2
 LOD main_buffer_media_movel_idex
 ADD 1
 SET main_buffer_media_movel_idex
 LOD main_w_media
 LES main_buffer_media_movel_idex
 LIN
-JIZ Lif3else
+JIZ Lif2else
 LOD 0
 SET main_buffer_media_movel_idex
-@Lif3else LOD 0
+@Lif2else I2F_M 1000000
+F_MLT main_fcc
+F2I
+OUT 2
+LOD 0
 GRE main_atraso_geral
-JIZ Lif4else
+JIZ Lif3else
 LOD main_c_index
 LDI main_buffer_atraso_x
 SET main_x_atrasado
@@ -464,19 +448,19 @@ SET main_c_index
 LOD main_atraso_geral
 LES main_c_index
 LIN
-JIZ Lif5else
+JIZ Lif4else
 LOD 0
 SET main_c_index
-@Lif5else JMP Lif4end
-@Lif4else LOD main_x
+@Lif4else JMP Lif3end
+@Lif3else LOD main_x
 SET main_x_atrasado
-@Lif4end I2F_M 1000000
+@Lif3end I2F_M 1000000
 F_MLT main_x_atrasado
 F2I
 OUT 3
 LOD 1023
 GRE main_cont_global
-JIZ Lif6else
+JIZ Lif5else
 LOD 0
 P_LOD 1
 LDI main_buffer_entrada_prefiltro
@@ -599,26 +583,26 @@ SET main_freq_atrasada
 P_LOD 0.0
 S_EQU
 LIN
-JIZ Lif7else
+JIZ Lif6else
 LOD main_freq_atrasada
 F_DIV 60.0
 SET main_lambda_val
-JMP Lif7end
-@Lif7else LOD 0.0
+JMP Lif6end
+@Lif6else LOD 0.0
 SET main_lambda_val
-@Lif7end I2F_M 1000000
-F_MLT main_freq_smoothed
+@Lif6end I2F_M 1000000
+F_MLT main_freq_atrasada
 F2I
 OUT 4
 LOD 0.0
 SET main_y
 LOD 6
 GRE main_cnt
-JIZ Lif8else
-@Lwh3 LOD main_alfa
+JIZ Lif7else
+@Lwh2 LOD main_alfa
 P_LOD 1.0
 SF_LES
-JIZ Lwh3end
+JIZ Lwh2end
 LOD 0
 LDI main_buffer_entrada_farrow
 F_MLT 0.1666666667
@@ -684,19 +668,19 @@ OUT 0
 LOD main_alfa
 F_ADD main_lambda_val
 SET main_alfa
-JMP Lwh3
-@Lwh3end LOD main_alfa
+JMP Lwh2
+@Lwh2end LOD main_alfa
 F_SU1 1.0
 SET main_alfa
-JMP Lif8end
-@Lif8else LOD main_cnt
+JMP Lif7end
+@Lif7else LOD main_cnt
 ADD 1
 SET main_cnt
-@Lif8end @Lif6else LOD 10000
+@Lif7end @Lif5else LOD 10000
 LES main_cont_global
-JIZ Lif9else
+JIZ Lif8else
 LOD main_cont_global
 ADD 1
 SET main_cont_global
-@Lif9else JMP Lwh1
+@Lif8else JMP Lwh1
 @Lwh1end @fim JMP fim

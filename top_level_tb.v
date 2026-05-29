@@ -24,19 +24,19 @@ fork
 	rst_proc_interp <= 1'b0;
 	rst_geral <= 1'b1;
 	#40 rst_geral <= 1'b0;
-	#190000000 $finish;
+	#4000000 $finish;
 	$display ("termionou");
 join
 
 integer i, data_in1,data_out_interp0, data_out_interp1, data_out_interp2, data_out_interp3, data_out_interp4;//,data_out_1;
 initial begin
 	//sempre que for simular na sua maquina colocar o caminho do arquivo que a simulação vai ler
-	data_in1 = $fopen("C:\\Users\\Ricardo\\Documents\\projeto_completo\\projeto_completo\\sinal_teste.txt", "r");
-	data_out_interp0 = $fopen("C:\\Users\\Ricardo\\Documents\\projeto_completo\\projeto_completo\\saida_interp0.txt", "w");
-	data_out_interp1 = $fopen("C:\\Users\\Ricardo\\Documents\\projeto_completo\\projeto_completo\\saida_interp1.txt", "w");
-	data_out_interp2 = $fopen("C:\\Users\\Ricardo\\Documents\\projeto_completo\\projeto_completo\\saida_interp2.txt", "w");
-	data_out_interp3 = $fopen("C:\\Users\\Ricardo\\Documents\\projeto_completo\\projeto_completo\\saida_interp3.txt", "w");
-	data_out_interp4 = $fopen("C:\\Users\\Ricardo\\Documents\\projeto_completo\\projeto_completo\\saida_interp4.txt", "w");
+	data_in1 = $fopen("C:\\Users\\Ricardo\\Documents\\Dissertacao\\sinal_teste.txt", "r");
+	data_out_interp0 = $fopen("C:\\Users\\Ricardo\\Documents\\Dissertacao\\saida_interp0.txt", "w");
+	data_out_interp1 = $fopen("C:\\Users\\Ricardo\\Documents\\Dissertacao\\saida_interp1.txt", "w");
+	data_out_interp2 = $fopen("C:\\Users\\Ricardo\\Documents\\Dissertacao\\saida_interp2.txt", "w");
+	data_out_interp3 = $fopen("C:\\Users\\Ricardo\\Documents\\Dissertacao\\saida_interp3.txt", "w");
+	data_out_interp4 = $fopen("C:\\Users\\Ricardo\\Documents\\Dissertacao\\saida_interp4.txt", "w");
 end
 
 integer scan_result;

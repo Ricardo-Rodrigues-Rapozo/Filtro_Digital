@@ -63,8 +63,8 @@ processor#(.NUBITS(32),
 .F2I_M(1),
 .POP(1),
 .F2I(1),
-.DFILE("C:/Users/Ricardo/Documents/projeto_completo/projeto_completo/proc_banco/Hardware/proc_banco_data.mif"),
-.IFILE("C:/Users/Ricardo/Documents/projeto_completo/projeto_completo/proc_banco/Hardware/proc_banco_inst.mif"))
+.DFILE("C:/Users/Ricardo/Documents/Dissertacao/proc_banco/Hardware/proc_banco_data.mif/proc_banco_data.mif"),
+.IFILE("C:/Users/Ricardo/Documents/Dissertacao/proc_banco/Hardware/proc_banco_inst.mif/proc_banco_inst.mif"))
 
 `ifdef __ICARUS__
 p_proc_banco (clk, rst, in, out, addr_in, addr_out, proc_req_in, proc_out_en, itr, cheguei, mem_wr, mem_addr_wr,pc_sim_val);

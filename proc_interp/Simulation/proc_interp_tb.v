@@ -121,7 +121,7 @@ end
 
 integer progress, chrys;
 
-always @ (posedge clk) if (proc.valr10 == 675) begin
+always @ (posedge clk) if (proc.valr10 == 660) begin
     $display("Info: end of program!");
     $fclose(progress);
     $finish;
@@ -165,6 +165,7 @@ initial begin
     $dumpvars(0,proc_interp_tb.proc.me2_f_main_v_Nb_e_);
     $dumpvars(0,proc_interp_tb.proc.me2_f_main_v_T2_e_);
     $dumpvars(0,proc_interp_tb.proc.me1_f_main_v_atraso_amotras_filtro_pre_zc_e_);
+    $dumpvars(0,proc_interp_tb.proc.me2_f_main_v_w_coeff_e_);
     $dumpvars(0,proc_interp_tb.proc.me1_f_main_v_w_index_e_);
     $dumpvars(0,proc_interp_tb.proc.me2_f_main_v_w_sum_e_);
     $dumpvars(0,proc_interp_tb.proc.me1_f_main_v_buffer_media_movel_idex_e_);
@@ -175,6 +176,7 @@ initial begin
     $dumpvars(0,proc_interp_tb.proc.me1_f_main_v_p_e_);
     $dumpvars(0,proc_interp_tb.proc.me1_f_main_v_b_index_mean_e_);
     $dumpvars(0,proc_interp_tb.proc.me1_f_main_v_atraso_amotras_media_movel_e_);
+    $dumpvars(0,proc_interp_tb.proc.me2_f_main_v_fvelho_e_);
     $dumpvars(0,proc_interp_tb.proc.me1_f_main_v_j_e_);
     $dumpvars(0,proc_interp_tb.proc.me1_f_main_v_read_idx_e_);
     $dumpvars(0,proc_interp_tb.proc.me2_f_main_v_acc_e_);
