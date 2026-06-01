@@ -20,9 +20,9 @@ always #5.000000 clk = ~clk;
 reg  signed [31:0] proc_io_in = 0;
 wire signed [31:0] proc_io_out;
 wire [0:0] proc_req_in;
-wire [1:0] proc_out_en;
+wire [2:0] proc_out_en;
 
-proc_banco proc(clk,rst,proc_io_in,proc_io_out,proc_req_in,proc_out_en);
+proc_banco proc(clk,rst,proc_io_in,proc_io_out,proc_req_in,proc_out_en,1'b0);
 
 // input ports ----------------------------------------------------------------
 
@@ -62,10 +62,16 @@ integer data_out_1;
 reg signed [31:0] out_sig_1 = 0;
 reg out_en_1 = 0;
 
+// port 2 variables
+integer data_out_2;
+reg signed [31:0] out_sig_2 = 0;
+reg out_en_2 = 0;
+
 // open a file for writing on each port
 initial begin
     data_out_0 = $fopen("C:/Users/Ricardo/Documents/Dissertacao/proc_banco/Simulation/output_0.txt", "w"); // check the output data in this file
     data_out_1 = $fopen("C:/Users/Ricardo/Documents/Dissertacao/proc_banco/Simulation/output_1.txt", "w"); // check the output data in this file
+    data_out_2 = $fopen("C:/Users/Ricardo/Documents/Dissertacao/proc_banco/Simulation/output_2.txt", "w"); // check the output data in this file
 end
 
 // decode output ports
@@ -76,6 +82,9 @@ always @ (*) begin
     // port 1 decoding
     if (proc_out_en == 2) out_sig_1 <= proc_io_out;
     out_en_1 = proc_out_en == 2;
+    // port 2 decoding
+    if (proc_out_en == 4) out_sig_2 <= proc_io_out;
+    out_en_2 = proc_out_en == 4;
 end
 
 // implement writing to the file
@@ -84,11 +93,13 @@ always @ (posedge clk) begin
     if (out_en_0 == 1'b1) begin $fdisplay(data_out_0, "%0d", out_sig_0); $fflush(data_out_0); end
     // write to port 1
     if (out_en_1 == 1'b1) begin $fdisplay(data_out_1, "%0d", out_sig_1); $fflush(data_out_1); end
+    // write to port 2
+    if (out_en_2 == 1'b1) begin $fdisplay(data_out_2, "%0d", out_sig_2); $fflush(data_out_2); end
 end
 
 integer progress, chrys;
 
-always @ (posedge clk) if (proc.valr10 == 353) begin
+always @ (posedge clk) if (proc.valr10 == 368) begin
     $display("Info: end of program!");
     $fclose(progress);
     $finish;
@@ -108,6 +119,8 @@ initial begin
     $dumpvars(0,proc_banco_tb.proc.out_sig_0);
     $dumpvars(0,proc_banco_tb.proc.out_en_sim_1);
     $dumpvars(0,proc_banco_tb.proc.out_sig_1);
+    $dumpvars(0,proc_banco_tb.proc.out_en_sim_2);
+    $dumpvars(0,proc_banco_tb.proc.out_sig_2);
     $dumpvars(0,proc_banco_tb.proc.valr2);
     $dumpvars(0,proc_banco_tb.proc.linetabs);
     $dumpvars(0,proc_banco_tb.proc.me1_f_main_v_sample_count_e_);
@@ -115,8 +128,9 @@ initial begin
     $dumpvars(0,proc_banco_tb.proc.me1_f_main_v_M_e_);
     $dumpvars(0,proc_banco_tb.proc.me1_f_main_v_fft_limit_e_);
     $dumpvars(0,proc_banco_tb.proc.me2_f_main_v_vector_count_e_);
-    $dumpvars(0,proc_banco_tb.proc.me1_f_main_v_k_e_);
+    $dumpvars(0,proc_banco_tb.proc.me1_f_main_v_buffer_head_e_);
     $dumpvars(0,proc_banco_tb.proc.me1_f_main_v_mm_e_);
+    $dumpvars(0,proc_banco_tb.proc.me1_f_main_v_ii_e_);
     $dumpvars(0,proc_banco_tb.proc.me1_f_main_v_mmax_e_);
     $dumpvars(0,proc_banco_tb.proc.me1_f_main_v_istep_e_);
     $dumpvars(0,proc_banco_tb.proc.me1_f_main_v_m_e_);

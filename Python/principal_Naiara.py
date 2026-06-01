@@ -5,7 +5,7 @@ from scipy.signal import lfilter
 from sinaisIEC60255_118 import signal_frequency, frequency_ramp, modulation
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
-from DSPEPS import downsample, estima_f_zc, BSplineInterp, FlatTopFilterBase, PolyphaseFilterBank, kf_trend_poly
+from DSPEPS import downsample, estima_f_zc, BSplineInterp, FlatTopFilterBase, PolyphaseFilterBank, kf_trend_poly,PolyphaseFilterBankCircular
 from auxiliares import TVE, wrap_to_pi
 
 # ===================================================
@@ -182,6 +182,18 @@ M = Fs//f0
 h = FlatTopFilterBase(8*Nppc + 1) # Base Filter Definition - FlatTop 
 fbDelay = (len(h))//(2*M)
 
+
+Ehh_cmm = np.zeros((M, 8))
+for kk in range(M):
+    Ehh_cmm[kk, :] = h[kk::M][:8]
+np.savetxt('flattop_coeffs.txt', Ehh_cmm.reshape(-1), fmt='%.18e')
+
+Xcircular = PolyphaseFilterBankCircular(h, M, xi)
+Xcircular  = Xcircular[1:hmax+1,:]
+np.savetxt('saida_im_banco.txt', 1000000 * Xcircular.imag, fmt='%d')
+np.savetxt('saida_real_banco.txt', 1000000 * Xcircular.real, fmt='%d')
+
+
 # Cut the signals to the length of the polyphase filter bank output, which is equal to the number of samples that can be processed by the filter bank given its delay and decimation factor
 # ------------------------------------------------------------------------------------------------------------------------------------------------------
 xi = xi[:(Nc + fbDelay)*Nppc]
@@ -190,8 +202,11 @@ freq = freq[:(Nc + fbDelay)*Nppc]
 fr = fr[:(Nc + fbDelay)*Nppc]
 
 X = PolyphaseFilterBank(h, M, xi)
-
 X  = X[1:hmax+1,:]
+
+
+
+
 AFT = 2*np.abs(X)
 PFT = np.unwrap(np.angle(X))
 

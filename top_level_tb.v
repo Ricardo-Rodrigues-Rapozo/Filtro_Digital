@@ -7,9 +7,9 @@ reg clk, rst_geral, rst_proc_interp;
 reg [31:0] cont_rst_proc, cnt_amostras;
 reg signed [31:0] data = 32'd0;
 wire signed [31:0] out0_interp,out1_interp,out2_interp,out3_interp,out4_interp;
-//wire signed [31:0] out0_banco;
+wire signed [31:0] out0_banco;
 wire        [4:0]  out_en_interp;
-//wire        [1:0]  out_en_banco;
+wire        [2:0]  out_en_banco;
 
 
 // Variaveis intermediarias para Leitura
@@ -24,12 +24,12 @@ fork
 	rst_proc_interp <= 1'b0;
 	rst_geral <= 1'b1;
 	#40 rst_geral <= 1'b0;
-	#5000000 $finish;
+	#40000000 $finish;
 	
 	$display ("termionou");
 join
 
-integer i, data_in1,data_out_interp0, data_out_interp1, data_out_interp2, data_out_interp3, data_out_interp4;//,data_out_1;
+integer i, data_in1,data_out_interp0, data_out_interp1, data_out_interp2, data_out_interp3, data_out_interp4, data_out_banco0;//,data_out_1;
 initial begin
 	//sempre que for simular na sua maquina colocar o caminho do arquivo que a simulação vai ler
 	data_in1 = $fopen("C:\\Users\\Ricardo\\Documents\\Dissertacao\\sinal_teste.txt", "r");
@@ -38,6 +38,7 @@ initial begin
 	data_out_interp2 = $fopen("C:\\Users\\Ricardo\\Documents\\Dissertacao\\saida_interp2.txt", "w");
 	data_out_interp3 = $fopen("C:\\Users\\Ricardo\\Documents\\Dissertacao\\saida_interp3.txt", "w");
 	data_out_interp4 = $fopen("C:\\Users\\Ricardo\\Documents\\Dissertacao\\saida_interp4.txt", "w");
+	data_out_banco0  = $fopen("C:\\Users\\Ricardo\\Documents\\Dissertacao\\saida_banco0.txt", "w");
 end
 
 integer scan_result;
@@ -97,6 +98,7 @@ always@(posedge clk)
 			if (out_en_interp[2] == 1'b1) $fdisplay(data_out_interp2, "%0d", out2_interp);
 			if (out_en_interp[3] == 1'b1) $fdisplay(data_out_interp3, "%0d", out3_interp);
 			if (out_en_interp[4] == 1'b1) $fdisplay(data_out_interp4, "%0d", out4_interp);
+			if (out_en_banco[0] == 1'b1) $fdisplay(data_out_banco0, "%0d", out0_banco);
 		end
 
 
@@ -110,7 +112,10 @@ top_level top_level_inst(
 						.out2_interp(out2_interp),
 						.out3_interp(out3_interp),
 						.out4_interp(out4_interp),					          
-						.out_en_interp(out_en_interp)
+						.out_en_interp(out_en_interp),
+						.out0_banco(out0_banco),
+						.out_en_banco(out_en_banco)
 						);
+
 
 endmodule 

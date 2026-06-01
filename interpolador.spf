@@ -2,11 +2,11 @@
   "metadata": {
     "projectName": "interpolador",
     "createdAt": "2026-05-14T14:17:28.763Z",
-    "lastModified": "2026-05-28T16:29:26.137Z",
+    "lastModified": "2026-06-01T13:16:26.311Z",
     "computerName": "VINICIUS",
     "appVersion": "5.0.0",
     "projectPath": "C:\\Users\\Ricardo\\Documents\\Dissertacao",
-    "lastOpened": "2026-05-29T14:00:59.551Z"
+    "lastOpened": "2026-06-01T13:19:19.607Z"
   },
   "structure": {
     "basePath": "C:\\Users\\Ricardo\\Documents\\Dissertacao",
@@ -34,6 +34,11 @@
       {
         "name": "proc_interp.v",
         "path": "C:\\Users\\Ricardo\\Documents\\Dissertacao\\proc_interp\\Hardware\\proc_interp.v",
+        "isTopLevel": false
+      },
+      {
+        "name": "procTest_00.v",
+        "path": "C:\\Users\\Ricardo\\Documents\\Dissertacao\\proc_banco\\Hardware\\procTest_00.v",
         "isTopLevel": false
       },
       {

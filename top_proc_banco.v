@@ -1,8 +1,12 @@
-module top_proc_banco(input clk, rst_geral, rst_proc,
+module top_proc_banco(input clk, 
+			input rst_geral, 
+			input rst_proc,
 			input signed [31:0] in0,
-			output reg signed [31:0] out0, out1,
+			output reg signed [31:0] out0,
+			output reg signed [31:0] out1,
+			output reg signed [31:0] out2,
 			output wire req_in,
-			output wire [1:0]out_en
+			output wire [2:0]out_en
 		 );
 		 
 
@@ -27,8 +31,8 @@ proc_banco proc_banco_inst(
 								 .in(in_proc),
 								 .out(out_proc),
 								 .req_in(req_in),
-								 .out_en(out_en)
-								 //.itr(rst_proc)
+								 .out_en(out_en),
+								 .itr(rst_proc)
 								 );
 always @(posedge clk)
 begin
@@ -36,15 +40,16 @@ begin
 	begin
 		out0 <= 32'd0;
 		out1 <= 32'd0;
+		out2 <= 32'd0;
 	end
 	else
 	begin
 		if(out_en[0])
 			out0 <= out_proc;
-	end
-	begin
 		if(out_en[1])
 			out1 <= out_proc;
+		if(out_en[2])
+			out2 <= out_proc;
 	end
 end
 

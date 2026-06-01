@@ -376,7 +376,6 @@ def PolyphaseFilterBank(h, M, x):
 
     Eout = np.zeros((M,len(x)//M))
     for mm in range(M):    
-        
         x_slice = x[0:len(x)-mm]
         zeros = np.zeros(mm, dtype=x.dtype)
         
@@ -396,6 +395,84 @@ def PolyphaseFilterBank(h, M, x):
         v[:,nn] = M*np.fft.ifft(Eout[:,nn])
         
     return v
+
+
+
+
+def PolyphaseFilterBankCircular(h, M, x):
+    """
+    Polyphase filter bank using a circular input buffer.
+
+    This version keeps the same input/output behavior as PolyphaseFilterBank,
+    but updates only one sample of the input buffer at each iteration.
+    """
+
+    h = np.asarray(h)
+    x = np.asarray(x)
+
+    if M <= 0:
+        raise ValueError("M deve ser maior que zero.")
+
+    #===================================================
+    # Decomposicao Polifasica
+    #===================================================
+
+    Nf = int(np.ceil(len(h)/M))
+    dtype = np.result_type(h, x, float)
+    E = np.zeros((M, Nf), dtype=dtype)
+
+    for kk in range(M):
+        hh = np.array(h[kk::M], dtype=dtype)
+        hh_padded = np.pad(hh, (0, Nf - len(hh)), 'constant')
+        E[kk, :] = hh_padded
+
+    #===================================================
+    # Aplicacao dos Filtros com Buffer Circular
+    #===================================================
+
+    output_size = len(x)//M
+    Eout = np.zeros((M, output_size), dtype=dtype)
+
+    buffer = np.zeros(M, dtype=dtype)
+    buffer_head = 0
+    phase_state = np.zeros((M, Nf), dtype=dtype)
+    output_idx = 0
+
+    for nn in range(len(x)):
+        buffer_head = buffer_head - 1
+        if buffer_head < 0:
+            buffer_head = M - 1
+
+        buffer[buffer_head] = x[nn]
+            # criado para evitar erro nas colunas -> output_idx < output_size
+        if (nn % M) == 0 and output_idx < output_size: 
+            idx = buffer_head
+
+            for mm in range(M):
+                phase_state[mm, 1:] = phase_state[mm, :-1]
+                phase_state[mm, 0] = buffer[idx]
+                Eout[mm, output_idx] = np.dot(E[mm], phase_state[mm])
+
+                idx = idx + 1
+                if idx == M:
+                    idx = 0
+
+            output_idx = output_idx + 1
+
+    #===================================================
+    # Aplicacao da IDFT
+    #===================================================
+
+    v = np.zeros((M, output_size), dtype=complex)
+
+    for nn in range(output_size):
+        v[:,nn] = M*np.fft.ifft(Eout[:,nn])
+
+    return v
+
+
+
+
 
 def kf_trend_poly(f, Ts, order, q, r):
     """

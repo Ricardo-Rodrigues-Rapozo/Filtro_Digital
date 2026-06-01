@@ -1,4 +1,4 @@
-module proc_banco (
+module procTest_00 (
 
 input  clk, rst,
 input  signed [31:0] in ,
@@ -23,8 +23,8 @@ processor#(.NUBITS(32),
 .NBEXPO(8),
 .NBOPER(13),
 .NUGAIN(128),
-.MDATAS(5669),
-.MINSTS(369),
+.MDATAS(5670),
+.MINSTS(365),
 .SDEPTH(5),
 .DDEPTH(5),
 .NBIOIN(1),
@@ -44,10 +44,12 @@ processor#(.NUBITS(32),
 .P_LOD(1),
 .SF_DIV(1),
 .STI(1),
+.LDI(1),
+.P_I2F_M(1),
+.SF_MLT(1),
+.F2I(1),
 .EQU(1),
 .MLT(1),
-.LDI(1),
-.SF_MLT(1),
 .SF_ADD(1),
 .SET_P(1),
 .LIN(1),
@@ -57,17 +59,16 @@ processor#(.NUBITS(32),
 .F_SU1(1),
 .ISI(1),
 .F_ADD(1),
-.P_I2F_M(1),
-.POP(1),
-.F2I(1),
 .SF_GRE(1),
-.DFILE("C:/Users/Ricardo/Documents/Dissertacao/proc_banco/Hardware/proc_banco_data.mif"),
-.IFILE("C:/Users/Ricardo/Documents/Dissertacao/proc_banco/Hardware/proc_banco_inst.mif"))
+.F2I_M(1),
+.POP(1),
+.DFILE("C:/Users/Ricardo/Documents/Dissertacao/proc_banco/Hardware/procTest_00_data.mif"),
+.IFILE("C:/Users/Ricardo/Documents/Dissertacao/proc_banco/Hardware/procTest_00_inst.mif"))
 
 `ifdef __ICARUS__
-p_proc_banco (clk, rst, in, out, addr_in, addr_out, proc_req_in, proc_out_en, itr, cheguei, mem_wr, mem_addr_wr,pc_sim_val);
+p_procTest_00 (clk, rst, in, out, addr_in, addr_out, proc_req_in, proc_out_en, itr, cheguei, mem_wr, mem_addr_wr,pc_sim_val);
 `else
-p_proc_banco (clk, rst, in, out, addr_in, addr_out, proc_req_in, proc_out_en, itr, cheguei);
+p_procTest_00 (clk, rst, in, out, addr_in, addr_out, proc_req_in, proc_out_en, itr, cheguei);
 `endif
 
 assign req_in = proc_req_in;
@@ -134,17 +135,17 @@ always @ (posedge clk) begin
    if (mem_addr_wr == 5640 && mem_wr) me1_f_main_v_fft_limit_e_ <= out;
    if (mem_addr_wr == 5642 && mem_wr) me2_f_main_v_vector_count_e_ <= sm_me2*$pow(2.0,e_me2);
    if (mem_addr_wr == 5643 && mem_wr) me1_f_main_v_buffer_head_e_ <= out;
-   if (mem_addr_wr == 5645 && mem_wr) me1_f_main_v_mm_e_ <= out;
-   if (mem_addr_wr == 5646 && mem_wr) me1_f_main_v_ii_e_ <= out;
-   if (mem_addr_wr == 5656 && mem_wr) me1_f_main_v_mmax_e_ <= out;
-   if (mem_addr_wr == 5657 && mem_wr) me1_f_main_v_istep_e_ <= out;
-   if (mem_addr_wr == 5658 && mem_wr) me1_f_main_v_m_e_ <= out;
-   if (mem_addr_wr == 5659 && mem_wr) me1_f_main_v_ind_e_ <= out;
-   if (mem_addr_wr == 5660 && mem_wr) me1_f_main_v_sind_e_ <= out;
-   if (mem_addr_wr == 5661 && mem_wr) me1_f_main_v_q_e_ <= out;
-   if (mem_addr_wr == 5662 && mem_wr) me1_f_main_v_j_e_ <= out;
-   if (mem_addr_wr == 5665 && mem_wr) me3_f_main_v_temp_i_e_ <= out;
-   if (mem_addr_wr == 5666 && mem_wr) me3_f_main_v_temp_e_ <= out;
+   if (mem_addr_wr == 5646 && mem_wr) me1_f_main_v_mm_e_ <= out;
+   if (mem_addr_wr == 5647 && mem_wr) me1_f_main_v_ii_e_ <= out;
+   if (mem_addr_wr == 5657 && mem_wr) me1_f_main_v_mmax_e_ <= out;
+   if (mem_addr_wr == 5658 && mem_wr) me1_f_main_v_istep_e_ <= out;
+   if (mem_addr_wr == 5659 && mem_wr) me1_f_main_v_m_e_ <= out;
+   if (mem_addr_wr == 5660 && mem_wr) me1_f_main_v_ind_e_ <= out;
+   if (mem_addr_wr == 5661 && mem_wr) me1_f_main_v_sind_e_ <= out;
+   if (mem_addr_wr == 5662 && mem_wr) me1_f_main_v_q_e_ <= out;
+   if (mem_addr_wr == 5663 && mem_wr) me1_f_main_v_j_e_ <= out;
+   if (mem_addr_wr == 5666 && mem_wr) me3_f_main_v_temp_i_e_ <= out;
+   if (mem_addr_wr == 5667 && mem_wr) me3_f_main_v_temp_e_ <= out;
 end
 
 wire [16+32*2-1:0] comp_me3_f_main_v_temp_e_ = {8'd23, 8'd8, me3_f_main_v_temp_e_, me3_f_main_v_temp_i_e_};
@@ -162,15 +163,15 @@ reg [31:0] valr8=0;
 reg [31:0] valr9=0;
 reg [31:0] valr10=0;
 
-reg [19:0] min [0:369-1];
+reg [19:0] min [0:365-1];
 
 reg signed [19:0] linetab =-1;
 reg signed [19:0] linetabs=-1;
 
-initial	$readmemb("pc_proc_banco_mem.txt",min);
+initial	$readmemb("pc_procTest_00_mem.txt",min);
 
 always @ (posedge clk) begin
-if (pc_sim_val < 369) linetab <= min[pc_sim_val];
+if (pc_sim_val < 365) linetab <= min[pc_sim_val];
 linetabs <= linetab;   
 valr1    <= pc_sim_val;
 valr2    <= valr1;

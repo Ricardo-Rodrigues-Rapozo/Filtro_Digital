@@ -4,7 +4,7 @@ NOP
 #NDSTAC 5
 #SDEPTH 5
 #NUIOIN 1
-#NUIOOU 2
+#NUIOOU 3
 #NBMANT 23
 #NBEXPO 8
 #FFTSIZ 8
@@ -36,42 +36,44 @@ LOD 0
 SET main_output_count
 I2F_M 0
 SET main_vector_count
-@Lwh1 LOD 1
-JIZ Lwh1end
+LOD 0
+SET main_buffer_head
+@fim JMP fim
+#ITRAD
+LOD 0
+OUT 2
 LOD 1
 OUT 1
 NEG_M 1
-ADD main_M
-SET main_k
-@Lwh2 LOD 0
-GRE main_k
-JIZ Lwh2end
-LOD main_k
-P_NEG_M 1
-ADD main_k
-LDI main_buffer
-STI main_buffer
+ADD main_buffer_head
+SET main_buffer_head
+LOD 0
+LES main_buffer_head
+JIZ Lif1else
 NEG_M 1
-ADD main_k
-SET main_k
-JMP Lwh2
-@Lwh2end LOD 0
+ADD main_M
+SET main_buffer_head
+@Lif1else LOD main_buffer_head
 P_INN 0
 I2F
-P_LOD 100000.0
+P_LOD 1000000.0
 SF_DIV
 STI main_buffer
+LOD 1
+OUT 2
 NEG_M 1
 ADD main_M
 EQU main_sample_count
-JIZ Lif1else
+JIZ Lif2else
 LOD 0
 SET main_sample_count
 LOD 0
 SET main_mm
-@Lwh3 LOD main_M
+LOD main_buffer_head
+SET main_ii
+@Lwh1 LOD main_M
 LES main_mm
-JIZ Lwh3end
+JIZ Lwh1end
 LOD  main_mm
 MLT  main_E_arr_size
 ADD  7
@@ -131,7 +133,7 @@ STI main_E
 LOD  main_mm
 MLT  main_E_arr_size
 ADD  0
-P_LOD main_mm
+P_LOD main_ii
 LDI main_buffer
 STI main_E
 LOD main_mm
@@ -224,12 +226,25 @@ STI E0_i
 LOD main_mm
 ADD 1
 SET main_mm
-JMP Lwh3
-@Lwh3end LOD 1
+LOD main_ii
+ADD 1
+SET main_ii
+LOD main_M
+LES main_ii
+LIN
+JIZ Lif3else
+LOD 0
+SET main_ii
+@Lif3else LOD 2
+OUT 2
+JMP Lwh1
+@Lwh1end LOD 3
+OUT 2
+LOD 1
 SET main_mmax
-@Lwh4 LOD main_M
+@Lwh2 LOD main_M
 LES main_mmax
-JIZ Lwh4end
+JIZ Lwh2end
 LOD main_mmax
 MLT 2
 SET main_istep
@@ -239,14 +254,14 @@ LOD 0
 SET main_ind
 LOD 0
 SET main_sind
-@Lwh5 LOD main_mmax
+@Lwh3 LOD main_mmax
 LES main_m
-JIZ Lwh5end
+JIZ Lwh3end
 LOD main_m
 SET main_q
-@Lwh6 LOD main_M
+@Lwh4 LOD main_M
 LES main_q
-JIZ Lwh6end
+JIZ Lwh4end
 LOD main_q
 ADD main_mmax
 SET main_j
@@ -313,25 +328,21 @@ SET main_q
 LOD main_ind
 ADD 1
 SET main_ind
-JMP Lwh6
-@Lwh6end LOD main_ind
+JMP Lwh4
+@Lwh4end LOD main_ind
 SET main_sind
 LOD main_m
 ADD 1
 SET main_m
-JMP Lwh5
-@Lwh5end LOD main_istep
+JMP Lwh3
+@Lwh3end LOD main_istep
 SET main_mmax
-JMP Lwh4
-@Lwh4end @Lwh7 LOD main_vector_count
-P_I2F_M 50
-SF_GRE
-LIN
-JIZ Lwh7end
-F2I_M main_vector_count
-SET   aux_var
+JMP Lwh2
+@Lwh2end LOD 4
+OUT 2
+LOD 1
 ILI E0
-P_LOD aux_var
+P_LOD 1
 ILI E0_i
 SET_P aux_var
 P_I2F_M 1000000
@@ -342,10 +353,9 @@ SF_MLT
 POP
 F2I
 OUT 0
-F2I_M main_vector_count
-SET   aux_var
+LOD 1
 ILI E0
-P_LOD aux_var
+P_LOD 1
 ILI E0_i
 SET_P aux_var
 P_I2F_M 1000000
@@ -357,17 +367,23 @@ SET_P aux_var
 LOD   aux_var
 F2I
 OUT 0
+@Lwh5 LOD main_vector_count
+P_I2F_M 50
+SF_GRE
+LIN
+JIZ Lwh5end
 I2F_M 1
 F_ADD main_vector_count
 SET main_vector_count
-JMP Lwh7
-@Lwh7end I2F_M 0
+JMP Lwh5
+@Lwh5end I2F_M 0
 SET main_vector_count
-JMP Lif1end
-@Lif1else LOD main_sample_count
+LOD 5
+OUT 2
+JMP Lif2end
+@Lif2else LOD main_sample_count
 ADD 1
 SET main_sample_count
-@Lif1end LOD 0
+@Lif2end LOD 0
 OUT 1
-JMP Lwh1
-@Lwh1end @fim JMP fim
+@fim JMP fim
