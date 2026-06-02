@@ -1,0 +1,20 @@
+Fitter Status : Successful - Tue Jun 02 16:27:08 2026
+Quartus Prime Version : 20.1.1 Build 720 11/11/2020 Patches 1.02i SJ Lite Edition
+Revision Name : hpe
+Top-level Entity Name : toplevel_placa
+Family : Cyclone V
+Device : 5CSEBA6U23I7
+Timing Models : Final
+Logic utilization (in ALMs) : 4,196 / 41,910 ( 10 % )
+Total registers : 2098
+Total pins : 3 / 314 ( < 1 % )
+Total virtual pins : 0
+Total block memory bits : 3,911,639 / 5,662,720 ( 69 % )
+Total RAM Blocks : 489 / 553 ( 88 % )
+Total DSP Blocks : 4 / 112 ( 4 % )
+Total HSSI RX PCSs : 0
+Total HSSI PMA RX Deserializers : 0
+Total HSSI TX PCSs : 0
+Total HSSI PMA TX Serializers : 0
+Total PLLs : 1 / 6 ( 17 % )
+Total DLLs : 0 / 4 ( 0 % )

@@ -1,0 +1,28 @@
+module toplevel_placa(
+							input clk_50,
+							input rst,
+							output teste
+);
+
+
+
+
+
+
+top_level top_level(
+						 .clk(), 
+						 .rst_geral(), 
+						 .rst_proc_interp(),
+			          .in0_interp(),
+			          .out0_interp(), 
+			          .out1_interp(),
+			          .out2_interp(),
+			          .out3_interp(),
+			          .out4_interp(),
+			          .out0_banco(),
+			          .out_en_interp(),
+			          .out_en_banco() 
+		 );
+
+
+endmodule 

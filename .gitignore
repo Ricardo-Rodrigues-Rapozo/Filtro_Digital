@@ -1,5 +1,4 @@
-ICHQP2026_Ricardo/
-/Docs/
-/docs/
-Backup/
-Python/Docs/
+
+Aurora/Backup
+Python/Docs
+*.flock
