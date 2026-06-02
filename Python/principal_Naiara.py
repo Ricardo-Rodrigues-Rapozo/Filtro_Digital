@@ -1,3 +1,6 @@
+# ===================================================
+# Imports
+# ===================================================
 from pathlib import Path
 
 import numpy as np
@@ -7,9 +10,11 @@ import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 from DSPEPS import downsample, estima_f_zc, BSplineInterp, FlatTopFilterBase, PolyphaseFilterBank, kf_trend_poly,PolyphaseFilterBankCircular
 from auxiliares import TVE, wrap_to_pi
+import matplotlib.pyplot as plt
+
 
 # ===================================================
-# Basic Parameters for Signal Generation
+# Basic Parameters
 # ===================================================
 
 f0 = 60
@@ -20,7 +25,7 @@ Nc = 600
 t = np.arange((Nc + 100) * Nppc)*Ts
 
 # ===================================================
-# Basic Parameters for IEC60255_118 Tests
+# IEC60255-118 Test Parameters
 # ===================================================
 
 hmax = 50
@@ -33,14 +38,21 @@ f1 = 65
 Rf = 1
 fa = 54.75
 
+
+# ===================================================
+# Signal Generation
+# ===================================================
 x, Xr, fr, ROCOFr = signal_frequency(f1, (Nc + 300)*Nppc, f0, Fs, Fr, hmax, hmag, SNR)
 #x, Xr, fr, ROCOFr = frequency_ramp(Rf, (Nc + 300)*Nppc, f0, fa, Fs, Fr, hmax, hmag, SNR)
 
 
 x_int = (x * 32768.0).astype(np.int32)    
 np.savetxt('sinal_entrada_sapho.txt', x_int, fmt='%d')
-# Plotting the input signal, reference frequency, and reference ROCOF
-# -------------------------------------------------------------------
+
+
+# ===================================================
+# Initial Plots
+# ===================================================
 fig = make_subplots(
     rows=3, cols=1,
     shared_xaxes=True,
@@ -69,10 +81,11 @@ fig.update_traces(line=dict(width=4))
 
 fig.show()
 
-# ===================================================
-# Frequency Estimation
-# ===================================================
+# ===================================================#
+#              Frequency Estimation                  #
+# ===================================================#
 
+# ----------   from python ----------
 f_zc_m, zc_m_delay, f_zc, zc_delay = estima_f_zc(x, 1/Fs, Nppc, plot_level=2)
 
 freq = f_zc_m
@@ -82,6 +95,13 @@ delay[-1] = 1.0
 
 x = lfilter(delay, [1.0], x)
 
+# ----------   from Sapho  ----------
+freq_est_sapho = np.loadtxt('saida_interp2.txt')  ## frequencia do média movel
+
+
+# ===================================================
+# Alignment and Discard from python 
+# ===================================================
 # para alinhar o tempo de f_zc, fr, Xr e ROCOFr com o tempo de x, considerando o delay introduzido pelo filtro de média móvel
 # ---------------------------------------------------------------------------------------------------------------------------
 fr2 = np.concatenate((np.zeros(zc_delay), fr)) 
@@ -89,8 +109,10 @@ fr = np.concatenate((np.zeros(zc_m_delay), fr))
 Xr = np.hstack((np.zeros((hmax, zc_m_delay)), Xr)) 
 ROCOFr  = np.concatenate((np.zeros(zc_m_delay), ROCOFr)) 
 
-# Plotting the input signal, reference frequency, and reference ROCOF
-# -------------------------------------------------------------------
+
+# ===================================================
+# Frequency Estimation Plots
+# ===================================================
 fig = make_subplots(
     rows=2, cols=1,
     shared_xaxes=True,
@@ -132,8 +154,10 @@ fr = fr[discard_samples:discard_samples+(Nc+200)*Nppc]
 Xr = Xr[:, discard_samples:discard_samples+(Nc+200)*Nppc]
 ROCOFr = ROCOFr[discard_samples:discard_samples+(Nc+200)*Nppc]
 
-# Plotting the reference frequency and the zero-crossing frequency estimation
-# ---------------------------------------------------------------------------
+
+# ===================================================
+# Aligned Frequency Plot
+# ===================================================
 fig = go.Figure()
 fig.add_trace(go.Scatter(y=fr, name="Reference", mode='lines'))
 fig.add_trace(go.Scatter(y=freq, name="Zero Crossing", mode='lines'))
@@ -154,6 +178,7 @@ fig.show()
 # ===================================================
 # BSpline Interpolation
 # ===================================================
+
 MBSP = 5
 
 xi = BSplineInterp(x, f0, freq, MBSP, Fs, plot_level=0)
@@ -175,24 +200,57 @@ fig.update_layout(
 fig.show()
 
 # ===================================================
-# Polyphase FilterBank
+# Polyphase FilterBank / CMM
 # ===================================================
+
 M = Fs//f0
 
 h = FlatTopFilterBase(8*Nppc + 1) # Base Filter Definition - FlatTop 
 fbDelay = (len(h))//(2*M)
 
 
+# CMM coefficient export
 Ehh_cmm = np.zeros((M, 8))
 for kk in range(M):
     Ehh_cmm[kk, :] = h[kk::M][:8]
 np.savetxt('flattop_coeffs.txt', Ehh_cmm.reshape(-1), fmt='%.18e')
 
+
+# Python circular filter bank
 Xcircular = PolyphaseFilterBankCircular(h, M, xi)
 Xcircular  = Xcircular[1:hmax+1,:]
-np.savetxt('saida_im_banco.txt', 1000000 * Xcircular.imag, fmt='%d')
-np.savetxt('saida_real_banco.txt', 1000000 * Xcircular.real, fmt='%d')
 
+
+# ===================================================
+# CMM Output Comparison
+# ===================================================
+
+out = np.loadtxt('saida_banco0.txt')
+real = out[0::2]
+imag = out[1::2] 
+fasores = real + 1j * imag
+
+# Detecta o numero de componente por frame (50 ou 51)
+Nh = None
+for cand in (50, 51):
+    if len(fasores) % cand == 0:
+        Nh = cand
+        break
+if Nh is None:
+    raise ValueError(
+        f"len(fasores)={len(fasores)} not multiple of 50 or 51. Check SAPHO saving loop."
+    )
+fasores = fasores[0 : Nh * len(fasores) // Nh]  # Truncate to multiple of Nh
+fasor_h = fasores.reshape(Nh, N, order="F")
+fasor_h = fasor_h[1:50, fbDelay + 1 : len(fasor_h)]
+
+AFT_cmm = 2 * np.abs(fasor_h)
+PFT_cmm = np.unwrap(np.angle(fasor_h))
+
+
+# ===================================================
+# Signal Length Adjustment
+# ===================================================
 
 # Cut the signals to the length of the polyphase filter bank output, which is equal to the number of samples that can be processed by the filter bank given its delay and decimation factor
 # ------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -205,10 +263,13 @@ X = PolyphaseFilterBank(h, M, xi)
 X  = X[1:hmax+1,:]
 
 
-
-
 AFT = 2*np.abs(X)
 PFT = np.unwrap(np.angle(X))
+
+
+# ===================================================
+# Downsampling and Delay Compensation
+# ===================================================
 
 # Downsampling the frequency, fr and Xr to match the decimation factor of the polyphase filter bank
 # ---------------------------------------------------------------------------------------------
@@ -228,9 +289,11 @@ freq = freq[:-fbDelay]
 fr = fr[:-fbDelay]
 Xr = Xr[:,:-fbDelay]
 
+
 # ===================================================
 # Phase Correction
 # ===================================================
+
 delta_f = freq - f0
 correc = np.zeros(len(delta_f))
 
@@ -247,9 +310,11 @@ correcH = h*correc
 PFTc = np.unwrap((PFT) + np.unwrap(correcH)) 
 Xc = AFT*np.exp(1j*PFTc)
 
+
 # ===================================================
 # Performance Analysis
 # ===================================================
+
 Aref = np.abs(Xr)
 Pref = np.unwrap(np.angle(Xr))
 
@@ -277,8 +342,10 @@ fig.update_layout(
 fig.show()
 
 
+# ===================================================
 # Error Calculation
-# ---------------------------------------------------
+# ===================================================
+
 AFT   = AFT[:,2*fbDelay:]  
 Aref  = Aref[:,2*fbDelay:] 
 PFTc  = PFTc[:,2*fbDelay:] 
@@ -313,8 +380,10 @@ fig.update_layout(
 fig.show()
 
 
-# Min, Max and Average Errors
-# ---------------------------------------------------
+# ===================================================
+# Error Summary
+# ===================================================
+
 ErroAFTmin = np.min(ErroAFT, axis=1)
 ErroAFTmax = np.max(ErroAFT, axis=1)
 ErroAFTavg = np.mean(ErroAFT, axis=1)
