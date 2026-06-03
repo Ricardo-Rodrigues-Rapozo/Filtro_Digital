@@ -198,7 +198,7 @@ np.savetxt('saida_real_banco.txt', 1000000 * Xcircular.real, fmt='%d')
 # ------------------------------------------------------------------------------------------------------------------------------------------------------
 xi = xi[:(Nc + fbDelay)*Nppc]
 Xr = Xr[:,:(Nc + fbDelay)*Nppc]
-freq = freq[:(Nc + fbDelay)*Nppc]
+freq = freq[:(Nc + fbDelay)*Nppc] ## Limita a 10s de simulação 
 fr = fr[:(Nc + fbDelay)*Nppc]
 
 X = PolyphaseFilterBank(h, M, xi)
@@ -212,13 +212,13 @@ PFT = np.unwrap(np.angle(X))
 
 # Downsampling the frequency, fr and Xr to match the decimation factor of the polyphase filter bank
 # ---------------------------------------------------------------------------------------------
-freq = downsample(freq,M)
+freq = downsample(freq,M)   
 Xr = downsample(Xr,M)
 fr = downsample(fr,M)
 
 # Compensating the delay introduced by the polyphase filter bank, which is equal to half the length of the filter divided by the decimation factor
 # --------------------------------------------------------------------------------------------------------------------------------------
-freq = np.concatenate((np.zeros(fbDelay), freq))
+freq = np.concatenate((np.zeros(fbDelay), freq))  ## Compensa o atraso do filtro polifasico 
 fr = np.concatenate((np.zeros(fbDelay), fr))
 Xr = np.hstack((np.zeros((hmax, fbDelay)), Xr))
 
