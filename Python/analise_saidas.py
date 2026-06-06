@@ -46,6 +46,14 @@ HARMONICOS_ANALISADOS = np.arange(1, HMAX + 1, 2)
 INDICES_HARMONICOS = HARMONICOS_ANALISADOS - 1
 HARMONICOS_PLOT = (1, 13, 27, int(HARMONICOS_ANALISADOS[-1]))
 
+# A saida_interp2/4 do SAPHO fica etiquetada uma amostra de entrada
+# adiantada em relacao ao fluxo Python equivalente.
+ADIANTAMENTO_FREQ_AMOSTRAS_SAPHO = 1
+
+# A rotacao fixa de uma amostra no fasor SAPHO foi testada separadamente
+# e piora estes dados; mantemos a fase sem esse termo constante.
+AJUSTE_FASE_AMOSTRAS_SAPHO = 0.0
+
 # Se quiser tambem mostrar as figuras em uma janela, troque para True.
 ABRIR_GRAFICOS = False
 
@@ -287,6 +295,29 @@ def reconstruir_frequencia_interpolada(freq_entrada):
     return np.asarray(freq_interpolada)
 
 
+def compensar_adiantamento_amostras(vetor, adiantamento_amostras):
+    """
+    Ajusta vetores exportados por amostra quando o SAPHO registra o instante
+    uma amostra adiantado em relacao ao fluxo equivalente em Python.
+    """
+    vetor = np.asarray(vetor)
+    adiantamento_amostras = int(adiantamento_amostras)
+
+    if adiantamento_amostras == 0:
+        return vetor
+
+    if abs(adiantamento_amostras) >= vetor.size:
+        raise ValueError("Deslocamento de amostras maior que o vetor de entrada.")
+
+    if adiantamento_amostras > 0:
+        preenchimento = np.full(adiantamento_amostras, vetor[0], dtype=vetor.dtype)
+        return np.concatenate((preenchimento, vetor))[: vetor.size]
+
+    atraso = -adiantamento_amostras
+    preenchimento = np.full(atraso, vetor[-1], dtype=vetor.dtype)
+    return np.concatenate((vetor[atraso:], preenchimento))
+
+
 def alinhar_frequencia_com_banco(freq_interpolada, n_frames, fb_delay, offset=0):
     """Decima a frequencia interpolada e aplica o atraso do banco polifasico."""
     if offset >= freq_interpolada.size:
@@ -304,7 +335,15 @@ def alinhar_frequencia_com_banco(freq_interpolada, n_frames, fb_delay, offset=0)
     return freq_frames[:n_frames]
 
 
-def preparar_frequencia_sapho(n_frames, fb_delay, saida_sapho=None, referencia=None, pre_delay=None):
+def preparar_frequencia_sapho(
+    n_frames,
+    fb_delay,
+    saida_sapho=None,
+    referencia=None,
+    pre_delay=None,
+    adiantamento_freq_amostras=0,
+    ajuste_fase_amostras=0.0,
+):
     """
     Carrega a frequencia estimada pelo SAPHO para usar na correcao de fase.
 
@@ -328,6 +367,10 @@ def preparar_frequencia_sapho(n_frames, fb_delay, saida_sapho=None, referencia=N
 
     for caminho, descricao in fontes:
         freq_entrada = np.loadtxt(caminho) / ESCALA_BANCO
+        freq_entrada = compensar_adiantamento_amostras(
+            freq_entrada,
+            adiantamento_freq_amostras,
+        )
         freq_interpolada = reconstruir_frequencia_interpolada(freq_entrada)
 
         for offset in range(M):
@@ -339,7 +382,13 @@ def preparar_frequencia_sapho(n_frames, fb_delay, saida_sapho=None, referencia=N
             )
 
             if usar_referencia:
-                estimado = corrigir_fase(saida_sapho, pre_delay, fb_delay, freq_frames)
+                estimado = corrigir_fase(
+                    saida_sapho,
+                    pre_delay,
+                    fb_delay,
+                    freq_frames,
+                    adiantamento_amostras=ajuste_fase_amostras,
+                )
                 resultado = calcular_metricas(
                     "teste_freq_sapho",
                     estimado,
@@ -368,6 +417,8 @@ def preparar_frequencia_sapho(n_frames, fb_delay, saida_sapho=None, referencia=N
 
     print("\nFrequencia SAPHO usada na correcao de fase:")
     print(f"  arquivo: {melhor['descricao']}")
+    print(f"  ajuste da saida_interp SAPHO: {adiantamento_freq_amostras} amostra(s)")
+    print(f"  ajuste fixo de fase SAPHO: {ajuste_fase_amostras} amostra(s)")
     print(f"  amostras na saida interpolada: {melhor['freq_interpolada'].size}")
     print(f"  frames do banco: {freq_frames.size}")
     print(f"  offset na saida interpolada: {melhor['offset']} amostras")
@@ -381,7 +432,13 @@ def preparar_frequencia_sapho(n_frames, fb_delay, saida_sapho=None, referencia=N
     return freq_frames
 
 
-def corrigir_fase(fasores, pre_delay, fb_delay, freq_frames=None):
+def corrigir_fase(
+    fasores,
+    pre_delay,
+    fb_delay,
+    freq_frames=None,
+    adiantamento_amostras=0.0,
+):
     """Converte a saida do banco em fasor corrigido, como no fluxo principal."""
     n_frames = fasores.shape[1]
     n_harmonicos = fasores.shape[0]
@@ -411,7 +468,7 @@ def corrigir_fase(fasores, pre_delay, fb_delay, freq_frames=None):
 
     # Nos TXT exportados pelo banco, o termo -pi inverte os harmonicos impares.
     # Por isso mantemos apenas o ajuste do atraso do pre-filtro.
-    correc = correc + (pre_delay / N_PPC) * 2 * np.pi
+    correc = correc + ((pre_delay - adiantamento_amostras) / N_PPC) * 2 * np.pi
 
     harmonicos = np.arange(1, n_harmonicos + 1).reshape(-1, 1)
     fase_corrigida = np.unwrap(fase + harmonicos * correc, axis=1)
@@ -546,9 +603,23 @@ def salvar_grafico(nome_arquivo, resultado):
         plt.show()
 
 
-def analisar_saida(nome, fasores, referencia, pre_delay, fb_delay, freq_frames=None):
+def analisar_saida(
+    nome,
+    fasores,
+    referencia,
+    pre_delay,
+    fb_delay,
+    freq_frames=None,
+    adiantamento_amostras=0.0,
+):
     """Aplica correcao de fase, calcula metricas e salva resultados."""
-    estimado = corrigir_fase(fasores, pre_delay, fb_delay, freq_frames)
+    estimado = corrigir_fase(
+        fasores,
+        pre_delay,
+        fb_delay,
+        freq_frames,
+        adiantamento_amostras=adiantamento_amostras,
+    )
     resultado = calcular_metricas(nome, estimado, referencia, fb_delay)
     resultado["fasores_corrigidos"] = estimado
 
@@ -666,6 +737,8 @@ def main():
         saida_sapho,
         referencia,
         pre_delay,
+        ADIANTAMENTO_FREQ_AMOSTRAS_SAPHO,
+        AJUSTE_FASE_AMOSTRAS_SAPHO,
     )
 
     print("Arquivos carregados:")
@@ -677,12 +750,20 @@ def main():
     print(f"  zc_m_delay={zc_m_delay}")
     print(f"  discard_samples={discard_samples}")
     print(f"  fb_delay={fb_delay}")
+    print(f"  adiantamento_freq_amostras_sapho={ADIANTAMENTO_FREQ_AMOSTRAS_SAPHO}")
+    print(f"  ajuste_fase_amostras_sapho={AJUSTE_FASE_AMOSTRAS_SAPHO}")
 
     resultado_python = analisar_saida(
         "python_banco", saida_python, referencia, pre_delay, fb_delay
     )
     resultado_sapho = analisar_saida(
-        "sapho_banco", saida_sapho, referencia, pre_delay, fb_delay, freq_sapho
+        "sapho_banco",
+        saida_sapho,
+        referencia,
+        pre_delay,
+        fb_delay,
+        freq_sapho,
+        AJUSTE_FASE_AMOSTRAS_SAPHO,
     )
     salvar_grafico_harmonicos(
         referencia,
