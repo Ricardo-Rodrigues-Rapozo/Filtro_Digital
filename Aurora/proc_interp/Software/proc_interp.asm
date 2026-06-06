@@ -429,11 +429,7 @@ LIN
 JIZ Lif2else
 LOD 0
 SET main_buffer_media_movel_idex
-@Lif2else I2F_M 1000000
-F_MLT main_fcc
-F2I
-OUT 2
-LOD 0
+@Lif2else LOD 0
 GRE main_atraso_geral
 JIZ Lif3else
 LOD main_c_index
@@ -665,6 +661,10 @@ I2F_M 1000000
 F_MLT main_y
 F2I
 OUT 0
+I2F_M 1000000
+F_MLT main_fcc
+F2I
+OUT 2
 LOD main_alfa
 F_ADD main_lambda_val
 SET main_alfa

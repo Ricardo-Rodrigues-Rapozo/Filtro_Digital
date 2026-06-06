@@ -181,7 +181,7 @@ void main()
             buffer_media_movel_idex = 0;
         }
 
-        fout(2, fcc * 1000000);
+        //fout(2, fcc * 1000000);
 
         // ============================== Estrutura B-Spline ====================================== //
 
@@ -281,6 +281,7 @@ void main()
                     y = ((H0 * alfa + H1) * alfa + H2) * alfa + H3;
 
                     fout(0, y * 1000000);
+                    fout(2, fcc * 1000000);
 
                     alfa = alfa + lambda_val;
                 }

@@ -1,523 +1,261 @@
+from contextlib import redirect_stdout
 from pathlib import Path
+import io
 import warnings
+
+# Este script gera a referencia em Python, executa o mesmo fluxo principal do
+# principal_Naiara.py por tras dos panos e compara essa referencia com os TXT
+# exportados pelo SAPHo. A ideia e manter tudo linear e facil de auditar:
+# primeiro monta o caminho Python, depois le o SAPHo, depois corrige fase e
+# calcula os erros.
 
 import matplotlib
 import numpy as np
-from scipy.signal import bessel, bilinear, group_delay
+from scipy.signal import lfilter
 
+# Blocos originais usados pelo fluxo de validacao.
 from sinaisIEC60255_118 import signal_frequency
+from DSPEPS import (
+    BSplineInterp,
+    FlatTopFilterBase,
+    PolyphaseFilterBank,
+    downsample,
+    estima_f_zc,
+)
 from auxiliares import TVE, wrap_to_pi
 
+# Backend sem janela. Assim o script pode rodar direto no terminal e salvar os
+# PDFs mesmo sem interface grafica aberta.
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 
 
-# ======================================================================
-# Parametros do caso analisado
-# ======================================================================
+# ===================================================
+# Parametros iguais ao principal_Naiara.py
+# ===================================================
+# Frequencia nominal do sistema.
+f0 = 60
 
-F0 = 60
-F1 = 65
-N_PPC = 256
-FS = F0 * N_PPC
-TS = 1 / FS
-NC = 600
-FR = 60
-HMAX = 50
-HMAG = 0.05
+# Numero de pontos por ciclo nominal usado em todo o processamento.
+Nppc = 256
+
+# Frequencia de amostragem e periodo de amostragem.
+Fs = f0 * Nppc
+Ts = 1 / Fs
+
+# Numero de ciclos efetivos analisados apos os descartes.
+Nc = 600
+
+# Quantidade maxima de harmonicos produzidos/esperados no banco.
+hmax = 50
+
+# Magnitude dos harmonicos injetados na geracao do sinal sintetico.
+hmag = 0.05
+
+# Frequencia de referencia usada pela interpolacao.
+Fr = 60
+
+# SNR alto para deixar o teste praticamente deterministico.
 SNR = 6_000_000
-ESCALA_BANCO = 1_000_000.0
 
-M = FS // F0
-N_SIGNAL = (NC + 300) * N_PPC
-N_ANALISE = (NC + 200) * N_PPC
+# Frequencia off-nominal do caso avaliado.
+f1 = 65
 
+# Ordem do interpolador B-spline.
+MBSP = 5
+
+# Fator de decimacao: uma saida do banco por ciclo nominal.
+M = Fs // f0
+
+# Os arquivos do SAPHo estao em ponto fixo escalado por 1e6.
+ESCALA = 1_000_000.0
+
+# Caminhos relativos ao repositorio, para o script funcionar de qualquer cwd.
 BASE_DIR = Path(__file__).resolve().parents[1]
 DADOS_DIR = BASE_DIR / "Aurora" / "dados_simulacao"
 SAIDA_DIR = DADOS_DIR / "analise_saidas"
 
-REAL_PYTHON_TXT = DADOS_DIR / "saida_real_banco.txt"
-IMAG_PYTHON_TXT = DADOS_DIR / "saida_im_banco.txt"
-SAPHO_TXT = DADOS_DIR / "saida_banco0.txt"
-FREQ_MEDIA_SAPHO_TXT = DADOS_DIR / "saida_interp2.txt"
-FREQ_ATRASADA_SAPHO_TXT = DADOS_DIR / "saida_interp4.txt"
+# Arquivos brutos exportados pelo testbench/SAPHo.
+ARQ_SAPHO_BANCO = DADOS_DIR / "saida_banco0.txt"
+ARQ_SAPHO_FREQ = DADOS_DIR / "saida_interp2.txt"
+ARQ_SAPHO_INTERP = DADOS_DIR / "saida_interp0.txt"
 
-HARMONICOS_ANALISADOS = np.arange(1, HMAX + 1, 2)
-INDICES_HARMONICOS = HARMONICOS_ANALISADOS - 1
-HARMONICOS_PLOT = (1, 13, 27, int(HARMONICOS_ANALISADOS[-1]))
+# Harmonicos mostrados no grafico de conferencia visual.
+HARMONICOS_PLOT = (1, 13, 27, 49)
 
-# A saida_interp2/4 do SAPHO fica etiquetada uma amostra de entrada
-# adiantada em relacao ao fluxo Python equivalente.
-ADIANTAMENTO_FREQ_AMOSTRAS_SAPHO = 1
+# Parametros de janela/corte. Ficam separados para facilitar testes de atraso
+# sem procurar numeros magicos no meio do fluxo.
+CICLOS_EXTRAS_GERACAO = 300
+CICLOS_EXTRAS_ANALISE = 200
+MULTIPLICADOR_DESCARTE_ZC = 2
+MULTIPLICADOR_CORTE_BANCO = 4
 
-# A rotacao fixa de uma amostra no fasor SAPHO foi testada separadamente
-# e piora estes dados; mantemos a fase sem esse termo constante.
-AJUSTE_FASE_AMOSTRAS_SAPHO = 0.0
-
-# Se quiser tambem mostrar as figuras em uma janela, troque para True.
-ABRIR_GRAFICOS = False
-
-
-def calcular_atrasos():
-    """Calcula os atrasos usados no mesmo fluxo de principal_Naiara.py."""
-    b, a = bessel(6, 2 * np.pi * 90, analog=True)
-    b, a = bilinear(b, a, fs=FS)
-
-    # group_delay pode avisar sobre singularidades fora da regiao de interesse.
-    with warnings.catch_warnings():
-        warnings.simplefilter("ignore")
-        freq_gd, gd = group_delay((b, a), w=4096, fs=FS)
-
-    idx_60hz = np.argmin(np.abs(freq_gd - F0))
-    pre_delay = int(round(gd[idx_60hz]))
-
-    zc_delay = pre_delay + N_PPC // 2
-    zc_m_delay = N_PPC // 2 + zc_delay
-    discard_samples = 2 * int(np.ceil(zc_m_delay / N_PPC) * N_PPC)
-
-    tamanho_filtro = 8 * N_PPC + 1
-    fb_delay = tamanho_filtro // (2 * M)
-
-    return pre_delay, zc_m_delay, discard_samples, fb_delay
+# Tamanhos derivados dos parametros acima.
+AMOSTRAS_GERACAO = (Nc + CICLOS_EXTRAS_GERACAO) * Nppc
+AMOSTRAS_ANALISE = (Nc + CICLOS_EXTRAS_ANALISE) * Nppc
+TAMANHO_FILTRO_BANCO = 8 * Nppc + 1
 
 
-def carregar_saida_python():
-    """Le a saida complexa exportada pelo banco polifasico em Python."""
-    real = np.loadtxt(REAL_PYTHON_TXT) / ESCALA_BANCO
-    imag = np.loadtxt(IMAG_PYTHON_TXT) / ESCALA_BANCO
-
-    if real.shape != imag.shape:
-        raise ValueError(
-            f"Dimensoes diferentes: real={real.shape}, imag={imag.shape}"
-        )
-
-    if real.shape[0] != HMAX:
-        raise ValueError(
-            f"Esperava {HMAX} harmonicos na saida Python, mas veio {real.shape[0]}."
-        )
-
-    return real + 1j * imag
-
-
-def erro_medio_raw(sapho, python):
-    """Erro simples entre a matriz SAPHO bruta e a matriz Python bruta."""
-    n_harmonicos = min(sapho.shape[0], python.shape[0])
-    n_frames = min(sapho.shape[1], python.shape[1])
-
-    sapho = sapho[:n_harmonicos, :n_frames]
-    python = python[:n_harmonicos, :n_frames]
-
-    return np.mean(np.abs(sapho - python))
-
-
-def candidatos_saida_sapho(fasores, componentes):
-    """Gera os cortes possiveis para transformar componentes em H1..H50."""
-    n_frames = fasores.size // componentes
-    matriz = fasores[: componentes * n_frames].reshape(componentes, n_frames, order="F")
-
-    if componentes == HMAX:
-        yield "50 componentes: linhas 0..49 = H1..H50", matriz[:HMAX, :]
-    elif componentes == HMAX + 1:
-        yield "51 componentes: linhas 0..49 = H1..H50", matriz[:HMAX, :]
-        yield "51 componentes: linhas 1..50 = H1..H50", matriz[1 : HMAX + 1, :]
-
-
-def candidatos_saida_sapho_com_atraso_escalar(out):
+def corrigir_fase(X, freq, pre_delay, fbDelay):
     """
-    Reconstrucao para a captura atual do top_level_tb.
+    Corrige a fase dos fasores usando a frequencia estimada.
 
-    O banco emite 102 escalares por frame: real/imag de 51 componentes.
-    Como out0_banco e registrado e o testbench escreve no mesmo posedge,
-    o primeiro escalar de cada frame e o valor atrasado do frame anterior.
-    Assim, H1..H49 ficam nos escalares 3..100 de cada frame.
+    X pode vir tanto do banco Python quanto do banco SAPHo. Por isso esta
+    funcao nao tem nenhum ajuste especifico de origem: se Python e SAPHo
+    estiverem alinhados, a mesma regra deve servir para os dois.
     """
-    escalares_por_frame = 2 * (HMAX + 1)
+    # Mesma correcao usada para os dois caminhos analisados: banco Python e
+    # banco SAPHo. A diferenca entre eles deve vir dos fasores/frequencia de
+    # entrada, nao de uma formula de fase diferente.
 
-    if out.size % escalares_por_frame != 0:
-        return
+    # O banco retorna uma componente complexa por harmonico. O fator 2 coloca a
+    # magnitude na mesma convencao da referencia gerada por signal_frequency.
+    AFT = 2 * np.abs(X)
 
-    frames = out.reshape(-1, escalares_por_frame)
+    # unwrap evita saltos artificiais de +/-pi durante a integracao/erro.
+    PFT = np.unwrap(np.angle(X), axis=1)
 
-    candidatos = [
-        ("real=primeiro, imag=segundo", lambda real, imag: real + 1j * imag),
-        ("real=segundo, imag=primeiro", lambda real, imag: imag + 1j * real),
-        ("conjugado", lambda real, imag: real - 1j * imag),
-        ("troca + conjugado", lambda real, imag: imag - 1j * real),
-    ]
+    # delta_f e a frequencia instantanea medida em relacao a nominal.
+    delta_f = freq[: X.shape[1]] - f0
 
-    for nome, montar_complexo in candidatos:
-        fasores = []
-        for frame in frames:
-            valores_h1_h49 = frame[3:101]
-            real = valores_h1_h49[0::2]
-            imag = valores_h1_h49[1::2]
-            fasores.append(montar_complexo(real, imag))
+    # correc_fundamental acumula a rotacao de fase da fundamental, frame a
+    # frame. Ela e escalar no harmonico porque ainda representa apenas H1.
+    correc_fundamental = np.zeros(len(delta_f))
 
-        matriz = np.array(fasores).T
-        yield (
-            "captura registrada: descarta 1 escalar/frame; "
-            f"H1..H49; {nome}",
-            matriz,
-        )
-
-
-def carregar_saida_sapho(saida_python):
-    """Le a saida serial do SAPHO e escolhe o mapeamento mais parecido com Python."""
-    out = np.loadtxt(SAPHO_TXT) / ESCALA_BANCO
-
-    if out.size % 2 != 0:
-        raise ValueError("saida_banco0.txt deve ter uma quantidade par de amostras.")
-
-    primeira = out[0::2]
-    segunda = out[1::2]
-
-    ordens_complexas = [
-        ("ordem Vitor: real=amostra par, imag=amostra impar", primeira + 1j * segunda),
-        ("ordem invertida: real=amostra impar, imag=amostra par", segunda + 1j * primeira),
-    ]
-
-    melhores = []
-    for nome_ordem, fasores in ordens_complexas:
-        for componentes in (HMAX + 1, HMAX):
-            if fasores.size % componentes != 0:
-                continue
-
-            for nome_corte, matriz in candidatos_saida_sapho(fasores, componentes):
-                if matriz.shape[0] != HMAX:
-                    continue
-
-                erro = erro_medio_raw(matriz, saida_python)
-                melhores.append((erro, nome_ordem, nome_corte, matriz))
-
-    for nome_corte, matriz in candidatos_saida_sapho_com_atraso_escalar(out):
-        erro = erro_medio_raw(matriz, saida_python)
-        melhores.append((erro, "reconstrucao por frame", nome_corte, matriz))
-
-    if not melhores:
-        raise ValueError(
-            "Nao foi possivel organizar saida_banco0.txt em blocos de 50 ou 51 "
-            f"componentes. Total de fasores: {primeira.size}."
-        )
-
-    erro, nome_ordem, nome_corte, matriz = min(melhores, key=lambda item: item[0])
-
-    print("\nMapeamento SAPHO escolhido:")
-    print(f"  {nome_ordem}")
-    print(f"  {nome_corte}")
-    print(f"  erro bruto medio contra Python: {erro:.6e}")
-
-    return matriz
-
-
-def diagnosticar_saida_sapho(saida_sapho, saida_python, fb_delay):
-    """Mostra avisos simples sobre problemas comuns na saida SAPHO."""
-    if saida_sapho.shape[0] < 2 or saida_sapho.shape[1] == 0:
-        return
-
-    n_frames = min(saida_sapho.shape[1], saida_python.shape[1])
-    inicio = min(2 * fb_delay, max(n_frames - 1, 0))
-    sapho = saida_sapho[:, inicio:n_frames]
-    python = saida_python[:, inicio:n_frames]
-
-    if sapho.size == 0 or python.size == 0:
-        return
-
-    media_sapho = np.mean(np.abs(sapho), axis=1)
-    media_python = np.mean(np.abs(python), axis=1)
-
-    razao_h1 = media_sapho[0] / max(media_python[0], 1e-12)
-    razao_harmonicos = np.median(
-        media_sapho[2::2] / np.maximum(media_python[2::2], 1e-12)
-    )
-
-    print("\nDiagnostico SAPHO bruto:")
-    print(f"  |H1| SAPHO/Python = {razao_h1:.3f}")
-    print(f"  mediana |H3..H49| SAPHO/Python = {razao_harmonicos:.3f}")
-
-    if razao_harmonicos < 0.2:
-        print(
-            "  Aviso: os harmonicos do SAPHO estao muito menores que os do Python."
-        )
-        print(
-            "  Isso costuma indicar entrada diferente no testbench ou exportacao/calculo "
-            "dos bins harmonicos ainda incorreto."
-        )
-
-
-def gerar_referencia(pre_delay, zc_m_delay, discard_samples, fb_delay):
-    """Gera Xr por signal_frequency e aplica os mesmos cortes principais."""
-    _, Xr, _, _ = signal_frequency(F1, N_SIGNAL, F0, FS, FR, HMAX, HMAG, SNR)
-
-    # Alinha com o atraso da estimacao de frequencia por zero crossing.
-    zeros_zc = np.zeros((HMAX, zc_m_delay), dtype=complex)
-    Xr = np.hstack((zeros_zc, Xr))
-    Xr = Xr[:, discard_samples : discard_samples + N_ANALISE]
-
-    # Alinha com a saida decimada do banco polifasico.
-    Xr = Xr[:, : (NC + fb_delay) * N_PPC]
-    Xr = Xr[..., ::M]
-
-    zeros_fb = np.zeros((HMAX, fb_delay), dtype=complex)
-    Xr = np.hstack((zeros_fb, Xr))
-    Xr = Xr[:, :-fb_delay]
-
-    return Xr
-
-
-def reconstruir_frequencia_interpolada(freq_entrada):
-    """
-    Reconstroi a frequencia associada a cada amostra interpolada do SAPHO.
-
-    saida_interp2/saida_interp4 sao gravadas uma vez por amostra de entrada.
-    Ja saida_interp0 pode gerar 1 ou 2 amostras para a mesma entrada, conforme
-    o acumulador alfa do Farrow. Este loop repete a frequencia com a mesma
-    logica de lambda = 60/frequencia usada em proc_interp.cmm.
-    """
-    freq_interpolada = []
-    alfa = 0.0
-    cnt = 0
-
-    for freq in np.asarray(freq_entrada, dtype=float):
-        lambda_val = FR / freq if freq != 0.0 else 0.0
-
-        if cnt > 6:
-            if lambda_val <= 0.0:
-                continue
-
-            while alfa < 1.0:
-                freq_interpolada.append(freq)
-                alfa += lambda_val
-
-            alfa -= 1.0
-        else:
-            cnt += 1
-
-    return np.asarray(freq_interpolada)
-
-
-def compensar_adiantamento_amostras(vetor, adiantamento_amostras):
-    """
-    Ajusta vetores exportados por amostra quando o SAPHO registra o instante
-    uma amostra adiantado em relacao ao fluxo equivalente em Python.
-    """
-    vetor = np.asarray(vetor)
-    adiantamento_amostras = int(adiantamento_amostras)
-
-    if adiantamento_amostras == 0:
-        return vetor
-
-    if abs(adiantamento_amostras) >= vetor.size:
-        raise ValueError("Deslocamento de amostras maior que o vetor de entrada.")
-
-    if adiantamento_amostras > 0:
-        preenchimento = np.full(adiantamento_amostras, vetor[0], dtype=vetor.dtype)
-        return np.concatenate((preenchimento, vetor))[: vetor.size]
-
-    atraso = -adiantamento_amostras
-    preenchimento = np.full(atraso, vetor[-1], dtype=vetor.dtype)
-    return np.concatenate((vetor[atraso:], preenchimento))
-
-
-def alinhar_frequencia_com_banco(freq_interpolada, n_frames, fb_delay, offset=0):
-    """Decima a frequencia interpolada e aplica o atraso do banco polifasico."""
-    if offset >= freq_interpolada.size:
-        raise ValueError("Offset maior que o vetor de frequencia interpolada.")
-
-    freq_frames = freq_interpolada[offset::M]
-    freq_frames = np.concatenate((np.zeros(fb_delay), freq_frames))[:-fb_delay]
-
-    if freq_frames.size == 0:
-        raise ValueError("Nao ha amostras suficientes para alinhar a frequencia.")
-
-    if freq_frames.size < n_frames:
-        freq_frames = np.pad(freq_frames, (0, n_frames - freq_frames.size), mode="edge")
-
-    return freq_frames[:n_frames]
-
-
-def preparar_frequencia_sapho(
-    n_frames,
-    fb_delay,
-    saida_sapho=None,
-    referencia=None,
-    pre_delay=None,
-    adiantamento_freq_amostras=0,
-    ajuste_fase_amostras=0.0,
-):
-    """
-    Carrega a frequencia estimada pelo SAPHO para usar na correcao de fase.
-
-    Preferimos saida_interp4.txt porque ela e a freq_atrasada usada pelo Farrow.
-    Se ela nao existir, usamos saida_interp2.txt, que e a frequencia media fcc.
-    """
-    fontes = [
-        (FREQ_ATRASADA_SAPHO_TXT, "saida_interp4.txt (freq_atrasada usada pelo Farrow)"),
-        (FREQ_MEDIA_SAPHO_TXT, "saida_interp2.txt (fcc: media movel da frequencia)"),
-    ]
-    fontes = [(caminho, descricao) for caminho, descricao in fontes if caminho.exists()]
-
-    if not fontes:
-        print("\nFrequencia SAPHO nao encontrada; usando F1 constante na fase.")
-        return None
-
-    melhor = None
-    usar_referencia = (
-        saida_sapho is not None and referencia is not None and pre_delay is not None
-    )
-
-    for caminho, descricao in fontes:
-        freq_entrada = np.loadtxt(caminho) / ESCALA_BANCO
-        freq_entrada = compensar_adiantamento_amostras(
-            freq_entrada,
-            adiantamento_freq_amostras,
-        )
-        freq_interpolada = reconstruir_frequencia_interpolada(freq_entrada)
-
-        for offset in range(M):
-            freq_frames = alinhar_frequencia_com_banco(
-                freq_interpolada,
-                n_frames,
-                fb_delay,
-                offset=offset,
+    for nn in range(1, len(delta_f)):
+        if nn >= fbDelay + 1:
+            # Integracao trapezoidal da frequencia desviada. Como cada frame
+            # esta espacadamente em M*Ts segundos, este termo vira radianos.
+            correc_fundamental[nn] = (
+                correc_fundamental[nn - 1]
+                + np.pi * (delta_f[nn] + delta_f[nn - 1]) * (M * Ts)
             )
 
-            if usar_referencia:
-                estimado = corrigir_fase(
-                    saida_sapho,
-                    pre_delay,
-                    fb_delay,
-                    freq_frames,
-                    adiantamento_amostras=ajuste_fase_amostras,
-                )
-                resultado = calcular_metricas(
-                    "teste_freq_sapho",
-                    estimado,
-                    referencia,
-                    fb_delay,
-                )
-                pontuacao = np.mean(resultado["resumo"][:, 5])
-            else:
-                pontuacao = 0.0
+    # A integral abaixo compensa a rotacao acumulada entre a frequencia do
+    # sinal e a frequencia nominal, frame a frame. Como o banco entrega um
+    # fasor por ciclo nominal, M*Ts = 1/f0.
+    #
+    # O termo de meia volta do ZC (-pi) existe na deducao porque a estimacao
+    # usa meio ciclo. Isso vale tanto para Python quanto para SAPHo. Nesta
+    # analise, porem, os fasores dos dois bancos e a referencia ja estao na
+    # mesma convencao de sinal/indice: H1 esta na linha 0 e os harmonicos
+    # impares nao devem ser invertidos. Colocar -pi aqui contaria essa meia
+    # volta novamente e joga o TVE para perto de 200%.
+    #
+    # O termo constante que ainda precisa entrar explicitamente e o atraso do
+    # pre-filtro do ZC, expresso como fracao de um ciclo nominal.
+    correc_fundamental = correc_fundamental + (pre_delay / Nppc) * 2 * np.pi
 
-            if melhor is None or pontuacao < melhor["pontuacao"]:
-                melhor = {
-                    "pontuacao": pontuacao,
-                    "caminho": caminho,
-                    "descricao": descricao,
-                    "offset": offset,
-                    "freq_interpolada": freq_interpolada,
-                    "freq_frames": freq_frames,
-                }
+    # Cada harmonico gira h vezes a fase fundamental. Por isso o h nao entra
+    # na realimentacao escalar acima: ele so expande a correcao de H1 para
+    # H2, H3, ..., depois que a fase fundamental foi integrada.
+    h = np.arange(1, X.shape[0] + 1).reshape(-1, 1)
+    correc_harmonicos = h * correc_fundamental
+    PFTc = np.unwrap(PFT + correc_harmonicos, axis=1)
 
-            if not usar_referencia:
-                break
-
-    freq_frames = melhor["freq_frames"]
-    freq_validos = freq_frames[2 * fb_delay :]
-
-    print("\nFrequencia SAPHO usada na correcao de fase:")
-    print(f"  arquivo: {melhor['descricao']}")
-    print(f"  ajuste da saida_interp SAPHO: {adiantamento_freq_amostras} amostra(s)")
-    print(f"  ajuste fixo de fase SAPHO: {ajuste_fase_amostras} amostra(s)")
-    print(f"  amostras na saida interpolada: {melhor['freq_interpolada'].size}")
-    print(f"  frames do banco: {freq_frames.size}")
-    print(f"  offset na saida interpolada: {melhor['offset']} amostras")
-    print(
-        "  media/desvio dos frames validos: "
-        f"{np.mean(freq_validos):.6f} Hz / {np.std(freq_validos):.6f} Hz"
-    )
-    if usar_referencia:
-        print(f"  TVE medio usado para alinhamento: {melhor['pontuacao']:.6f} %")
-
-    return freq_frames
+    # Reconstroi o fasor corrigido mantendo a magnitude medida pelo banco.
+    return AFT * np.exp(1j * PFTc)
 
 
-def corrigir_fase(
-    fasores,
-    pre_delay,
-    fb_delay,
-    freq_frames=None,
-    adiantamento_amostras=0.0,
-):
-    """Converte a saida do banco em fasor corrigido, como no fluxo principal."""
-    n_frames = fasores.shape[1]
-    n_harmonicos = fasores.shape[0]
+def carregar_sapho_banco():
+    """
+    Le saida_banco0.txt no mesmo formato usado na validacao de referencia.
 
-    magnitude = 2 * np.abs(fasores)
-    fase = np.unwrap(np.angle(fasores), axis=1)
+    Retorno: matriz [harmonico, frame], com linha 0 = H1 e linha 49 = H50.
+    """
+    out = np.loadtxt(ARQ_SAPHO_BANCO)
 
-    if freq_frames is None:
-        freq = F1 * np.ones(n_frames)
-    else:
-        freq = np.asarray(freq_frames, dtype=float)
-        if freq.size < n_frames:
-            freq = np.pad(freq, (0, n_frames - freq.size), mode="edge")
-        freq = freq[:n_frames]
+    # O primeiro escalar do arquivo pertence ao frame anterior. Tiramos esse
+    # valor velho uma unica vez e depois montamos os pares real/imaginario.
+    out = out[1:]
 
-    delta_f = freq - F0
-    correc = np.zeros(n_frames)
+    fasores_por_frame = hmax + 1
+    escalares_por_frame = 2 * fasores_por_frame
+    N_frames = len(out) // escalares_por_frame
+    out = out[: N_frames * escalares_por_frame]
 
-    for nn in range(1, n_frames):
-        if nn >= fb_delay + 1:
-            correc[nn] = (
-                correc[nn - 1]
-                + np.pi * (delta_f[nn] + delta_f[nn - 1]) * (M * TS)
-            )
-        else:
-            correc[nn] = correc[nn - 1]
+    # Cada linha e um frame completo. O frame tem 51 fasores complexos
+    # (DC, H1, ..., H50), mas no TXT isso vira 102 escalares:
+    # real_DC, imag_DC, real_H1, imag_H1, ...
+    frames = out.reshape(N_frames, escalares_por_frame)
+    real = frames[:, 0::2] / ESCALA
+    imag = frames[:, 1::2] / ESCALA
+    fasor_completo = (real + 1j * imag).T
 
-    # Nos TXT exportados pelo banco, o termo -pi inverte os harmonicos impares.
-    # Por isso mantemos apenas o ajuste do atraso do pre-filtro.
-    correc = correc + ((pre_delay - adiantamento_amostras) / N_PPC) * 2 * np.pi
-
-    harmonicos = np.arange(1, n_harmonicos + 1).reshape(-1, 1)
-    fase_corrigida = np.unwrap(fase + harmonicos * correc, axis=1)
-
-    return magnitude * np.exp(1j * fase_corrigida)
+    # Descarta o indice 0, que e o nivel DC.
+    return fasor_completo[1 : hmax + 1, :]
 
 
-def calcular_metricas(nome, estimado, referencia, fb_delay):
-    """Corta sinais no mesmo tamanho e calcula metricas dos harmonicos impares."""
-    n_frames = min(estimado.shape[1], referencia.shape[1])
-    n_harmonicos = min(estimado.shape[0], referencia.shape[0])
+def carregar_freq_sapho(n_frames, fbDelay):
+    """
+    Le a frequencia do SAPHo e coloca na taxa de fasores do banco.
 
-    estimado = estimado[:n_harmonicos, :n_frames]
-    referencia = referencia[:n_harmonicos, :n_frames]
+    A saida_interp2 e gravada na taxa de amostras interpoladas/entrada do
+    banco; depois ela e decimada por M para virar uma frequencia por frame.
+    """
+    # saida_interp2 deve ser o fout2 gravado junto com cada fout0 valido.
+    # Assim ela fica no eixo da entrada do banco polifasico, igual ao arquivo
+    # de frequencia usado no validacaoOffnominal/ValidacaoRampa.
+    freq_interp = np.loadtxt(ARQ_SAPHO_FREQ) / ESCALA
 
-    # Remove o transitorio inicial do banco polifasico.
-    inicio = 2 * fb_delay
-    estimado = estimado[:, inicio:]
-    referencia = referencia[:, inicio:]
+    if ARQ_SAPHO_INTERP.exists(): ## 
+        interp = np.loadtxt(ARQ_SAPHO_INTERP)
+        if (
+            len(freq_interp) == len(interp)
+            and freq_interp[0] == 0
+            and freq_interp[1] != 0
+        ):
+            # O primeiro zero e apenas o dummy inicial exportado antes da
+            # primeira amostra interpolada util.
+            freq_interp = freq_interp[1:]
 
-    indices_harmonicos = INDICES_HARMONICOS[INDICES_HARMONICOS < n_harmonicos]
-    harmonicos_analisados = indices_harmonicos + 1
+    # Agora a frequencia pode ser decimada diretamente, no mesmo estilo:
+    # freq = fr[::M].
+    freq = downsample(freq_interp, M)
 
-    estimado = estimado[indices_harmonicos, :]
-    referencia = referencia[indices_harmonicos, :]
+    # Compensa o atraso do banco polifasico no eixo de frames.
+    freq = np.concatenate((np.zeros(fbDelay), freq))[:-fbDelay]
 
-    mag_est = np.abs(estimado)
-    mag_ref = np.abs(referencia)
+    return freq[:n_frames]
 
-    fase_est = np.unwrap(np.angle(estimado), axis=1)
-    fase_ref = np.unwrap(np.angle(referencia), axis=1)
 
-    erro_mag = 100 * np.abs(mag_est - mag_ref) / mag_ref
-    erro_fase = np.abs(wrap_to_pi(fase_est - fase_ref)) * 180 / np.pi
-    tve = TVE(estimado, referencia)
+def calcular_metricas(nome, Xc, Xr):
+    """
+    Calcula magnitude, fase e TVE por harmonico impar.
 
-    matrizes = {
-        "erro_mag": erro_mag,
-        "erro_fase": erro_fase,
-        "tve": tve,
-    }
+    Xc e a estimativa corrigida; Xr e a referencia. Ambas devem estar no mesmo
+    eixo [harmonico, frame].
+    """
+    # Primeiro iguala a quantidade de harmonicos e frames disponiveis.
+    n_h = min(Xc.shape[0], Xr.shape[0])
+    n_f = min(Xc.shape[1], Xr.shape[1])
 
-    for chave, matriz in matrizes.items():
-        if not np.all(np.isfinite(matriz)):
-            raise ValueError(f"{nome}: matriz {chave} contem NaN ou infinito.")
+    # O teste de interesse usa apenas harmonicos impares: H1, H3, ..., H49.
+    # Como H1 esta no indice 0, os impares ficam nos indices 0, 2, 4...
+    indh = np.arange(0, n_h, 2)
 
+    Xc = Xc[:n_h, :n_f][indh]
+    Xr = Xr[:n_h, :n_f][indh]
+
+    # Separa magnitude e fase para relatorios especificos.
+    AFT = np.abs(Xc)
+    Aref = np.abs(Xr)
+    PFT = np.unwrap(np.angle(Xc), axis=1)
+    Pref = np.unwrap(np.angle(Xr), axis=1)
+
+    # Erro relativo de magnitude em porcentagem.
+    erro_mag = 100 * np.abs(AFT - Aref) / Aref
+
+    # Erro de fase limitado a [-pi, pi] antes de converter para graus.
+    erro_fase = np.abs(wrap_to_pi(PFT - Pref)) * 180 / np.pi
+
+    # TVE ja retorna percentual pela funcao auxiliar do projeto.
+    tve = TVE(Xc, Xr)
+
+    # Uma linha por harmonico: H, erro medio/max de magnitude, fase e TVE.
     resumo = np.column_stack(
         (
-            harmonicos_analisados,
+            indh + 1,
             np.mean(erro_mag, axis=1),
             np.max(erro_mag, axis=1),
             np.mean(erro_fase, axis=1),
@@ -527,136 +265,75 @@ def calcular_metricas(nome, estimado, referencia, fb_delay):
         )
     )
 
-    return {
-        "nome": nome,
-        "n_frames_usados": estimado.shape[1],
-        "resumo": resumo,
-        "erro_mag": erro_mag,
-        "erro_fase": erro_fase,
-        "tve": tve,
-    }
+    return nome, resumo
 
 
-def salvar_resumo(nome_arquivo, resultado):
-    """Salva um TXT com uma linha por harmonico analisado."""
-    SAIDA_DIR.mkdir(parents=True, exist_ok=True)
+def salvar_resumo(nome_arquivo, resumo):
+    """Salva o resumo numerico em TXT com cabecalho legivel."""
     cabecalho = (
         "harmonico erro_mag_medio_percent erro_mag_max_percent "
-        "erro_fase_medio_graus erro_fase_max_graus tve_medio_percent "
-        "tve_max_percent"
+        "erro_fase_medio_graus erro_fase_max_graus "
+        "tve_medio_percent tve_max_percent"
     )
     np.savetxt(
         SAIDA_DIR / nome_arquivo,
-        resultado["resumo"],
+        resumo,
         fmt=["%d", "%.10f", "%.10f", "%.10f", "%.10f", "%.10f", "%.10f"],
         header=cabecalho,
     )
 
 
-def remover_html_antigo():
-    """Remove os HTMLs antigos gerados por versoes anteriores deste script."""
-    if not SAIDA_DIR.exists():
-        return
-
-    for caminho in SAIDA_DIR.glob("*.html"):
-        caminho.unlink()
-
-
-def salvar_grafico(nome_arquivo, resultado):
-    """Salva um grafico PDF com erros medios e maximos por harmonico."""
-    resumo = resultado["resumo"]
+def plotar_erros(nome_arquivo, titulo, resumo):
+    """Gera um PDF com erro medio e maximo por harmonico."""
+    # Primeira coluna do resumo guarda o numero do harmonico.
     harmonicos = resumo[:, 0]
 
-    SAIDA_DIR.mkdir(parents=True, exist_ok=True)
+    # Tres linhas: magnitude, fase e TVE.
+    fig, axes = plt.subplots(3, 1, figsize=(9, 10), sharex=True, constrained_layout=True)
+    fig.suptitle(titulo)
 
-    fig, axes = plt.subplots(
-        3,
-        1,
-        figsize=(9, 10),
-        sharex=True,
-        constrained_layout=True,
-    )
-    fig.suptitle(f"Analise de saida - {resultado['nome']}")
-
-    series = [
-        (axes[0], "Erro de magnitude", "Erro (%)", resumo[:, 1], resumo[:, 2], "royalblue"),
-        (axes[1], "Erro de fase", "Erro (graus)", resumo[:, 3], resumo[:, 4], "seagreen"),
-        (axes[2], "Total Vector Error (TVE)", "TVE (%)", resumo[:, 5], resumo[:, 6], "crimson"),
+    # Cada entrada define um subplot: titulo, eixo y, curva media, curva maxima.
+    dados = [
+        ("Erro de magnitude", "Erro (%)", resumo[:, 1], resumo[:, 2], "royalblue"),
+        ("Erro de fase", "Erro (graus)", resumo[:, 3], resumo[:, 4], "seagreen"),
+        ("Total Vector Error", "TVE (%)", resumo[:, 5], resumo[:, 6], "crimson"),
     ]
 
-    for ax, titulo, ylabel, media, maximo, cor in series:
-        ax.plot(harmonicos, media, "o-", color=cor, label="Medio")
+    for ax, (subtitulo, ylabel, medio, maximo, cor) in zip(axes, dados):
+        # Curva continua para media; curva tracejada para pior caso.
+        ax.plot(harmonicos, medio, "o-", color=cor, label="Medio")
         ax.plot(harmonicos, maximo, "o--", color=cor, label="Maximo")
-        ax.set_title(titulo)
+        ax.set_title(subtitulo)
         ax.set_ylabel(ylabel)
         ax.grid(True, alpha=0.3)
         ax.legend()
 
+    # Linha de referencia do limite classico de 1% de TVE.
     axes[2].axhline(1.0, color="black", linestyle=":", label="Limite TVE 1%")
-    axes[2].legend()
     axes[2].set_xlabel("Harmonico")
+    axes[2].legend()
 
+    # Salva e fecha para nao acumular figuras em memoria.
     fig.savefig(SAIDA_DIR / nome_arquivo, format="pdf")
     plt.close(fig)
 
-    if ABRIR_GRAFICOS:
-        plt.show()
 
+def plotar_tres_sinais(Xr, X_python, X_sapho):
+    """
+    Plota referencia, banco Python e SAPHo para harmonicos escolhidos.
 
-def analisar_saida(
-    nome,
-    fasores,
-    referencia,
-    pre_delay,
-    fb_delay,
-    freq_frames=None,
-    adiantamento_amostras=0.0,
-):
-    """Aplica correcao de fase, calcula metricas e salva resultados."""
-    estimado = corrigir_fase(
-        fasores,
-        pre_delay,
-        fb_delay,
-        freq_frames,
-        adiantamento_amostras=adiantamento_amostras,
-    )
-    resultado = calcular_metricas(nome, estimado, referencia, fb_delay)
-    resultado["fasores_corrigidos"] = estimado
+    Este grafico nao e a metrica final; ele serve para olhar se a divergencia
+    esta mais evidente na magnitude, na fase, ou em algum harmonico especifico.
+    """
+    # Usa apenas o trecho comum entre os tres sinais.
+    n_h = min(Xr.shape[0], X_python.shape[0], X_sapho.shape[0])
+    n_f = min(Xr.shape[1], X_python.shape[1], X_sapho.shape[1])
 
-    nome_base = nome.lower().replace(" ", "_")
-    salvar_resumo(f"resumo_{nome_base}.txt", resultado)
-    salvar_grafico(f"grafico_{nome_base}.pdf", resultado)
+    Xr = Xr[:n_h, :n_f]
+    X_python = X_python[:n_h, :n_f]
+    X_sapho = X_sapho[:n_h, :n_f]
 
-    return resultado
-
-
-def cortar_sinais_para_plot(referencia, python_corrigido, sapho_corrigido, fb_delay):
-    """Alinha os tres sinais no menor tamanho comum e remove o transitorio."""
-    n_frames = min(
-        referencia.shape[1],
-        python_corrigido.shape[1],
-        sapho_corrigido.shape[1],
-    )
-    inicio = 2 * fb_delay
-
-    return (
-        referencia[:, :n_frames][:, inicio:],
-        python_corrigido[:, :n_frames][:, inicio:],
-        sapho_corrigido[:, :n_frames][:, inicio:],
-    )
-
-
-def salvar_grafico_harmonicos(referencia, python_corrigido, sapho_corrigido, fb_delay):
-    """Plota magnitude e fase de harmonicos escolhidos para ref, Python e SAPHO."""
-    referencia, python_corrigido, sapho_corrigido = cortar_sinais_para_plot(
-        referencia,
-        python_corrigido,
-        sapho_corrigido,
-        fb_delay,
-    )
-
-    SAIDA_DIR.mkdir(parents=True, exist_ok=True)
-
+    # Uma linha por harmonico e duas colunas: magnitude e fase.
     fig, axes = plt.subplots(
         len(HARMONICOS_PLOT),
         2,
@@ -664,119 +341,213 @@ def salvar_grafico_harmonicos(referencia, python_corrigido, sapho_corrigido, fb_
         sharex=True,
         constrained_layout=True,
     )
-    fig.suptitle("Comparacao Ref x Python x SAPHO")
+    fig.suptitle("Referencia x Python x SAPHo")
 
     sinais = [
-        ("Referencia", referencia, "black"),
-        ("Python", python_corrigido, "royalblue"),
-        ("SAPHO", sapho_corrigido, "crimson"),
+        ("Referencia", Xr, "black"),
+        ("Python", X_python, "royalblue"),
+        ("SAPHo", X_sapho, "crimson"),
     ]
 
     for linha, harmonico in enumerate(HARMONICOS_PLOT):
+        # A matriz usa indice zero: H1 -> 0, H13 -> 12, etc.
         idx = harmonico - 1
-        x = np.arange(referencia.shape[1])
-        ax_mag = axes[linha, 0]
-        ax_fase = axes[linha, 1]
+        if idx >= n_h:
+            continue
 
+        x = np.arange(n_f)
         for nome, sinal, cor in sinais:
-            ax_mag.plot(
+            # Magnitude no painel esquerdo.
+            axes[linha, 0].plot(x, np.abs(sinal[idx]), color=cor, label=nome)
+
+            # Fase desembrulhada em graus no painel direito.
+            axes[linha, 1].plot(
                 x,
-                np.abs(sinal[idx, :]),
-                color=cor,
-                label=nome,
-            )
-            ax_fase.plot(
-                x,
-                np.rad2deg(np.unwrap(np.angle(sinal[idx, :]))),
+                np.rad2deg(np.unwrap(np.angle(sinal[idx]))),
                 color=cor,
                 label=nome,
             )
 
-        ax_mag.set_title(f"H{harmonico} - magnitude")
-        ax_fase.set_title(f"H{harmonico} - fase")
-        ax_mag.set_ylabel("Magnitude")
-        ax_fase.set_ylabel("Fase (graus)")
-        ax_mag.grid(True, alpha=0.3)
-        ax_fase.grid(True, alpha=0.3)
+        axes[linha, 0].set_title(f"H{harmonico} - magnitude")
+        axes[linha, 1].set_title(f"H{harmonico} - fase")
+        axes[linha, 0].grid(True, alpha=0.3)
+        axes[linha, 1].grid(True, alpha=0.3)
 
     axes[0, 0].legend()
     axes[-1, 0].set_xlabel("Frame")
     axes[-1, 1].set_xlabel("Frame")
 
+    # PDF unico de conferencia visual dos tres caminhos.
     fig.savefig(SAIDA_DIR / "comparacao_ref_python_sapho_harmonicos.pdf", format="pdf")
     plt.close(fig)
 
-    if ABRIR_GRAFICOS:
-        plt.show()
 
+# Garante que a pasta de saida exista antes de salvar TXT/PDF.
+SAIDA_DIR.mkdir(parents=True, exist_ok=True)
 
-def imprimir_resumo(resultado):
-    """Mostra no terminal um resumo curto para conferencia rapida."""
-    resumo = resultado["resumo"]
-    tve_medio_global = np.mean(resumo[:, 5])
-    tve_max_global = np.max(resumo[:, 6])
+# ===================================================
+# 1. Principal
+# ===================================================
+# O sinal e a referencia sao gerados um pouco mais longos que a janela final.
+# Esses ciclos extras permitem descartar o transitorio do ZC/interpolador sem
+# encurtar a analise de Nc ciclos.
+x, Xr, fr, _ = signal_frequency(f1, AMOSTRAS_GERACAO, f0, Fs, Fr, hmax, hmag, SNR)
 
-    print(f"\n{resultado['nome']}")
-    print(f"  Frames usados apos descartes: {resultado['n_frames_usados']}")
-    print(f"  TVE medio global: {tve_medio_global:.6f} %")
-    print(f"  TVE maximo global: {tve_max_global:.6f} %")
+# estima_f_zc imprime/avisa coisas que aqui nao interessam. Como este script
+# e de analise automatica, suprimimos a saida e guardamos apenas os vetores e
+# atrasos retornados.
+with warnings.catch_warnings():
+    warnings.simplefilter("ignore")
+    with redirect_stdout(io.StringIO()):
+        f_zc_m, zc_m_delay, _, zc_delay = estima_f_zc(
+            x,
+            1 / Fs,
+            Nppc,
+            plot_level=0,
+        )
 
+# A estimativa por ZC usa meio ciclo. O zc_delay inclui esse meio ciclo; para a
+# correcao de fase interessa apenas o atraso anterior a ele.
+atraso_meio_ciclo_zc = Nppc // 2
+pre_delay = zc_delay - atraso_meio_ciclo_zc
 
-def main():
-    remover_html_antigo()
+# zc_m_delay e o atraso total da frequencia ja suavizada pela media movel.
+# Separar os dois nomes deixa claro o que e atraso fisico de fase e o que e
+# atraso de alinhamento para alimentar o interpolador.
+atraso_media_movel_zc = zc_m_delay - zc_delay
+atraso_total_zc = zc_m_delay
+freq = f_zc_m
 
-    pre_delay, zc_m_delay, discard_samples, fb_delay = calcular_atrasos()
+# A frequencia estimada sai atrasada. Em vez de adiantar freq, atrasamos o
+# sinal e a referencia para deixar tudo no mesmo eixo temporal.
+impulso_atraso_zc = np.zeros(atraso_total_zc + 1)
 
-    referencia = gerar_referencia(pre_delay, zc_m_delay, discard_samples, fb_delay)
-    saida_python = carregar_saida_python()
-    saida_sapho = carregar_saida_sapho(saida_python)
-    diagnosticar_saida_sapho(saida_sapho, saida_python, fb_delay)
-    freq_sapho = preparar_frequencia_sapho(
-        saida_sapho.shape[1],
-        fb_delay,
-        saida_sapho,
-        referencia,
-        pre_delay,
-        ADIANTAMENTO_FREQ_AMOSTRAS_SAPHO,
-        AJUSTE_FASE_AMOSTRAS_SAPHO,
-    )
+# Um impulso unitario na ultima posicao equivale a um atraso puro de
+# atraso_total_zc amostras.
+impulso_atraso_zc[-1] = 1.0
+x = lfilter(impulso_atraso_zc, [1.0], x)
 
-    print("Arquivos carregados:")
-    print(f"  Python: {saida_python.shape}")
-    print(f"  SAPHO:  {saida_sapho.shape}")
-    print(f"  Xr:     {referencia.shape}")
-    print("\nAtrasos usados:")
-    print(f"  pre_delay={pre_delay}")
-    print(f"  zc_m_delay={zc_m_delay}")
-    print(f"  discard_samples={discard_samples}")
-    print(f"  fb_delay={fb_delay}")
-    print(f"  adiantamento_freq_amostras_sapho={ADIANTAMENTO_FREQ_AMOSTRAS_SAPHO}")
-    print(f"  ajuste_fase_amostras_sapho={AJUSTE_FASE_AMOSTRAS_SAPHO}")
+# A referencia tambem precisa receber zeros na frente, para acompanhar o mesmo
+# atraso aplicado no sinal de entrada.
+zeros_zc_amostras = np.zeros(atraso_total_zc)
+zeros_zc_fasores = np.zeros((hmax, atraso_total_zc), dtype=complex)
+fr = np.concatenate((zeros_zc_amostras, fr))
+Xr = np.hstack((zeros_zc_fasores, Xr))
 
-    resultado_python = analisar_saida(
-        "python_banco", saida_python, referencia, pre_delay, fb_delay
-    )
-    resultado_sapho = analisar_saida(
-        "sapho_banco",
-        saida_sapho,
-        referencia,
-        pre_delay,
-        fb_delay,
-        freq_sapho,
-        AJUSTE_FASE_AMOSTRAS_SAPHO,
-    )
-    salvar_grafico_harmonicos(
-        referencia,
-        resultado_python["fasores_corrigidos"],
-        resultado_sapho["fasores_corrigidos"],
-        fb_delay,
-    )
+# O descarte e arredondado para ciclos inteiros para nao introduzir fase
+# fracionaria extra na referencia.
+ciclos_descartados_zc = int(np.ceil(atraso_total_zc / Nppc))
+discard_samples = MULTIPLICADOR_DESCARTE_ZC * ciclos_descartados_zc * Nppc
+fim_analise = discard_samples + AMOSTRAS_ANALISE
 
-    imprimir_resumo(resultado_python)
-    imprimir_resumo(resultado_sapho)
+# A partir daqui todos os vetores continuam com a mesma origem temporal.
+freq = freq[discard_samples:fim_analise]
+x = x[discard_samples:fim_analise]
+fr = fr[discard_samples:fim_analise]
+Xr = Xr[:, discard_samples:fim_analise]
 
-    print(f"\nResultados salvos em: {SAIDA_DIR}")
+# Interpolacao B-spline exatamente como no principal_Naiara, mas usando as
+# variaveis acima para deixar explicito qual frequencia alimenta o processo.
+xi = BSplineInterp(x, f0, freq, MBSP, Fs, plot_level=0)
 
+h = FlatTopFilterBase(TAMANHO_FILTRO_BANCO)
+fbDelay = len(h) // (2 * M)
 
-if __name__ == "__main__":
-    main()
+# O banco consome amostras e entrega um fasor por ciclo nominal. Mantemos
+# fbDelay ciclos extras na entrada porque eles serao usados para compensar o
+# atraso de grupo do filtro polifasico depois da decimacao.
+amostras_entrada_banco = (Nc + fbDelay) * Nppc
+
+# O mesmo corte e aplicado ao sinal interpolado, a referencia e a frequencia.
+xi = xi[:amostras_entrada_banco]
+Xr = Xr[:, :amostras_entrada_banco]
+freq = freq[:amostras_entrada_banco]
+
+# O banco tambem calcula a componente DC. Como a comparacao comeca em H1,
+# descartamos a linha zero da saida completa.
+X_python_com_dc = PolyphaseFilterBank(h, M, xi)
+X_python = X_python_com_dc[1 : hmax + 1, :] 
+
+# A frequencia e a referencia saem da taxa de amostras para a taxa de fasores.
+freq_python = downsample(freq, M)
+Xr = downsample(Xr, M)
+
+# Compensacao do atraso do banco: o mesmo numero de frames zero e inserido na
+# frequencia e na referencia para comparar com o fasor que saiu do filtro.
+freq_python = np.concatenate((np.zeros(fbDelay), freq_python))[:-fbDelay]
+Xr = np.hstack((np.zeros((hmax, fbDelay), dtype=complex), Xr))[:, :-fbDelay]
+
+# ===================================================
+# 2. Saida SAPHo
+# ===================================================
+# Banco SAPHo bruto: fasores complexos por harmonico/frame.
+X_sapho = carregar_sapho_banco()
+
+# Frequencia SAPHo no mesmo eixo de frames do banco.
+freq_sapho = carregar_freq_sapho(X_sapho.shape[1], fbDelay)
+
+# ===================================================
+# 3. Correcao de fase e corte do transitorio
+# ===================================================
+# Antes da metrica, todos os sinais sao cortados para o menor tamanho comum.
+# Isso evita comparar frames que existem em um caminho mas nao em outro.
+n_h = min(X_python.shape[0], X_sapho.shape[0], Xr.shape[0])
+n_f = min(X_python.shape[1], X_sapho.shape[1], Xr.shape[1], len(freq_sapho))
+
+X_python = X_python[:n_h, :n_f] ## normaliza tamanho para o menor entre os tamanhos
+X_sapho = X_sapho[:n_h, :n_f] ## normaliza tamanho para o menor entre os tamanhos
+Xr = Xr[:n_h, :n_f] ## normaliza tamanho para o menor entre os tamanhos
+freq_python = freq_python[:n_f] ## normaliza tamanho para o menor entre os tamanhos
+freq_sapho = freq_sapho[:n_f] ## normaliza tamanho para o menor entre os tamanhos
+
+# Aplica exatamente a mesma correcao de fase no banco Python e no SAPHo.
+Xc_python = corrigir_fase(X_python, freq_python, pre_delay, fbDelay)
+Xc_sapho = corrigir_fase(X_sapho, freq_sapho, pre_delay, fbDelay)
+
+# Remove frames iniciais ainda influenciados pelo transitorio do banco.
+corte = MULTIPLICADOR_CORTE_BANCO * fbDelay
+Xc_python = Xc_python[:, corte:]  ## tira um pedaço do iniio do python para tirar o transitorio do banco
+Xc_sapho = Xc_sapho[:, corte:] ## tira um pedaço do iniio do sapho para tirar o transitorio do banco
+Xr = Xr[:, corte:] ## tira um pedaço do iniio da referencia para tirar o transitorio do banco
+
+# ===================================================
+# 4. Analise de desempenho
+# ===================================================
+# Calcula uma tabela separada para o banco Python e para o SAPHo.
+nome_python, resumo_python = calcular_metricas("python_banco", Xc_python, Xr)
+nome_sapho, resumo_sapho = calcular_metricas("sapho_banco", Xc_sapho, Xr)
+
+# Salva TXT e graficos individuais de erro.
+salvar_resumo("resumo_python_banco.txt", resumo_python)
+salvar_resumo("resumo_sapho_banco.txt", resumo_sapho)
+plotar_erros("grafico_python_banco.pdf", nome_python, resumo_python)
+plotar_erros("grafico_sapho_banco.pdf", nome_sapho, resumo_sapho)
+
+# Salva grafico comparando referencia, Python e SAPHo no mesmo desenho.
+plotar_tres_sinais(Xr, Xc_python, Xc_sapho)
+
+# Resumo curto no terminal para conferir rapidamente o alinhamento usado.
+print("Analise finalizada.")
+print(
+    "ZC: "
+    f"meio_ciclo={atraso_meio_ciclo_zc}, "
+    f"pre_delay={pre_delay}, "
+    f"media_movel={atraso_media_movel_zc}, "
+    f"total={atraso_total_zc}"
+)
+print(
+    "Banco: "
+    f"tamanho_filtro={TAMANHO_FILTRO_BANCO}, "
+    f"fbDelay={fbDelay}, "
+    f"corte={corte}"
+)
+print(f"Janelas: descarte={discard_samples}, entrada_banco={amostras_entrada_banco}")
+print(f"Referencia: {Xr.shape}")
+print(f"Python:     {Xc_python.shape}")
+print(f"SAPHo:      {Xc_sapho.shape}")
+print()
+
+# Resumo global: media dos TVEs medios por harmonico e pior TVE maximo.
+print(f"Python TVE medio/max: {np.mean(resumo_python[:, 5]):.6f}% / {np.max(resumo_python[:, 6]):.6f}%")
+print(f"SAPHo  TVE medio/max: {np.mean(resumo_sapho[:, 5]):.6f}% / {np.max(resumo_sapho[:, 6]):.6f}%")
+print(f"Resultados salvos em: {SAIDA_DIR}")
