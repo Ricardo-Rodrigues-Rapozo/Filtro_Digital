@@ -345,9 +345,10 @@ P_I2F_M 50
 SF_GRE
 LIN
 JIZ Lwh5end
-LOD 1
+F2I_M main_vector_count
+SET   aux_var
 ILI E0
-P_LOD 1
+P_LOD aux_var
 ILI E0_i
 SET_P aux_var
 P_I2F_M 1000000
@@ -358,9 +359,10 @@ SF_MLT
 POP
 F2I
 OUT 0
-LOD 1
+F2I_M main_vector_count
+SET   aux_var
 ILI E0
-P_LOD 1
+P_LOD aux_var
 ILI E0_i
 SET_P aux_var
 P_I2F_M 1000000

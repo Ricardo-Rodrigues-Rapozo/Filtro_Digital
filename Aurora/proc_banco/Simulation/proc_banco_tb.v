@@ -99,7 +99,7 @@ end
 
 integer progress, chrys;
 
-always @ (posedge clk) if (proc.valr10 == 368) begin
+always @ (posedge clk) if (proc.valr10 == 370) begin
     $display("Info: end of program!");
     $fclose(progress);
     $finish;
