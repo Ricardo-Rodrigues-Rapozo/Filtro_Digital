@@ -184,25 +184,114 @@ def estima_f_zc(s, Ts, Nppc, plot_level=0):
     # ================================================
     # Smoothing Moving Average Filter
     # ================================================
+
+    bMED, aMED = bessel(6, 2*np.pi*30, analog=True)
+    bMED, aMED = bilinear(bMED, aMED, fs=Fs)  
+    print(f"Pre-filter coefficients (b): {bMED}")
+    print(f"Pre-filter coefficients (a): {aMED}")
+
+    sosMED = tf2sos(bMED, aMED)
+    sos_num_gain = np.max(np.abs(sosMED[:, :3]), axis=1)
+    sos_target_gain = np.prod(sos_num_gain) ** (1 / sosMED.shape[0])
+    sosMED[:, :3] *= (sos_target_gain / sos_num_gain)[:, np.newaxis]
+
+    # Frequency Response and Group Delay Plot
+    # ------------------------------------------------
     
-    Nw = 1 * Nppc
-    w = np.ones(Nw) / Nw
+    f, H = freqz(bMED, aMED, worN=4096, fs=Fs)
+    w_gd, gd = group_delay((bMED,aMED), w=4096, fs=Fs)
+    freq_alvo = 0  # Hz
+
+    # Encontrar o índice mais próximo de 60 Hz
+    idx = np.argmin(np.abs(w_gd - freq_alvo))
+    gd_dc = int(round(gd[idx]))
+
+    if plot_level >= 1:
+        fig = make_subplots(rows=3, cols=1, shared_xaxes=True, subplot_titles=("Magnitude (dB)", "Phase (graus)", "Group Delay (samples)"))
+
+        fig.add_trace(go.Scatter(x=f, y=abs(H), mode='lines', name='Magnitude'), row=1, col=1)
+        fig.add_trace(go.Scatter(x=f, y=np.unwrap(np.angle(H))*180/np.pi, mode='lines', name='Phase'), row=2, col=1)
+        fig.add_trace(go.Scatter(x=f, y=gd, mode='lines', name='Delay'), row=3, col=1)
+        fig.update_yaxes(range=[np.mean(gd) - 1, np.mean(gd) + 1], row=3, col=1)
+        fig.update_xaxes(title_text='Frequency (Hz)', row=3, col=1)
+        fig.update_yaxes(title_text='Nomalized', row=1, col=1)
+        fig.update_yaxes(title_text='Degrees', row=2, col=1)
+        fig.update_yaxes(title_text='Samples', row=3, col=1)
+        
+        fig.update_layout(
+        autosize=True,
+        title_text="Zero Crossing Pre-Filter",
+        title_font=dict(size=24, family='Arial', color='black'),  
+        title_x=0.5,  
+        template='gridon'
+        )
+
+        fig.show()
+
+        zeros = np.roots(b)
+        poles = np.roots(a)
+        theta = np.linspace(0, 2*np.pi, 512)
+
+        fig_pz = go.Figure()
+        fig_pz.add_trace(go.Scatter(
+            x=np.cos(theta),
+            y=np.sin(theta),
+            mode='lines',
+            name='Unit circle',
+            line=dict(color='gray', dash='dash')
+        ))
+        fig_pz.add_trace(go.Scatter(
+            x=zeros.real,
+            y=zeros.imag,
+            mode='markers',
+            name='Zeros',
+            marker=dict(symbol='circle-open', size=12, color='royalblue', line=dict(width=2))
+        ))
+        fig_pz.add_trace(go.Scatter(
+            x=poles.real,
+            y=poles.imag,
+            mode='markers',
+            name='Poles',
+            marker=dict(symbol='x', size=12, color='crimson', line=dict(width=2))
+        ))
+
+        fig_pz.update_layout(
+            autosize=True,
+            title_text="Pole-Zero Diagram - Zero Crossing Pre-Filter",
+            title_font=dict(size=24, family='Arial', color='black'),
+            title_x=0.5,
+            template='gridon',
+            xaxis=dict(title='Real', scaleanchor='y', scaleratio=1),
+            yaxis=dict(title='Imaginary'),
+            legend=dict(font=dict(size=18))
+        )
+
+        fig_pz.show()
+
+    for i, section in enumerate(sosMED, start=1):
+        print(f"Pre-filter SOS section {i} [b0, b1, b2, a0, a1, a2]: {section}")
+
+    f_zc_m = sosfilt(sosMED, f_zc)
+
     
-    arquivo_w = Path(__file__).with_name("w_coeffs.txt")
-    np.savetxt(arquivo_w, w, fmt="%.18e")
-    # arquivo_w = Path(__file__).with_name("w_coeffs")  # txt na mesma pasta do DSPEPS.py
-    # w = np.loadtxt(arquivo_w, delimiter=",", dtype=float)
-    # w = w.ravel()
-    f_zc_m = lfilter(w, 1, f_zc)
+    # Nw = 1 * Nppc
+    # w = np.ones(Nw) / Nw
+    
+    # arquivo_w = Path(__file__).with_name("w_coeffs.txt")
+    # np.savetxt(arquivo_w, w, fmt="%.18e")
+    # # arquivo_w = Path(__file__).with_name("w_coeffs")  # txt na mesma pasta do DSPEPS.py
+    # # w = np.loadtxt(arquivo_w, delimiter=",", dtype=float)
+    # # w = w.ravel()
+    # f_zc_m = lfilter(w, 1, f_zc)
     
     pre_delay = gd_60hz #len(b)//2
     zc_delay = pre_delay + Nppc//2
-    zc_m_delay = Nw//2 + zc_delay
+    zc_m_delay = gd_dc + zc_delay
     print(f"Pre-filter delay: {pre_delay} samples")
     print(f"Zero Crossing delay: {zc_delay} samples")   
     print(f"Smoothed Zero Crossing delay: {zc_m_delay} samples")
     
-    return f_zc_m, zc_m_delay, f_zc, zc_delay
+    return f_zc_m, zc_m_delay, f_zc, zc_delay,v
 
 def BSplineInterp(x, f0, f, M, Fs, plot_level=0):
     """

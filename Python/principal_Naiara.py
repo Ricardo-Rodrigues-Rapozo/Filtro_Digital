@@ -73,7 +73,7 @@ fig.show()
 # Frequency Estimation
 # ===================================================
 
-f_zc_m, zc_m_delay, f_zc, zc_delay = estima_f_zc(x, 1/Fs, Nppc, plot_level=2)
+f_zc_m, zc_m_delay, f_zc, zc_delay, v_N = estima_f_zc(x, 1/Fs, Nppc, plot_level=2)
 
 freq = f_zc_m
 
