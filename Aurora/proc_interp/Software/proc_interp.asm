@@ -8,12 +8,8 @@ NOP
 #NBMANT 23
 #NBEXPO 8
 #NUGAIN 128
-@main LOD 80
-SET main_teste0
-LOD 0
+@main LOD 0
 SET main_cont_global
-LOD 0
-SET main_teste
 #arrays main_b_sos 2 9 "b_sos.txt"
 #arrays main_a_sos 2 9 "a_sos.txt"
 #array main_x1 2 3
@@ -84,6 +80,82 @@ LOD 0.0
 SET main_acc_b
 LOD 0.0
 SET main_acc_a
+LOD 127
+SET main_atraso_amotras_filtro_pre_zc
+#arrays main_bm_sos 2 9 "bm_sos.txt"
+#arrays main_am_sos 2 9 "am_sos.txt"
+#array main_xm1 2 3
+LOD 0
+P_LOD 0.0
+STI main_xm1
+LOD 1
+P_LOD 0.0
+STI main_xm1
+LOD 2
+P_LOD 0.0
+STI main_xm1
+#array main_ym1 2 3
+LOD 0
+P_LOD 0.0
+STI main_ym1
+LOD 1
+P_LOD 0.0
+STI main_ym1
+LOD 2
+P_LOD 0.0
+STI main_ym1
+#array main_xm2 2 3
+LOD 0
+P_LOD 0.0
+STI main_xm2
+LOD 1
+P_LOD 0.0
+STI main_xm2
+LOD 2
+P_LOD 0.0
+STI main_xm2
+#array main_ym2 2 3
+LOD 0
+P_LOD 0.0
+STI main_ym2
+LOD 1
+P_LOD 0.0
+STI main_ym2
+LOD 2
+P_LOD 0.0
+STI main_ym2
+#array main_xm3 2 3
+LOD 0
+P_LOD 0.0
+STI main_xm3
+LOD 1
+P_LOD 0.0
+STI main_xm3
+LOD 2
+P_LOD 0.0
+STI main_xm3
+#array main_ym3 2 3
+LOD 0
+P_LOD 0.0
+STI main_ym3
+LOD 1
+P_LOD 0.0
+STI main_ym3
+LOD 2
+P_LOD 0.0
+STI main_ym3
+LOD 0
+SET main_bm_index
+LOD 0
+SET main_km_idx
+LOD 0.0
+SET main_accm_b
+LOD 0.0
+SET main_accm_a
+LOD 0.0
+SET main_fcc
+LOD 381
+SET main_atraso_pos_zc
 LOD 0.0
 SET main_va
 I2F_M 1
@@ -102,34 +174,8 @@ LOD 0.0
 SET main_Nb
 LOD 0.0
 SET main_T2
-LOD 127
-SET main_atraso_amotras_filtro_pre_zc
-LOD 256.0
-F_DIV 1.0
-SET main_w_coeff
-LOD 0
-SET main_w_index
-LOD 0.0
-SET main_w_sum
-#array main_buffer_media_movel 2 256
-LOD 0
-SET main_buffer_media_movel_idex
-LOD 0.0
-SET main_fcc
-LOD 256
-SET main_w_media
-LOD 0
-SET main_read_idx_mean
-LOD 0
-SET main_w_index_mean
-LOD 0
-SET main_p
-LOD 0
-SET main_b_index_mean
 LOD 128
-SET main_atraso_amotras_media_movel
-LOD 0.0
-SET main_fvelho
+SET main_atraso_ZC
 LOD 0
 SET main_j
 LOD 0
@@ -146,17 +192,19 @@ LOD 1000.0
 SET main_ESCALA
 LOD 0.0
 SET main_x_atrasado
-LOD 0
-SET main_c_index
-LOD 0
-SET main_read_c_idx
-#array main_buffer_atraso_x 2 511
+I2F_M 1536
+SET main_discard_samples
 #array main_num_pre_BSP 2 6
 #array main_den_pre_BSP 2 2
 #array main_buffer_entrada_prefiltro 2 6
 #array main_buffer_saida_prefiltro 2 2
-LOD 383
+LOD 636
 SET main_atraso_geral
+LOD 0
+SET main_c_index
+LOD 0
+SET main_read_c_idx
+#array main_buffer_atraso_x 2 636
 #array main_buffer_entrada_farrow 2 4
 LOD 0.0
 SET main_alfa
@@ -414,32 +462,168 @@ I2F_M 1000000
 F_MLT main_fzc
 F2I
 OUT 1
-LOD main_buffer_media_movel_idex
-LDI main_buffer_media_movel
-SET main_fvelho
-LOD main_buffer_media_movel_idex
-P_LOD main_fzc
-STI main_buffer_media_movel
-LOD main_fzc
-F_SU1 main_fvelho
-F_MLT main_w_coeff
-F_ADD main_fcc
-SET main_fcc
-LOD main_buffer_media_movel_idex
-ADD 1
-SET main_buffer_media_movel_idex
-LOD main_w_media
-EQU main_buffer_media_movel_idex
-JIZ Lif2else
 LOD 0
-SET main_buffer_media_movel_idex
-@Lif2else I2F_M 1000000
+P_LOD main_fzc
+STI main_xm1
+LOD 0
+P_LOD 0
+LDI main_bm_sos
+P_LOD 0
+LDI main_xm1
+SF_MLT
+P_LOD 1
+LDI main_bm_sos
+P_LOD 1
+LDI main_xm1
+SF_MLT
+SF_ADD
+P_LOD 2
+LDI main_bm_sos
+P_LOD 2
+LDI main_xm1
+SF_MLT
+SF_ADD
+P_LOD 1
+LDI main_am_sos
+P_LOD 1
+LDI main_ym1
+SF_MLT
+SF_SU2
+P_LOD 2
+LDI main_am_sos
+P_LOD 2
+LDI main_ym1
+SF_MLT
+SF_SU2
+STI main_ym1
+LOD 2
+P_LOD 1
+LDI main_xm1
+STI main_xm1
+LOD 1
+P_LOD 0
+LDI main_xm1
+STI main_xm1
+LOD 2
+P_LOD 1
+LDI main_ym1
+STI main_ym1
+LOD 1
+P_LOD 0
+LDI main_ym1
+STI main_ym1
+LOD 0
+P_LOD 0
+LDI main_ym1
+STI main_xm2
+LOD 0
+P_LOD 3
+LDI main_bm_sos
+P_LOD 0
+LDI main_xm2
+SF_MLT
+P_LOD 4
+LDI main_bm_sos
+P_LOD 1
+LDI main_xm2
+SF_MLT
+SF_ADD
+P_LOD 5
+LDI main_bm_sos
+P_LOD 2
+LDI main_xm2
+SF_MLT
+SF_ADD
+P_LOD 4
+LDI main_am_sos
+P_LOD 1
+LDI main_ym2
+SF_MLT
+SF_SU2
+P_LOD 5
+LDI main_am_sos
+P_LOD 2
+LDI main_ym2
+SF_MLT
+SF_SU2
+STI main_ym2
+LOD 2
+P_LOD 1
+LDI main_xm2
+STI main_xm2
+LOD 1
+P_LOD 0
+LDI main_xm2
+STI main_xm2
+LOD 2
+P_LOD 1
+LDI main_ym2
+STI main_ym2
+LOD 1
+P_LOD 0
+LDI main_ym2
+STI main_ym2
+LOD 0
+P_LOD 0
+LDI main_ym2
+STI main_xm3
+LOD 0
+P_LOD 6
+LDI main_bm_sos
+P_LOD 0
+LDI main_xm3
+SF_MLT
+P_LOD 7
+LDI main_bm_sos
+P_LOD 1
+LDI main_xm3
+SF_MLT
+SF_ADD
+P_LOD 8
+LDI main_bm_sos
+P_LOD 2
+LDI main_xm3
+SF_MLT
+SF_ADD
+P_LOD 7
+LDI main_am_sos
+P_LOD 1
+LDI main_ym3
+SF_MLT
+SF_SU2
+P_LOD 8
+LDI main_am_sos
+P_LOD 2
+LDI main_ym3
+SF_MLT
+SF_SU2
+STI main_ym3
+LOD 2
+P_LOD 1
+LDI main_xm3
+STI main_xm3
+LOD 1
+P_LOD 0
+LDI main_xm3
+STI main_xm3
+LOD 2
+P_LOD 1
+LDI main_ym3
+STI main_ym3
+LOD 1
+P_LOD 0
+LDI main_ym3
+STI main_ym3
+LOD 0
+LDI main_ym3
+SET main_fcc
+I2F_M 1000000
 F_MLT main_fcc
 F2I
 OUT 2
 LOD 0
 GRE main_atraso_geral
-JIZ Lif3else
+JIZ Lif2else
 LOD main_c_index
 LDI main_buffer_atraso_x
 SET main_x_atrasado
@@ -452,15 +636,16 @@ SET main_c_index
 LOD main_atraso_geral
 LES main_c_index
 LIN
-JIZ Lif4else
+JIZ Lif3else
 LOD 0
 SET main_c_index
-@Lif4else JMP Lif3end
-@Lif3else LOD main_x
+@Lif3else JMP Lif2end
+@Lif2else LOD main_x
 SET main_x_atrasado
-@Lif3end LOD 1023
-GRE main_cont_global
-JIZ Lif5else
+@Lif2end I2F_M main_cont_global
+P_LOD main_discard_samples
+SF_GRE
+JIZ Lif4else
 LOD 0
 P_LOD 1
 LDI main_buffer_entrada_prefiltro
@@ -583,14 +768,14 @@ SET main_freq_atrasada
 P_LOD 0.0
 S_EQU
 LIN
-JIZ Lif6else
+JIZ Lif5else
 LOD main_freq_atrasada
 F_DIV 60.0
 SET main_lambda_val
-JMP Lif6end
-@Lif6else LOD 0.0
+JMP Lif5end
+@Lif5else LOD 0.0
 SET main_lambda_val
-@Lif6end I2F_M 1000000
+@Lif5end I2F_M 1000000
 F_MLT main_freq_atrasada
 F2I
 OUT 4
@@ -598,7 +783,7 @@ LOD 0.0
 SET main_y
 LOD 6
 GRE main_cnt
-JIZ Lif7else
+JIZ Lif6else
 @Lwh1 LOD main_alfa
 P_LOD 1.0
 SF_LES
@@ -672,14 +857,14 @@ JMP Lwh1
 @Lwh1end LOD main_alfa
 F_SU1 1.0
 SET main_alfa
-JMP Lif7end
-@Lif7else LOD main_cnt
+JMP Lif6end
+@Lif6else LOD main_cnt
 ADD 1
 SET main_cnt
-@Lif7end @Lif5else LOD 10000
+@Lif6end @Lif4else LOD 10000
 LES main_cont_global
-JIZ Lif8else
+JIZ Lif7else
 LOD main_cont_global
 ADD 1
 SET main_cont_global
-@Lif8else @fim JMP fim
+@Lif7else @fim JMP fim

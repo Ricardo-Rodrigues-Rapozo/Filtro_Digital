@@ -11,10 +11,7 @@
 void main()
 {
     // ---------- Globais ----------
-    int teste0=80;
     int cont_global = 0;                  // contador global de amostras processadas
-    int teste=0;
-
 
     // ---------- IIR Bessel para pré-ZC -----
 
@@ -30,20 +27,21 @@ void main()
     float x3[3]; x3[0] = 0.0; x3[1] = 0.0; x3[2] = 0.0; // buffer de entrada da secao 3 do IIR
     float y3[3]; y3[0] = 0.0; y3[1] = 0.0; y3[2] = 0.0; // buffer de saida da secao 3 do IIR
 
-    int b_index = 0;                        // mantido do molde antigo; nao usado no IIR atual
+    int b_index = 0;                       // mantido do molde antigo; nao usado no IIR atual
     int k_idx = 0;                         // variavel auxiliar mantida do molde antigo
     float acc_b = 0.0;                     // acumulador auxiliar mantido do molde antigo
     float acc_a = 0.0;                     // acumulador auxiliar mantido do molde antigo
+    int atraso_amotras_filtro_pre_zc = 127;// atraso de grupo do IIR em 60 Hz
 
 
     // ---------- IIR Bessel para pós-ZC -----
     float bm_sos[9] "bm_sos.txt";           // coeficientes do numerador das 3 secoes SOS do IIR
     float am_sos[9] "am_sos.txt";           // coeficientes do denominador das 3 secoes SOS do IIR
 
-    float xm2[3]; xm1[0] = 0.0; xm1[1] = 0.0; xm1[2] = 0.0; // buffer de entrada da secao 1 do IIR
+    float xm1[3]; xm1[0] = 0.0; xm1[1] = 0.0; xm1[2] = 0.0; // buffer de entrada da secao 1 do IIR
     float ym1[3]; ym1[0] = 0.0; ym1[1] = 0.0; ym1[2] = 0.0; // buffer de saida da secao 1 do IIR
 
-    float xm2[3]; xm2[0] = 0.0; xm2[1] = 0.0; xm2[2] = 0.0; // buffer de entrada da secao 2 do IIR
+    float xm2[3]; xm2[0] = 0.0; xm2['1] = 0.0; xm2[2] = 0.0; // buffer de entrada da secao 2 do IIR
     float ym2[3]; ym2[0] = 0.0; ym2[1] = 0.0; ym2[2] = 0.0; // buffer de saida da secao 2 do IIR
 
     float xm3[3]; xm3[0] = 0.0; xm3[1] = 0.0; xm3[2] = 0.0; // buffer de entrada da secao 3 do IIR
@@ -53,7 +51,8 @@ void main()
     int km_idx = 0;                         // variavel auxiliar mantida do molde antigo
     float accm_b = 0.0;                     // acumulador auxiliar mantido do molde antigo
     float accm_a = 0.0;                     // acumulador auxiliar mantido do molde antigo
-
+    float fcc = 0.0;                        // frequencia filtrada pela IIR"media movel"
+    int atraso_pos_zc = 381;                // atraso do filtro pos zc
 
     // ---------- Zero-Crossing -----
     float va              = 0.0;           // amostra anterior da saida do pre-filtro IIR
@@ -65,8 +64,7 @@ void main()
     float Nb              = 0.0;           // fator de interpolacao do cruzamento atual
     float T2              = 0.0;           // correcao temporal do cruzamento atual
     float Ts;                              // periodo de amostragem
-    int atraso_amotras_filtro_pre_zc = 127; // atraso de grupo do IIR em 60 Hz
-
+    int atraso_ZC = 128;                   // atraso do Zero crossing (Nppc // 2)    
 
     // ---------- Temporarias -----
     int j = 0;                             // contador auxiliar mantido do molde antigo
@@ -79,12 +77,7 @@ void main()
     float x;                               // amostra atual do sinal de entrada normalizado
     float y;                               // amostra interpolada na saida do Farrow
     float x_atrasado = 0.0;                // sinal de entrada atrasado para alinhar com a frequencia
-
-    // ----------- atraso de amostras do sinal ---------
-    int c_index = 0;                       // indice circular do buffer de atraso do sinal
-    int read_c_idx = 0;                    // indice auxiliar mantido do molde antigo
-    int k;                                 // contador auxiliar mantido do molde antigo
-    float buffer_atraso_x[511];            // buffer circular que atrasa x em atraso_geral amostras
+    float discard_samples = 1536;          // Número de amostras para evitar transitório
 
     // ---------- Prefiltro - B-Spline -----
     float num_pre_BSP[6];                  // numerador do pre-filtro B-Spline
@@ -94,7 +87,13 @@ void main()
     float dot_result;                      // resultado da parte FIR do pre-filtro B-Spline
     float freq_smoothed;                   // frequencia suavizada usada no interpolador
     int atraso_geral;                      // atraso aplicado ao sinal x antes do B-Spline
-    atraso_geral = 383;                    // 127 IIR + 128 ZC + 128 media movel
+    atraso_geral = 636;                    // 127 IIR_PRE_ZC + 128_ZC + 381_(IIR POS ZC)media movel
+
+    // ----------- atraso de amostras do sinal B-spline  ---------
+    int c_index = 0;                       // indice circular do buffer de atraso do sinal
+    int read_c_idx = 0;                    // indice auxiliar mantido do molde antigo
+    int k;                                 // contador auxiliar mantido do molde antigo
+    float buffer_atraso_x[636];            // buffer circular que atrasa x (buffer_atraso_x[atraso_geral])
 
     // ---------- Farrow -----
     float buffer_entrada_farrow[4];        // quatro amostras usadas pela estrutura Farrow
@@ -182,7 +181,7 @@ void main()
         va = acc;
         fout(1, fzc * 1000000);
 
-        // ========== FILTRO PÓS ZC  =========== #
+        // ========== FILTRO PÓS ZC  ("MEDIA MOVEL") =========== #
         
         xm1[0] = fzc;
 
@@ -236,9 +235,9 @@ void main()
         
 
         // ============================ DESCARTE DE AMOSTRAS ================= //
-        if(cont_global > 1023)
+        if(cont_global > discard_samples) // Evitar transitório 
         {
-            // ============================ PREFILTRO ============================ //
+            // ============================ PREFILTRO ======================== //
             buffer_entrada_prefiltro[0] = buffer_entrada_prefiltro[1];
             buffer_entrada_prefiltro[1] = buffer_entrada_prefiltro[2];
             buffer_entrada_prefiltro[2] = buffer_entrada_prefiltro[3];
@@ -256,7 +255,7 @@ void main()
             buffer_saida_prefiltro[1] = dot_result - den_pre_BSP[1]*buffer_saida_prefiltro[0];
             buffer_saida_prefiltro[0] = buffer_saida_prefiltro[1];
 
-            // ============================ FARROW ============================ //
+            // ============================ FARROW =========================== //
             buffer_entrada_farrow[0] = buffer_entrada_farrow[1];
             buffer_entrada_farrow[1] = buffer_entrada_farrow[2];
             buffer_entrada_farrow[2] = buffer_entrada_farrow[3];

@@ -187,8 +187,8 @@ def estima_f_zc(s, Ts, Nppc, plot_level=0):
 
     bMED, aMED = bessel(6, 2*np.pi*30, analog=True)
     bMED, aMED = bilinear(bMED, aMED, fs=Fs)  
-    print(f"Pre-filter coefficients (b): {bMED}")
-    print(f"Pre-filter coefficients (a): {aMED}")
+    print(f"Pre-filter coefficients (bm): {bMED}")
+    print(f"Pre-filter coefficients (am): {aMED}")
 
     sosMED = tf2sos(bMED, aMED)
     sos_num_gain = np.max(np.abs(sosMED[:, :3]), axis=1)
@@ -202,7 +202,7 @@ def estima_f_zc(s, Ts, Nppc, plot_level=0):
     w_gd, gd = group_delay((bMED,aMED), w=4096, fs=Fs)
     freq_alvo = 0  # Hz
 
-    # Encontrar o índice mais próximo de 60 Hz
+    # Encontrar o índice mais próximo de 0 Hz(dc)
     idx = np.argmin(np.abs(w_gd - freq_alvo))
     gd_dc = int(round(gd[idx]))
 

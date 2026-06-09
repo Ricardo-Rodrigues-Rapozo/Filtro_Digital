@@ -121,7 +121,7 @@ end
 
 integer progress, chrys;
 
-always @ (posedge clk) if (proc.valr10 == 658) begin
+always @ (posedge clk) if (proc.valr10 == 836) begin
     $display("Info: end of program!");
     $fclose(progress);
     $finish;
@@ -149,13 +149,18 @@ initial begin
     $dumpvars(0,proc_interp_tb.proc.out_sig_4);
     $dumpvars(0,proc_interp_tb.proc.valr2);
     $dumpvars(0,proc_interp_tb.proc.linetabs);
-    $dumpvars(0,proc_interp_tb.proc.me1_f_main_v_teste0_e_);
     $dumpvars(0,proc_interp_tb.proc.me1_f_main_v_cont_global_e_);
-    $dumpvars(0,proc_interp_tb.proc.me1_f_main_v_teste_e_);
     $dumpvars(0,proc_interp_tb.proc.me1_f_main_v_b_index_e_);
     $dumpvars(0,proc_interp_tb.proc.me1_f_main_v_k_idx_e_);
     $dumpvars(0,proc_interp_tb.proc.me2_f_main_v_acc_b_e_);
     $dumpvars(0,proc_interp_tb.proc.me2_f_main_v_acc_a_e_);
+    $dumpvars(0,proc_interp_tb.proc.me1_f_main_v_atraso_amotras_filtro_pre_zc_e_);
+    $dumpvars(0,proc_interp_tb.proc.me1_f_main_v_bm_index_e_);
+    $dumpvars(0,proc_interp_tb.proc.me1_f_main_v_km_idx_e_);
+    $dumpvars(0,proc_interp_tb.proc.me2_f_main_v_accm_b_e_);
+    $dumpvars(0,proc_interp_tb.proc.me2_f_main_v_accm_a_e_);
+    $dumpvars(0,proc_interp_tb.proc.me2_f_main_v_fcc_e_);
+    $dumpvars(0,proc_interp_tb.proc.me1_f_main_v_atraso_pos_zc_e_);
     $dumpvars(0,proc_interp_tb.proc.me2_f_main_v_va_e_);
     $dumpvars(0,proc_interp_tb.proc.me2_f_main_v_Tsc_e_);
     $dumpvars(0,proc_interp_tb.proc.me2_f_main_v_T1_e_);
@@ -164,19 +169,7 @@ initial begin
     $dumpvars(0,proc_interp_tb.proc.me2_f_main_v_sig_e_);
     $dumpvars(0,proc_interp_tb.proc.me2_f_main_v_Nb_e_);
     $dumpvars(0,proc_interp_tb.proc.me2_f_main_v_T2_e_);
-    $dumpvars(0,proc_interp_tb.proc.me1_f_main_v_atraso_amotras_filtro_pre_zc_e_);
-    $dumpvars(0,proc_interp_tb.proc.me2_f_main_v_w_coeff_e_);
-    $dumpvars(0,proc_interp_tb.proc.me1_f_main_v_w_index_e_);
-    $dumpvars(0,proc_interp_tb.proc.me2_f_main_v_w_sum_e_);
-    $dumpvars(0,proc_interp_tb.proc.me1_f_main_v_buffer_media_movel_idex_e_);
-    $dumpvars(0,proc_interp_tb.proc.me2_f_main_v_fcc_e_);
-    $dumpvars(0,proc_interp_tb.proc.me1_f_main_v_w_media_e_);
-    $dumpvars(0,proc_interp_tb.proc.me1_f_main_v_read_idx_mean_e_);
-    $dumpvars(0,proc_interp_tb.proc.me1_f_main_v_w_index_mean_e_);
-    $dumpvars(0,proc_interp_tb.proc.me1_f_main_v_p_e_);
-    $dumpvars(0,proc_interp_tb.proc.me1_f_main_v_b_index_mean_e_);
-    $dumpvars(0,proc_interp_tb.proc.me1_f_main_v_atraso_amotras_media_movel_e_);
-    $dumpvars(0,proc_interp_tb.proc.me2_f_main_v_fvelho_e_);
+    $dumpvars(0,proc_interp_tb.proc.me1_f_main_v_atraso_ZC_e_);
     $dumpvars(0,proc_interp_tb.proc.me1_f_main_v_j_e_);
     $dumpvars(0,proc_interp_tb.proc.me1_f_main_v_read_idx_e_);
     $dumpvars(0,proc_interp_tb.proc.me2_f_main_v_acc_e_);
@@ -185,9 +178,10 @@ initial begin
     $dumpvars(0,proc_interp_tb.proc.me2_f_main_v_denom_e_);
     $dumpvars(0,proc_interp_tb.proc.me2_f_main_v_ESCALA_e_);
     $dumpvars(0,proc_interp_tb.proc.me2_f_main_v_x_atrasado_e_);
+    $dumpvars(0,proc_interp_tb.proc.me2_f_main_v_discard_samples_e_);
+    $dumpvars(0,proc_interp_tb.proc.me1_f_main_v_atraso_geral_e_);
     $dumpvars(0,proc_interp_tb.proc.me1_f_main_v_c_index_e_);
     $dumpvars(0,proc_interp_tb.proc.me1_f_main_v_read_c_idx_e_);
-    $dumpvars(0,proc_interp_tb.proc.me1_f_main_v_atraso_geral_e_);
     $dumpvars(0,proc_interp_tb.proc.me2_f_main_v_alfa_e_);
     $dumpvars(0,proc_interp_tb.proc.me1_f_main_v_cnt_e_);
     $dumpvars(0,proc_interp_tb.proc.me2_f_main_v_x_e_);

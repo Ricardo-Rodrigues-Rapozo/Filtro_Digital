@@ -77,7 +77,7 @@ SAIDA_DIR = DADOS_DIR / "analise_saidas"
 
 # Arquivos brutos exportados pelo testbench/SAPHo.
 ARQ_SAPHO_BANCO = DADOS_DIR / "saida_banco0.txt"
-ARQ_SAPHO_FREQ = DADOS_DIR / "saida_interp2.txt"
+ARQ_SAPHO_pos_zc_FREQ = DADOS_DIR / "saida_interp2.txt"
 ARQ_SAPHO_INTERP = DADOS_DIR / "saida_interp0.txt"
 ARQ_SAPHO_pre_zc = DADOS_DIR / "saida_interp3.txt"
 ARQ_SAPHO_freq_zc = DADOS_DIR / "saida_interp1.txt"
@@ -199,7 +199,7 @@ def carregar_freq_sapho(n_frames, fbDelay):
     # saida_interp2 deve ser o fout2 gravado junto com cada fout0 valido.
     # Assim ela fica no eixo da entrada do banco polifasico, igual ao arquivo
     # de frequencia usado no validacaoOffnominal/ValidacaoRampa.
-    freq_interp = np.loadtxt(ARQ_SAPHO_FREQ) / ESCALA
+    freq_interp = np.loadtxt(ARQ_SAPHO_pos_zc_FREQ) / ESCALA
 
     if ARQ_SAPHO_INTERP.exists(): ## 
         interp = np.loadtxt(ARQ_SAPHO_INTERP)
@@ -458,12 +458,12 @@ plt.show(block=False)
 
 # Frequencia SAPHo no mesmo eixo de frames do banco.
 #freq_sapho = carregar_freq_sapho(X_sapho.shape[1],0)
-freq_sapho = np.loadtxt(ARQ_SAPHO_FREQ) / ESCALA
-freq_sapho = freq_sapho[1:]
+freq_sapho_pos_zc = np.loadtxt(ARQ_SAPHO_pos_zc_FREQ) / ESCALA
+freq_sapho = freq_sapho_pos_zc[1:]
 
 plt.figure(figsize=(10, 4))
-plt.plot(freq_sapho,"o-", label="freq_sapho")
-plt.plot(freq[:len(freq_sapho)],"o-", label="freq_python")
+plt.plot(freq_sapho,"o-", label="freq_sapho PÓS ZC")
+plt.plot(freq[:len(freq_sapho)],"o-", label="freq_python PÓS ZC")
 plt.plot(fr[:len(freq_sapho)], label="fr")
 plt.legend()
 plt.title("Frequencias usadas no banco SAPHo e no banco Python")
