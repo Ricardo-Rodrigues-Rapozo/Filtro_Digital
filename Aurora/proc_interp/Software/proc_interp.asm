@@ -192,19 +192,19 @@ LOD 1000.0
 SET main_ESCALA
 LOD 0.0
 SET main_x_atrasado
-I2F_M 1536
+I2F_M 1024
 SET main_discard_samples
 #array main_num_pre_BSP 2 6
 #array main_den_pre_BSP 2 2
 #array main_buffer_entrada_prefiltro 2 6
 #array main_buffer_saida_prefiltro 2 2
-LOD 636
+LOD 445
 SET main_atraso_geral
 LOD 0
 SET main_c_index
 LOD 0
 SET main_read_c_idx
-#array main_buffer_atraso_x 2 636
+#array main_buffer_atraso_x 2 445
 #array main_buffer_entrada_farrow 2 4
 LOD 0.0
 SET main_alfa

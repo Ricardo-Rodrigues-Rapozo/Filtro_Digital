@@ -23,7 +23,7 @@ processor#(.NUBITS(32),
 .NBEXPO(8),
 .NBOPER(10),
 .NUGAIN(128),
-.MDATAS(814),
+.MDATAS(623),
 .MINSTS(837),
 .SDEPTH(5),
 .DDEPTH(5),
@@ -198,19 +198,19 @@ always @ (posedge clk) begin
    if (mem_addr_wr == 130 && mem_wr) me1_f_main_v_atraso_geral_e_ <= out;
    if (mem_addr_wr == 131 && mem_wr) me1_f_main_v_c_index_e_ <= out;
    if (mem_addr_wr == 132 && mem_wr) me1_f_main_v_read_c_idx_e_ <= out;
-   if (mem_addr_wr == 773 && mem_wr) me2_f_main_v_alfa_e_ <= sm_me2*$pow(2.0,e_me2);
-   if (mem_addr_wr == 774 && mem_wr) me1_f_main_v_cnt_e_ <= out;
-   if (mem_addr_wr == 795 && mem_wr) me2_f_main_v_x_e_ <= sm_me2*$pow(2.0,e_me2);
-   if (mem_addr_wr == 799 && mem_wr) me2_f_main_v_Ts_e_ <= sm_me2*$pow(2.0,e_me2);
-   if (mem_addr_wr == 801 && mem_wr) me2_f_main_v_dot_result_e_ <= sm_me2*$pow(2.0,e_me2);
-   if (mem_addr_wr == 802 && mem_wr) me2_f_main_v_freq_smoothed_e_ <= sm_me2*$pow(2.0,e_me2);
-   if (mem_addr_wr == 803 && mem_wr) me2_f_main_v_freq_atrasada_e_ <= sm_me2*$pow(2.0,e_me2);
-   if (mem_addr_wr == 804 && mem_wr) me2_f_main_v_lambda_val_e_ <= sm_me2*$pow(2.0,e_me2);
-   if (mem_addr_wr == 805 && mem_wr) me2_f_main_v_y_e_ <= sm_me2*$pow(2.0,e_me2);
-   if (mem_addr_wr == 808 && mem_wr) me2_f_main_v_H0_e_ <= sm_me2*$pow(2.0,e_me2);
-   if (mem_addr_wr == 809 && mem_wr) me2_f_main_v_H1_e_ <= sm_me2*$pow(2.0,e_me2);
-   if (mem_addr_wr == 810 && mem_wr) me2_f_main_v_H2_e_ <= sm_me2*$pow(2.0,e_me2);
-   if (mem_addr_wr == 812 && mem_wr) me2_f_main_v_H3_e_ <= sm_me2*$pow(2.0,e_me2);
+   if (mem_addr_wr == 582 && mem_wr) me2_f_main_v_alfa_e_ <= sm_me2*$pow(2.0,e_me2);
+   if (mem_addr_wr == 583 && mem_wr) me1_f_main_v_cnt_e_ <= out;
+   if (mem_addr_wr == 604 && mem_wr) me2_f_main_v_x_e_ <= sm_me2*$pow(2.0,e_me2);
+   if (mem_addr_wr == 608 && mem_wr) me2_f_main_v_Ts_e_ <= sm_me2*$pow(2.0,e_me2);
+   if (mem_addr_wr == 610 && mem_wr) me2_f_main_v_dot_result_e_ <= sm_me2*$pow(2.0,e_me2);
+   if (mem_addr_wr == 611 && mem_wr) me2_f_main_v_freq_smoothed_e_ <= sm_me2*$pow(2.0,e_me2);
+   if (mem_addr_wr == 612 && mem_wr) me2_f_main_v_freq_atrasada_e_ <= sm_me2*$pow(2.0,e_me2);
+   if (mem_addr_wr == 613 && mem_wr) me2_f_main_v_lambda_val_e_ <= sm_me2*$pow(2.0,e_me2);
+   if (mem_addr_wr == 614 && mem_wr) me2_f_main_v_y_e_ <= sm_me2*$pow(2.0,e_me2);
+   if (mem_addr_wr == 617 && mem_wr) me2_f_main_v_H0_e_ <= sm_me2*$pow(2.0,e_me2);
+   if (mem_addr_wr == 618 && mem_wr) me2_f_main_v_H1_e_ <= sm_me2*$pow(2.0,e_me2);
+   if (mem_addr_wr == 619 && mem_wr) me2_f_main_v_H2_e_ <= sm_me2*$pow(2.0,e_me2);
+   if (mem_addr_wr == 621 && mem_wr) me2_f_main_v_H3_e_ <= sm_me2*$pow(2.0,e_me2);
 end
 
 // instructions ---------------------------------------------------------------

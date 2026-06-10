@@ -3,11 +3,23 @@ from pathlib import Path
 import io
 import warnings
 
+# analise_saidas.py
+#
 # Este script gera a referencia em Python, executa o mesmo fluxo principal do
 # principal_Naiara.py por tras dos panos e compara essa referencia com os TXT
-# exportados pelo SAPHo. A ideia e manter tudo linear e facil de auditar:
-# primeiro monta o caminho Python, depois le o SAPHo, depois corrige fase e
-# calcula os erros.
+# exportados pelo SAPHo.
+#
+# Fluxo linear atual:
+# 1. gerar sinal e referencia;
+# 2. estimar frequencia por ZC;
+# 3. aplicar o atraso geral zc_m_delay;
+# 4. descartar o transitorio inicial;
+# 5. interpolar por B-spline;
+# 6. passar pelo banco polifasico;
+# 7. carregar as saidas SAPHo;
+# 8. alinhar tamanhos entre Python, SAPHo e referencia;
+# 9. corrigir fase;
+# 10. calcular metricas, salvar resumos e gerar graficos.
 
 import matplotlib
 import numpy as np
@@ -26,13 +38,14 @@ from auxiliares import TVE, wrap_to_pi
 
 # Backend sem janela. Assim o script pode rodar direto no terminal e salvar os
 # PDFs mesmo sem interface grafica aberta.
-#matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 
 
 # ===================================================
-# Parametros iguais ao principal_Naiara.py
+# 0. Parametros e caminhos
 # ===================================================
+# Estes parametros espelham o principal_Naiara.py para que a analise use a
+# mesma geracao, a mesma taxa de amostragem e a mesma janela nominal.
 # Frequencia nominal do sistema.
 f0 = 60
 
@@ -99,13 +112,21 @@ AMOSTRAS_ANALISE = (Nc + CICLOS_EXTRAS_ANALISE) * Nppc
 TAMANHO_FILTRO_BANCO = 8 * Nppc + 1
 
 
+# ===================================================
+# 1. Funcoes auxiliares
+# ===================================================
 def corrigir_fase(X, freq, pre_delay, fbDelay):
     """
-    Corrige a fase dos fasores usando a frequencia estimada.
+    Corrige a fase dos fasores usando a frequencia estimada por frame.
 
-    X pode vir tanto do banco Python quanto do banco SAPHo. Por isso esta
-    funcao nao tem nenhum ajuste especifico de origem: se Python e SAPHo
-    estiverem alinhados, a mesma regra deve servir para os dois.
+    X deve estar no eixo [harmonico, frame]. A entrada freq deve estar na
+    mesma taxa de frames do banco polifasico, nao na taxa de amostras do
+    interpolador. O mesmo calculo e aplicado ao banco Python e ao banco SAPHo;
+    diferencas restantes devem vir dos fasores ou da frequencia de entrada.
+
+    pre_delay entra como atraso do pre-filtro do ZC em amostras. fbDelay entra
+    em frames e define quando a integracao de fase comeca apos o transitorio
+    do banco polifasico.
     """
     # Mesma correcao usada para os dois caminhos analisados: banco Python e
     # banco SAPHo. A diferenca entre eles deve vir dos fasores/frequencia de
@@ -162,9 +183,13 @@ def corrigir_fase(X, freq, pre_delay, fbDelay):
 
 def carregar_sapho_banco():
     """
-    Le saida_banco0.txt no mesmo formato usado na validacao de referencia.
+    Le saida_banco0.txt no formato bruto exportado pelo SAPHo.
 
-    Retorno: matriz [harmonico, frame], com linha 0 = H1 e linha 49 = H50.
+    O arquivo vem escalado por 1e6 e guarda, para cada frame, pares
+    real/imaginario no formato DC, H1, H2, ..., H50. O retorno fica no eixo
+    [fasor, frame], mantendo a linha 0 como DC e as linhas seguintes como
+    harmonicos. O descarte do DC, quando necessario, acontece no fluxo
+    principal.
     """
     out = np.loadtxt(ARQ_SAPHO_BANCO)
 
@@ -185,16 +210,17 @@ def carregar_sapho_banco():
     imag = frames[:, 1::2] / ESCALA
     fasor_completo = (real + 1j * imag).T
 
-    # Descarta o indice 0, que e o nivel DC.
-    return fasor_completo[1 : hmax + 1, :]
+    return fasor_completo[0 : hmax + 1, :]
 
 
 def carregar_freq_sapho(n_frames, fbDelay):
     """
-    Le a frequencia do SAPHo e coloca na taxa de fasores do banco.
+    Le a frequencia do SAPHo e coloca no eixo de frames do banco.
 
-    A saida_interp2 e gravada na taxa de amostras interpoladas/entrada do
-    banco; depois ela e decimada por M para virar uma frequencia por frame.
+    saida_interp2.txt esta na taxa de amostras interpoladas, que e a taxa de
+    entrada do banco polifasico. Por isso a frequencia e decimada por M para
+    virar uma amostra por frame. Em seguida, a compensacao por fbDelay coloca
+    essa frequencia no mesmo eixo temporal dos fasores.
     """
     # saida_interp2 deve ser o fout2 gravado junto com cada fout0 valido.
     # Assim ela fica no eixo da entrada do banco polifasico, igual ao arquivo
@@ -228,7 +254,8 @@ def calcular_metricas(nome, Xc, Xr):
     Calcula magnitude, fase e TVE por harmonico impar.
 
     Xc e a estimativa corrigida; Xr e a referencia. Ambas devem estar no mesmo
-    eixo [harmonico, frame].
+    eixo [harmonico, frame]. A comparacao final usa apenas H1, H3, ..., H49,
+    que correspondem aos indices 0, 2, 4, ... quando H1 ja esta na linha 0.
     """
     # Primeiro iguala a quantidade de harmonicos e frames disponiveis.
     n_h = min(Xc.shape[0], Xr.shape[0])
@@ -273,7 +300,7 @@ def calcular_metricas(nome, Xc, Xr):
 
 
 def salvar_resumo(nome_arquivo, resumo):
-    """Salva o resumo numerico em TXT com cabecalho legivel."""
+    """Salva a tabela final de metricas em TXT com cabecalho legivel."""
     cabecalho = (
         "harmonico erro_mag_medio_percent erro_mag_max_percent "
         "erro_fase_medio_graus erro_fase_max_graus "
@@ -288,7 +315,7 @@ def salvar_resumo(nome_arquivo, resumo):
 
 
 def plotar_erros(nome_arquivo, titulo, resumo):
-    """Gera um PDF com erro medio e maximo por harmonico."""
+    """Gera o PDF de metricas finais, com erro medio e maximo por harmonico."""
     # Primeira coluna do resumo guarda o numero do harmonico.
     harmonicos = resumo[:, 0]
 
@@ -324,7 +351,7 @@ def plotar_erros(nome_arquivo, titulo, resumo):
 
 def plotar_tres_sinais(Xr, X_python, X_sapho):
     """
-    Plota referencia, banco Python e SAPHo para harmonicos escolhidos.
+    Plota diagnostico visual entre referencia, banco Python e banco SAPHo.
 
     Este grafico nao e a metrica final; ele serve para olhar se a divergencia
     esta mais evidente na magnitude, na fase, ou em algum harmonico especifico.
@@ -390,20 +417,23 @@ def plotar_tres_sinais(Xr, X_python, X_sapho):
 SAIDA_DIR.mkdir(parents=True, exist_ok=True)
 
 # ===================================================
-# 1. Principal
+# 2. Geracao da referencia Python
 # ===================================================
 # O sinal e a referencia sao gerados um pouco mais longos que a janela final.
 # Esses ciclos extras permitem descartar o transitorio do ZC/interpolador sem
 # encurtar a analise de Nc ciclos.
 x, Xr, fr, _ = signal_frequency(f1, AMOSTRAS_GERACAO, f0, Fs, Fr, hmax, hmag, SNR)
 
+# ===================================================
+# 3. Estimacao ZC e alinhamento por atraso
+# ===================================================
 # estima_f_zc imprime/avisa coisas que aqui nao interessam. Como este script
 # e de analise automatica, suprimimos a saida e guardamos apenas os vetores e
 # atrasos retornados.
 with warnings.catch_warnings():
     warnings.simplefilter("ignore")
     with redirect_stdout(io.StringIO()):
-        f_zc_m, zc_m_delay,f_zc, zc_delay,v = estima_f_zc(
+        f_zc_m, zc_m_delay,f_zc, zc_delay,f_pre_zc = estima_f_zc(
             x,
             1 / Fs,
             Nppc,
@@ -413,103 +443,129 @@ with warnings.catch_warnings():
 atraso_meio_ciclo_zc = Nppc // 2
 pre_delay = zc_delay - atraso_meio_ciclo_zc
 
-freq = f_zc_m
-delay = np.zeros(zc_m_delay + 1)
+# Atraso geral aplicado ao sinal de entrada para alinhar x com a frequencia
+# suavizada. Na pratica, zc_m_delay soma pre_delay, meio ciclo do ZC e atraso
+# do filtro pos-ZC calculado dentro de estima_f_zc.
+freq_pos_ZC = f_zc_m
+delay = np.zeros(zc_m_delay + 1) 
 delay[-1] = 1.0
-x = lfilter(delay, [1.0], x)
+x = lfilter(delay, [1.0], x)  ## sinal alinhado com a frequencia após o media movel
 
+# A referencia recebe zeros no inicio para manter o mesmo eixo temporal do x
+# atrasado. fr e Xr seguem o atraso total zc_m_delay usado pela frequencia
+# suavizada.
 fr = np.concatenate((np.zeros(zc_m_delay), fr))
 Xr = np.hstack((np.zeros((hmax, zc_m_delay), dtype=complex), Xr))
 
 # ===================================================
-# 2. Saida SAPHo
+# 4. Comparacao do filtro pré-ZC do python e SAPHo
 # ===================================================
-# Banco SAPHo bruto: fasores complexos por harmonico/frame.
-#X_sapho = carregar_sapho_banco()
+# Estes graficos comparam pontos internos exportados pelo SAPHo com os vetores
+# equivalentes do Python. Eles servem para depurar a cadeia antes do banco.
 
 filtro_pre_zc = np.loadtxt(ARQ_SAPHO_pre_zc) / ESCALA
 filtro_pre_zc = filtro_pre_zc[1:]
 
 plt.figure(figsize=(10, 4))
-plt.plot(filtro_pre_zc,"o-", label="filtro_pre_zc sapho")
-plt.plot(v[:len(filtro_pre_zc)],"o-", label="filtro_pre_zc python")
+plt.plot(filtro_pre_zc,"o-", label="Filtro pré Zero crossing(SAPHO)")
+plt.plot(f_pre_zc[:len(filtro_pre_zc)],"o-", label="Filtro pré Zero crossing(Python)")
 plt.legend()
-plt.title("Frequencias usadas no banco SAPHo e no banco Python")
+plt.title("Comparação entre saídas do filtro pré ZC usadas no banco SAPHo e no banco Python")
 plt.xlabel("Frame")
 plt.ylabel("Frequencia (Hz)")
 plt.grid(True, alpha=0.3)
 plt.show(block=False)
 
-# Frequencia SAPHo no mesmo eixo de frames do banco.
+
+# ===================================================
+# 5. Comparacao da frequência ZC do python e SAPHo
+# ===================================================
+# Diagnostico da frequencia gerada diretamente pelo detector de zero crossing.
 #freq_sapho = carregar_freq_sapho(X_sapho.shape[1],0)
 freq_zc_sapho = np.loadtxt(ARQ_SAPHO_freq_zc) / ESCALA
 freq_zc_sapho = freq_zc_sapho[1:]
 
 plt.figure(figsize=(10, 4))
-plt.plot(freq_zc_sapho,"o-", label="freq_ZC_sapho")
-plt.plot(f_zc[:len(freq_zc_sapho)],"o-", label="freq_ZC_python")
-plt.plot(fr[:len(freq_zc_sapho)], label="fr")
+plt.plot(freq_zc_sapho,"o-", label="Frequência do zero crossing(SAPHO)")
+plt.plot(f_zc[:len(freq_zc_sapho)],"o-", label="Frequência do zero crossing(Python)")
+plt.plot(fr[:len(freq_zc_sapho)], label="Referência")
 plt.legend()
-plt.title("Frequencias ZC usadas no banco SAPHo e no banco Python")
+plt.title("Comparação entre saídas do detector de zero crossing usadas no banco SAPHo e no banco Python")
 plt.xlabel("Frame")
 plt.ylabel("Frequencia (Hz)")
 plt.grid(True, alpha=0.3)
 plt.show(block=False)
 
-# Frequencia SAPHo no mesmo eixo de frames do banco.
+
+
+# ===================================================
+# 6. Comparacao do filtro pós-ZC do python e SAPHo
+# ===================================================
+# Diagnostico da frequencia pos-ZC ainda na taxa de amostras/interpolador.
 #freq_sapho = carregar_freq_sapho(X_sapho.shape[1],0)
 freq_sapho_pos_zc = np.loadtxt(ARQ_SAPHO_pos_zc_FREQ) / ESCALA
+# No fluxo atual, freq_sapho tambem e reutilizada na correcao final.
 freq_sapho = freq_sapho_pos_zc[1:]
 
 plt.figure(figsize=(10, 4))
-plt.plot(freq_sapho,"o-", label="freq_sapho PÓS ZC")
-plt.plot(freq[:len(freq_sapho)],"o-", label="freq_python PÓS ZC")
-plt.plot(fr[:len(freq_sapho)], label="fr")
+plt.plot(freq_sapho,"o-", label="Frequência do filtro pós-ZC(SAPHO)")
+plt.plot(freq_pos_ZC[:len(freq_sapho)],"o-", label="Frequência do filtro pós-ZC(Python)")
+plt.plot(fr[:len(freq_sapho)], label="Referência")
 plt.legend()
-plt.title("Frequencias usadas no banco SAPHo e no banco Python")
+plt.title("Comparação entre saídas do filtro pós-ZC usadas no banco SAPHo e no banco Python")
 plt.xlabel("Frame")
 plt.ylabel("Frequencia (Hz)")
 plt.grid(True, alpha=0.3)
 plt.show(block=False)
 
+
+# ===================================================
+# 7. Descarte inicial e interpolacao
+# ===================================================
 # O descarte e arredondado para ciclos inteiros para nao introduzir fase
 # fracionaria extra na referencia.
 ciclos_descartados_zc = int(np.ceil(zc_m_delay / Nppc))
-discard_samples = MULTIPLICADOR_DESCARTE_ZC * ciclos_descartados_zc * Nppc
-fim_analise = discard_samples + AMOSTRAS_ANALISE
+discard_samples = 2*int(np.ceil(zc_m_delay / Nppc) * Nppc) ## igual ao dobro do numero de ciclos descartados para tirar o transitorio do ZC e do filtro pós-ZC, ambos com atraso zc_m_delay. O fator 2 e multiplicador de seguranca para garantir que o transitorio tenha passado completamente, mesmo que o atraso do filtro pós-ZC seja maior que o atraso do ZC.
 
 # A partir daqui todos os vetores continuam com a mesma origem temporal.
-freq = freq[discard_samples:fim_analise]
-x = x[discard_samples:fim_analise]
-fr = fr[discard_samples:fim_analise]
-Xr = Xr[:, discard_samples:fim_analise]
+
+freq_pos_ZC_python = freq_pos_ZC[discard_samples:discard_samples+(Nc+200)*Nppc]
+x = x[discard_samples:discard_samples+(Nc+200)*Nppc]
+fr = fr[discard_samples:discard_samples+(Nc+200)*Nppc]
+Xr = Xr[:, discard_samples:discard_samples+(Nc+200)*Nppc]
 
 # Interpolacao B-spline exatamente como no principal_Naiara, mas usando as
 # variaveis acima para deixar explicito qual frequencia alimenta o processo.
-xi = BSplineInterp(x, f0, freq, MBSP, Fs, plot_level=0)
+xi = BSplineInterp(x, f0, freq_pos_ZC_python, MBSP, Fs, plot_level=0)
 
 
-# ===================================================
-# 3. Saida SAPHo
-# ===================================================
-# Banco SAPHo bruto: fasores complexos por harmonico/frame.
+# Diagnostico da saida do interpolador SAPHo contra a saida B-spline Python.
 #X_sapho = carregar_sapho_banco()
 
-# Frequencia SAPHo no mesmo eixo de frames do banco.
+
+
+# ===================================================
+# 8. Comparacao das saídas interpoladas do python e SAPHo
+# ===================================================
+# A chamada abaixo documenta a opcao de carregar a frequencia SAPHo por frame;
+# no fluxo atual ela permanece comentada.
 #freq_sapho = carregar_freq_sapho(X_sapho.shape[1],0)
 xi_sapho = np.loadtxt(ARQ_SAPHO_INTERP) / ESCALA
 xi_sapho = xi_sapho[1:]
 
 plt.figure(figsize=(10, 4))
-plt.plot(xi_sapho,"o-", label="xi_sapho")
-plt.plot(xi[:len(xi_sapho)],"o-", label="xi")
+plt.plot(xi_sapho,"o-", label="Saída do interpolador (SAPHO)")
+plt.plot(xi[:len(xi_sapho)],"o-", label="Saída do interpolador (Python)")
 plt.legend()
-plt.title("Frequencias usadas no banco SAPHo e no banco Python")
+plt.title("Comparação entre saídas do interpolador usadas no SAPHo e no Python")
 plt.xlabel("Frame")
 plt.ylabel("Frequencia (Hz)")
 plt.grid(True, alpha=0.3)
 plt.show(block=True)
 
+# ===================================================
+# 9. Banco polifasico Python
+# ===================================================
 h = FlatTopFilterBase(TAMANHO_FILTRO_BANCO)
 fbDelay = len(h) // (2 * M)
 
@@ -519,9 +575,10 @@ fbDelay = len(h) // (2 * M)
 amostras_entrada_banco = (Nc + fbDelay) * Nppc
 
 # O mesmo corte e aplicado ao sinal interpolado, a referencia e a frequencia.
+# Cut the signals to the length of the polyphase filter bank output, which is equal to the number of samples that can be processed by the filter bank given its delay and decimation factor
 xi = xi[:amostras_entrada_banco]
 Xr = Xr[:, :amostras_entrada_banco]
-freq = freq[:amostras_entrada_banco]
+freq_pos_ZC_python = freq_pos_ZC_python[:amostras_entrada_banco]
 fr = fr[:amostras_entrada_banco]
 
 # O banco tambem calcula a componente DC. Como a comparacao comeca em H1,
@@ -530,84 +587,89 @@ X_python_com_dc = PolyphaseFilterBank(h, M, xi)
 X_python = X_python_com_dc[1 : hmax + 1, :] 
 
 # A frequencia e a referencia saem da taxa de amostras para a taxa de fasores.
-freq_python = downsample(freq, M)
+freq_pos_ZC_python = downsample(freq_pos_ZC_python, M)
 Xr = downsample(Xr, M)
 fr = downsample(fr, M)
 
 # Compensacao do atraso do banco: o mesmo numero de frames zero e inserido na
 # frequencia e na referencia para comparar com o fasor que saiu do filtro.
-freq_python = np.concatenate((np.zeros(fbDelay), freq_python))
+freq_pos_ZC_python = np.concatenate((np.zeros(fbDelay), freq_pos_ZC_python))
 fr = np.concatenate((np.zeros(fbDelay), fr))
 Xr = np.hstack((np.zeros((hmax, fbDelay), dtype=complex), Xr))
 
-freq_python = freq_python[:-fbDelay]
+freq_pos_ZC_python = freq_pos_ZC_python[:-fbDelay]
 fr = fr[:-fbDelay]
 Xr = Xr[:, :-fbDelay]
 
 
 
-# ===================================================
-# 3. Correcao de fase e corte do transitorio
-# ===================================================
-# Antes da metrica, todos os sinais sao cortados para o menor tamanho comum.
-# Isso evita comparar frames que existem em um caminho mas nao em outro.
-n_h = min(X_python.shape[0], X_sapho.shape[0], Xr.shape[0])
-n_f = min(X_python.shape[1], X_sapho.shape[1], Xr.shape[1], len(freq_sapho))
+# # ===================================================
+# # 10. Alinhamento Python x SAPHo x referencia
+# # ===================================================
+# X_sapho = carregar_sapho_banco()
+# X_sapho = X_sapho[1:1 + hmax]
+# # Antes da metrica, todos os sinais sao cortados para o menor tamanho comum.
+# # Isso evita comparar frames que existem em um caminho mas nao em outro.
+# n_h = min(X_python.shape[0], X_sapho.shape[0], Xr.shape[0])
+# n_f = min(X_python.shape[1], X_sapho.shape[1], Xr.shape[1], len(freq_sapho))
 
-X_python = X_python[:n_h, :n_f] ## normaliza tamanho para o menor entre os tamanhos
-X_sapho = X_sapho[:n_h, :n_f] ## normaliza tamanho para o menor entre os tamanhos
-Xr = Xr[:n_h, :n_f] ## normaliza tamanho para o menor entre os tamanhos
-freq_python = freq_python[:n_f] ## normaliza tamanho para o menor entre os tamanhos
-freq_sapho = freq_sapho[:n_f] ## normaliza tamanho para o menor entre os tamanhos
+# X_python = X_python[:n_h, :n_f] ## normaliza tamanho para o menor entre os tamanhos
+# X_sapho = X_sapho[:n_h, :n_f] ## normaliza tamanho para o menor entre os tamanhos
+# Xr = Xr[:n_h, :n_f] ## normaliza tamanho para o menor entre os tamanhos
+# freq_pos_ZC_python = freq_pos_ZC_python[:n_f] ## normaliza tamanho para o menor entre os tamanhos
+# freq_sapho = freq_sapho[:n_f] ## normaliza tamanho para o menor entre os tamanhos
 
-# Aplica exatamente a mesma correcao de fase no banco Python e no SAPHo.
-Xc_python = corrigir_fase(X_python, freq_python, pre_delay, fbDelay)
-Xc_sapho = corrigir_fase(X_sapho, freq_sapho, pre_delay, fbDelay)
+# # ===================================================
+# # 11. Correcao de fase e corte do transitorio
+# # ===================================================
+# # Aplica exatamente a mesma correcao de fase no banco Python e no SAPHo.
+# Xc_python = corrigir_fase(X_python, freq_pos_ZC_python, pre_delay, fbDelay)
+# Xc_sapho = corrigir_fase(X_sapho, freq_sapho, pre_delay, fbDelay)
 
-# Remove frames iniciais ainda influenciados pelo transitorio do banco.
-corte = MULTIPLICADOR_CORTE_BANCO * fbDelay
-Xc_python = Xc_python[:, corte:]  ## tira um pedaço do iniio do python para tirar o transitorio do banco
-Xc_sapho = Xc_sapho[:, corte:] ## tira um pedaço do iniio do sapho para tirar o transitorio do banco
-Xr = Xr[:, corte:] ## tira um pedaço do iniio da referencia para tirar o transitorio do banco
+# # Remove frames iniciais ainda influenciados pelo transitorio do banco.
+# corte = MULTIPLICADOR_CORTE_BANCO * fbDelay
+# Xc_python = Xc_python[:, corte:]  ## tira um pedaço do iniio do python para tirar o transitorio do banco
+# Xc_sapho = Xc_sapho[:, corte:] ## tira um pedaço do iniio do sapho para tirar o transitorio do banco
+# Xr = Xr[:, corte:] ## tira um pedaço do iniio da referencia para tirar o transitorio do banco
 
-# ===================================================
-# 4. Analise de desempenho
-# ===================================================
-# Calcula uma tabela separada para o banco Python e para o SAPHo.
-nome_python, resumo_python = calcular_metricas("python_banco", Xc_python, Xr)
-nome_sapho, resumo_sapho = calcular_metricas("sapho_banco", Xc_sapho, Xr)
+# # ===================================================
+# # 12. Metricas, graficos e resumo final
+# # ===================================================
+# # Calcula uma tabela separada para o banco Python e para o SAPHo.
+# nome_python, resumo_python = calcular_metricas("python_banco", Xc_python, Xr)
+# nome_sapho, resumo_sapho = calcular_metricas("sapho_banco", Xc_sapho, Xr)
 
-# Salva TXT e graficos individuais de erro.
-salvar_resumo("resumo_python_banco.txt", resumo_python)
-salvar_resumo("resumo_sapho_banco.txt", resumo_sapho)
-plotar_erros("grafico_python_banco.pdf", nome_python, resumo_python)
-plotar_erros("grafico_sapho_banco.pdf", nome_sapho, resumo_sapho)
+# # Salva TXT e graficos individuais de erro.
+# salvar_resumo("resumo_python_banco.txt", resumo_python)
+# salvar_resumo("resumo_sapho_banco.txt", resumo_sapho)
+# plotar_erros("grafico_python_banco.pdf", nome_python, resumo_python)
+# plotar_erros("grafico_sapho_banco.pdf", nome_sapho, resumo_sapho)
 
-# Salva grafico comparando referencia, Python e SAPHo no mesmo desenho.
-plotar_tres_sinais(Xr, Xc_python, Xc_sapho)
+# # Salva grafico comparando referencia, Python e SAPHo no mesmo desenho.
+# plotar_tres_sinais(Xr, Xc_python, Xc_sapho)
 
-# Resumo curto no terminal para conferir rapidamente o alinhamento usado.
-print("Analise finalizada.")
-print(
-    "ZC: "
-    f"meio_ciclo={atraso_meio_ciclo_zc}, "
-    f"pre_delay={pre_delay}, "
-    f"zc_delay={zc_delay}, "
-    f"zc_m_delay={zc_m_delay}"
-)
-print(
-    "Banco: "
-    f"tamanho_filtro={TAMANHO_FILTRO_BANCO}, "
-    f"fbDelay={fbDelay}, "
-    f"corte={corte}"
-)
-print(f"Janelas: descarte={discard_samples}, entrada_banco={amostras_entrada_banco}")
-print(f"Referencia: {Xr.shape}")
-print(f"Python:     {Xc_python.shape}")
-print(f"SAPHo:      {Xc_sapho.shape}")
-print()
+# # Resumo curto no terminal para conferir rapidamente o alinhamento usado.
+# print("Analise finalizada.")
+# print(
+#     "ZC: "
+#     f"meio_ciclo={atraso_meio_ciclo_zc}, "
+#     f"pre_delay={pre_delay}, "
+#     f"zc_delay={zc_delay}, "
+#     f"zc_m_delay={zc_m_delay}"
+# )
+# print(
+#     "Banco: "
+#     f"tamanho_filtro={TAMANHO_FILTRO_BANCO}, "
+#     f"fbDelay={fbDelay}, "
+#     f"corte={corte}"
+# )
+# print(f"Janelas: descarte={discard_samples}, entrada_banco={amostras_entrada_banco}")
+# print(f"Referencia: {Xr.shape}")
+# print(f"Python:     {Xc_python.shape}")
+# print(f"SAPHo:      {Xc_sapho.shape}")
+# print()
 
-# Resumo global: media dos TVEs medios por harmonico e pior TVE maximo.
-print(f"Python TVE medio/max: {np.mean(resumo_python[:, 5]):.6f}% / {np.max(resumo_python[:, 6]):.6f}%")
-print(f"SAPHo  TVE medio/max: {np.mean(resumo_sapho[:, 5]):.6f}% / {np.max(resumo_sapho[:, 6]):.6f}%")
-print(f"Resultados salvos em: {SAIDA_DIR}")
+# # Resumo global: media dos TVEs medios por harmonico e pior TVE maximo.
+# print(f"Python TVE medio/max: {np.mean(resumo_python[:, 5]):.6f}% / {np.max(resumo_python[:, 6]):.6f}%")
+# print(f"SAPHo  TVE medio/max: {np.mean(resumo_sapho[:, 5]):.6f}% / {np.max(resumo_sapho[:, 6]):.6f}%")
+# print(f"Resultados salvos em: {SAIDA_DIR}")

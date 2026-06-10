@@ -1,6 +1,6 @@
 import numpy as np
 from scipy.io import loadmat
-from scipy.signal import lfilter, sosfilt, freqz, group_delay, firls, bessel, bilinear, tf2sos
+from scipy.signal import lfilter, sos2tf, sosfilt, freqz, group_delay, firls, bessel, bilinear, tf2sos
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 from pathlib import Path
@@ -206,6 +206,7 @@ def estima_f_zc(s, Ts, Nppc, plot_level=0):
     idx = np.argmin(np.abs(w_gd - freq_alvo))
     gd_dc = int(round(gd[idx]))
 
+ 
     if plot_level >= 1:
         fig = make_subplots(rows=3, cols=1, shared_xaxes=True, subplot_titles=("Magnitude (dB)", "Phase (graus)", "Group Delay (samples)"))
 
@@ -272,8 +273,35 @@ def estima_f_zc(s, Ts, Nppc, plot_level=0):
         print(f"Pre-filter SOS section {i} [b0, b1, b2, a0, a1, a2]: {section}")
 
     f_zc_m = sosfilt(sosMED, f_zc)
+# ================================================
+# Smoothing Filter - usando coeficientes do SAPHo
+# Apenas para teste/comparacao
+# ================================================
 
-    
+    repo_root = Path(__file__).resolve().parents[1]
+    sos_dir = repo_root / "Aurora" / "proc_interp" / "Software"
+
+    bm_sos = np.loadtxt(sos_dir / "bm_sos.txt")
+    am_sos = np.loadtxt(sos_dir / "am_sos.txt")
+
+    bm_sos = bm_sos.reshape(-1, 3)
+    am_sos = am_sos.reshape(-1, 3)
+
+    sosMED = np.hstack((bm_sos, am_sos))
+
+    # Se quiser calcular o atraso a partir do filtro importado:
+    bMED, aMED = sos2tf(sosMED)
+    f, H = freqz(bMED, aMED, worN=4096, fs=Fs)
+    w_gd, gd = group_delay((bMED, aMED), w=4096, fs=Fs)
+
+    idx = np.argmin(np.abs(w_gd - 0))
+    gd_dc = int(round(gd[idx]))
+
+    # Se quiser forcar manualmente para seu teste:
+    # gd_dc = 190
+
+    f_zc_m = sosfilt(sosMED, f_zc)
+        
     # Nw = 1 * Nppc
     # w = np.ones(Nw) / Nw
     
