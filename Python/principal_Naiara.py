@@ -1,11 +1,9 @@
-from pathlib import Path
-
 import numpy as np
 from scipy.signal import lfilter
 from sinaisIEC60255_118 import signal_frequency, frequency_ramp, modulation
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
-from DSPEPS import downsample, estima_f_zc, BSplineInterp, FlatTopFilterBase, PolyphaseFilterBank, kf_trend_poly,PolyphaseFilterBankCircular
+from DSPEPS import downsample, estima_f_zc, BSplineInterp, FlatTopFilterBase, PolyphaseFilterBank, kf_trend_poly
 from auxiliares import TVE, wrap_to_pi
 
 # ===================================================
@@ -29,16 +27,13 @@ hmag = 0.05
 Fr = 60
 SNR = 6000000
 
-f1 = 65
+f1 = 61
 Rf = 1
 fa = 54.75
 
 x, Xr, fr, ROCOFr = signal_frequency(f1, (Nc + 300)*Nppc, f0, Fs, Fr, hmax, hmag, SNR)
-#x, Xr, fr, ROCOFr = frequency_ramp(Rf, (Nc + 300)*Nppc, f0, fa, Fs, Fr, hmax, hmag, SNR)
+# x, Xr, fr, ROCOFr = frequency_ramp(Rf, (Nc + 300)*Nppc, f0, fa, Fs, Fr, hmax, hmag, SNR)
 
-
-x_int = (x * 32768.0).astype(np.int32)    
-np.savetxt('sinal_entrada_sapho.txt', x_int, fmt='%d')
 # Plotting the input signal, reference frequency, and reference ROCOF
 # -------------------------------------------------------------------
 fig = make_subplots(
@@ -73,11 +68,24 @@ fig.show()
 # Frequency Estimation
 # ===================================================
 
-f_zc_m, zc_m_delay, f_zc, zc_delay = estima_f_zc(x, 1/Fs, Nppc, plot_level=2)
+f_zc_m, zc_m_delay, f_zc, zc_delay, total_delay = estima_f_zc(x, 1/Fs, Nppc, plot_level=0)
 
-freq = f_zc_m
+discard_samples = 2*int(np.ceil(total_delay / Nppc) * Nppc)
+f_zc_m = f_zc_m[discard_samples:]
+f_zc = f_zc[discard_samples:]
+x = x[discard_samples:]
+fr = fr[discard_samples:]
+ROCOFr = ROCOFr[discard_samples:]
+Xr = Xr[:, discard_samples:]
 
-delay = np.zeros(zc_m_delay+1)
+# Kalman filter to estimate the tendency of the frequency
+q = 1e-3;   # ajuste fino
+r = 1;      # se a senoide for forte, aumente
+
+out = kf_trend_poly(f_zc_m, Ts, 1, q, r)
+freq = out["b"].squeeze() #
+
+delay = np.zeros(total_delay+1)
 delay[-1] = 1.0
 
 x = lfilter(delay, [1.0], x)
@@ -85,9 +93,9 @@ x = lfilter(delay, [1.0], x)
 # para alinhar o tempo de f_zc, fr, Xr e ROCOFr com o tempo de x, considerando o delay introduzido pelo filtro de média móvel
 # ---------------------------------------------------------------------------------------------------------------------------
 fr2 = np.concatenate((np.zeros(zc_delay), fr)) 
-fr = np.concatenate((np.zeros(zc_m_delay), fr)) 
-Xr = np.hstack((np.zeros((hmax, zc_m_delay)), Xr)) 
-ROCOFr  = np.concatenate((np.zeros(zc_m_delay), ROCOFr)) 
+fr = np.concatenate((np.zeros(total_delay), fr)) 
+Xr = np.hstack((np.zeros((hmax, total_delay)), Xr)) 
+ROCOFr  = np.concatenate((np.zeros(total_delay), ROCOFr)) 
 
 # Plotting the input signal, reference frequency, and reference ROCOF
 # -------------------------------------------------------------------
@@ -122,7 +130,7 @@ fig.show()
 
 # Discarding the initial samples to align the time axes of all signals
 # --------------------------------------------------------------------
-discard_samples = 2*int(np.ceil(zc_m_delay / Nppc) * Nppc)
+discard_samples = 2*int(np.ceil(total_delay / Nppc) * Nppc)
 print("Discarding the first", discard_samples)
 
 freq = freq[discard_samples:discard_samples+(Nc+200)*Nppc]
@@ -182,43 +190,28 @@ M = Fs//f0
 h = FlatTopFilterBase(8*Nppc + 1) # Base Filter Definition - FlatTop 
 fbDelay = (len(h))//(2*M)
 
-
-Ehh_cmm = np.zeros((M, 8))
-for kk in range(M):
-    Ehh_cmm[kk, :] = h[kk::M][:8]
-np.savetxt('flattop_coeffs.txt', Ehh_cmm.reshape(-1), fmt='%.18e')
-
-Xcircular = PolyphaseFilterBankCircular(h, M, xi)
-Xcircular  = Xcircular[1:hmax+1,:]
-np.savetxt('saida_im_banco.txt', 1000000 * Xcircular.imag, fmt='%d')
-np.savetxt('saida_real_banco.txt', 1000000 * Xcircular.real, fmt='%d')
-
-
 # Cut the signals to the length of the polyphase filter bank output, which is equal to the number of samples that can be processed by the filter bank given its delay and decimation factor
 # ------------------------------------------------------------------------------------------------------------------------------------------------------
 xi = xi[:(Nc + fbDelay)*Nppc]
 Xr = Xr[:,:(Nc + fbDelay)*Nppc]
-freq = freq[:(Nc + fbDelay)*Nppc] ## Limita a 10s de simulação 
+freq = freq[:(Nc + fbDelay)*Nppc]
 fr = fr[:(Nc + fbDelay)*Nppc]
 
 X = PolyphaseFilterBank(h, M, xi)
+
 X  = X[1:hmax+1,:]
-
-
-
-
 AFT = 2*np.abs(X)
 PFT = np.unwrap(np.angle(X))
 
 # Downsampling the frequency, fr and Xr to match the decimation factor of the polyphase filter bank
 # ---------------------------------------------------------------------------------------------
-freq = downsample(freq,M)   
+freq = downsample(freq,M)
 Xr = downsample(Xr,M)
 fr = downsample(fr,M)
 
 # Compensating the delay introduced by the polyphase filter bank, which is equal to half the length of the filter divided by the decimation factor
 # --------------------------------------------------------------------------------------------------------------------------------------
-freq = np.concatenate((np.zeros(fbDelay), freq))  ## Compensa o atraso do filtro polifasico 
+freq = np.concatenate((np.zeros(fbDelay), freq))
 fr = np.concatenate((np.zeros(fbDelay), fr))
 Xr = np.hstack((np.zeros((hmax, fbDelay)), Xr))
 
@@ -239,7 +232,7 @@ for nn in range(1, len(delta_f)):
     if(nn >= fbDelay+1):
         correc[nn] = correc[nn-1] + np.pi*(delta_f[nn] + delta_f[nn-1])*(M*Ts) 
 
-correc = correc -np.pi + (127/Nppc)*2*np.pi
+correc = correc  - 1.4*np.pi/180 # para alinhar a fase do primeiro harmonico com a fase do referencial, considerando o atraso introduzido pelo filtro de média móvel e pelo filtro de interpolação
 # Multiplies the correction by each harmonic (h = 1:50)
 h = np.arange(1, 51).reshape(-1, 1)   # shape (50, 1)
 correcH = h*correc
@@ -279,12 +272,12 @@ fig.show()
 
 # Error Calculation
 # ---------------------------------------------------
-AFT   = AFT[:,2*fbDelay:]  
-Aref  = Aref[:,2*fbDelay:] 
-PFTc  = PFTc[:,2*fbDelay:] 
-Pref  = Pref[:,2*fbDelay:] 
-Xc    = Xc[:,2*fbDelay:] 
-Xr    = Xr[:,2*fbDelay:] 
+AFT   = AFT[:,10*fbDelay:]  
+Aref  = Aref[:,10*fbDelay:] 
+PFTc  = PFTc[:,10*fbDelay:] 
+Pref  = Pref[:,10*fbDelay:] 
+Xc    = Xc[:,10*fbDelay:] 
+Xr    = Xr[:,10*fbDelay:] 
     
 ErroAFT = 100*np.abs(AFT - Aref)/Aref            # Magnitude Error (%)
 ErroPFT = (wrap_to_pi(PFTc - Pref))*180/np.pi    # Phase Error (°)

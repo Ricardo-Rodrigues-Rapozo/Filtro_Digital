@@ -1,12 +1,8 @@
 import numpy as np
 from scipy.io import loadmat
-from scipy.signal import lfilter, sosfilt, freqz, group_delay, firls, bessel, bilinear, tf2sos
+from scipy.signal import butter, buttord, lfilter, sos2tf, sosfilt, freqz, sosfreqz, group_delay, firls, bessel, bilinear, tf2sos
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
-from pathlib import Path
-
-
-
 
 def downsample(signal, factor):
     signal = np.asarray(signal)
@@ -78,7 +74,7 @@ def estima_f_zc(s, Ts, Nppc, plot_level=0):
 
     # Encontrar o índice mais próximo de 60 Hz
     idx = np.argmin(np.abs(w_gd - freq_alvo))
-    gd_60hz = int(round(gd[idx]))
+    gd_60hz = gd[idx]
     
     if plot_level >= 1:
         fig = make_subplots(rows=3, cols=1, shared_xaxes=True, subplot_titles=("Magnitude (dB)", "Phase (graus)", "Group Delay (samples)"))
@@ -86,7 +82,7 @@ def estima_f_zc(s, Ts, Nppc, plot_level=0):
         fig.add_trace(go.Scatter(x=f, y=abs(H), mode='lines', name='Magnitude'), row=1, col=1)
         fig.add_trace(go.Scatter(x=f, y=np.unwrap(np.angle(H))*180/np.pi, mode='lines', name='Phase'), row=2, col=1)
         fig.add_trace(go.Scatter(x=f, y=gd, mode='lines', name='Delay'), row=3, col=1)
-        fig.update_yaxes(range=[np.mean(gd) - 1, np.mean(gd) + 1], row=3, col=1)
+        # fig.update_yaxes(range=[np.mean(gd) - 1, np.mean(gd) + 1], row=3, col=1)
         fig.update_xaxes(title_text='Frequency (Hz)', row=3, col=1)
         fig.update_yaxes(title_text='Nomalized', row=1, col=1)
         fig.update_yaxes(title_text='Degrees', row=2, col=1)
@@ -147,7 +143,7 @@ def estima_f_zc(s, Ts, Nppc, plot_level=0):
     # ================================================
     
     v = sosfilt(sos, s)
-    v_debug = v * 1000000
+    
     # ================================================
     # Zero Crossing Detection
     # ================================================    
@@ -157,7 +153,7 @@ def estima_f_zc(s, Ts, Nppc, plot_level=0):
     
     cnt = 0
     f_zc = []
-    f = 0.0
+    f = 60
     for ii in range(len(v)):
         #if va >= 0:
         sig = va * v[ii]
@@ -171,7 +167,7 @@ def estima_f_zc(s, Ts, Nppc, plot_level=0):
             Nb = v[ii] / (v[ii] - va)
             T2 = Nb * Ts
             Tsc = Tsc + T1 - T2
-            #f_zc2.extend([1 / (2*Tsc)] * cnt)
+            # f_zc.extend([1 / (2*Tsc)] * cnt)
             f = 1 / (2*Tsc)
             T1 = T2
             Tsc = 0
@@ -179,30 +175,125 @@ def estima_f_zc(s, Ts, Nppc, plot_level=0):
 
         va = v[ii]
         f_zc.append(f)
-    #f_zc2 = np.array(f_zc2)
+    # f_zc = np.array(f_zc)
     
     # ================================================
     # Smoothing Moving Average Filter
     # ================================================
     
-    Nw = 1 * Nppc
-    w = np.ones(Nw) / Nw
+    # Nw = 1 * Nppc
+    # w = np.ones(Nw) / Nw
+    # f_zc_m = lfilter(w, 1, f_zc)
+    # # f_zc_m = sosfilt(sos, f_zc)
     
-    arquivo_w = Path(__file__).with_name("w_coeffs.txt")
-    np.savetxt(arquivo_w, w, fmt="%.18e")
-    # arquivo_w = Path(__file__).with_name("w_coeffs")  # txt na mesma pasta do DSPEPS.py
-    # w = np.loadtxt(arquivo_w, delimiter=",", dtype=float)
-    # w = w.ravel()
-    f_zc_m = lfilter(w, 1, f_zc)
+    # pre_delay = gd_60hz #len(b)//2
+    # zc_delay = pre_delay + Nppc//2
+    # # zc_m_delay = gd_60hz + zc_delay
+    # zc_m_delay = Nw//2 + zc_delay
+    # print(f"Pre-filter delay: {pre_delay} samples")
+    # print(f"Zero Crossing delay: {zc_delay} samples")   
+    # print(f"Smoothed Zero Crossing delay: {zc_m_delay} samples")
     
-    pre_delay = gd_60hz #len(b)//2
-    zc_delay = pre_delay + Nppc//2
-    zc_m_delay = Nw//2 + zc_delay
+    
+    # bsvz, asvz = bessel(6, 2*np.pi*20, analog=True)
+    # bsvz, asvz = bilinear(bsvz, asvz, fs=Fs)  
+    # # normalização para ganho unitário em DC
+    # w, h = freqz(bsvz, asvz, worN=[0])
+    # gain = abs(h[0])
+    # print(f"Pre-filter gain at DC: {gain}")
+    # bsvz = bsvz / (gain)
+    
+    
+    # # Frequency Response and Group Delay Plot   
+    # # ------------------------------------------------
+    # f, H = freqz(bsvz, asvz, worN=4096, fs=Fs)
+    # w_gd, gd = group_delay((bsvz, asvz), w=4096, fs=Fs)
+    # freq_alvo = 0  # Hz
+
+    # # Encontrar o índice mais próximo de 60 Hz
+    # idx = np.argmin(np.abs(w_gd - freq_alvo))
+    # gd_0hz = gd[idx]
+    
+    # if plot_level >= 1:
+    #     fig = make_subplots(rows=3, cols=1, shared_xaxes=True, subplot_titles=("Magnitude (dB)", "Phase (graus)", "Group Delay (samples)"))
+
+    #     fig.add_trace(go.Scatter(x=f, y=abs(H), mode='lines', name='Magnitude'), row=1, col=1)
+    #     fig.add_trace(go.Scatter(x=f, y=np.unwrap(np.angle(H))*180/np.pi, mode='lines', name='Phase'), row=2, col=1)
+    #     fig.add_trace(go.Scatter(x=f, y=gd, mode='lines', name='Delay'), row=3, col=1)
+    #     # fig.update_yaxes(range=[np.mean(gd) - 1, np.mean(gd) + 1], row=3, col=1)
+    #     fig.update_xaxes(title_text='Frequency (Hz)', row=3, col=1)
+    #     fig.update_yaxes(title_text='Nomalized', row=1, col=1)
+    #     fig.update_yaxes(title_text='Degrees', row=2, col=1)
+    #     fig.update_yaxes(title_text='Samples', row=3, col=1)
+        
+    #     fig.update_layout(
+    #     autosize=True,
+    #     title_text="Zero Crossing Pre-Filter",
+    #     title_font=dict(size=24, family='Arial', color='black'),  
+    #     title_x=0.5,  
+    #     template='gridon'
+    #     )
+
+    #     fig.show()
+
+    #     zeros = np.roots(bsvz)
+    #     poles = np.roots(asvz)
+    #     theta = np.linspace(0, 2*np.pi, 512)
+
+    #     fig_pz = go.Figure()
+    #     fig_pz.add_trace(go.Scatter(
+    #         x=np.cos(theta),
+    #         y=np.sin(theta),
+    #         mode='lines',
+    #         name='Unit circle',
+    #         line=dict(color='gray', dash='dash')
+    #     ))
+    #     fig_pz.add_trace(go.Scatter(
+    #         x=zeros.real,
+    #         y=zeros.imag,
+    #         mode='markers',
+    #         name='Zeros',
+    #         marker=dict(symbol='circle-open', size=12, color='royalblue', line=dict(width=2))
+    #     ))
+    #     fig_pz.add_trace(go.Scatter(
+    #         x=poles.real,
+    #         y=poles.imag,
+    #         mode='markers',
+    #         name='Poles',
+    #         marker=dict(symbol='x', size=12, color='crimson', line=dict(width=2))
+    #     ))
+
+    #     fig_pz.update_layout(
+    #         autosize=True,
+    #         title_text="Pole-Zero Diagram - Zero Crossing Pre-Filter",
+    #         title_font=dict(size=24, family='Arial', color='black'),
+    #         title_x=0.5,
+    #         template='gridon',
+    #         xaxis=dict(title='Real', scaleanchor='y', scaleratio=1),
+    #         yaxis=dict(title='Imaginary'),
+    #         legend=dict(font=dict(size=18))
+    #     )
+
+    #     fig_pz.show()
+    
+    # # ================================================
+    # # Filter Application
+    # # ================================================
+    
+    # f_zc_m = lfilter(bsvz, asvz, f_zc)*58/58.53
+    
+    f_zc_m = f_zc
+    pre_delay = gd_60hz 
+    zc_delay =  Nppc//2
+    zc_m_delay = 0 
+    total_delay = int(np.ceil(pre_delay + zc_delay + zc_m_delay))
+    
     print(f"Pre-filter delay: {pre_delay} samples")
     print(f"Zero Crossing delay: {zc_delay} samples")   
     print(f"Smoothed Zero Crossing delay: {zc_m_delay} samples")
+    print(f"Total estimated delay: {total_delay} samples")
     
-    return f_zc_m, zc_m_delay, f_zc, zc_delay
+    return f_zc_m, zc_m_delay, f_zc, zc_delay, total_delay
 
 def BSplineInterp(x, f0, f, M, Fs, plot_level=0):
     """
@@ -234,6 +325,9 @@ def BSplineInterp(x, f0, f, M, Fs, plot_level=0):
     
     num_pre = -6.0 * (s ** exps)[::-1] # fliplr equivalent
     den_pre = np.array([1.0, -s])
+    
+    print(f"Pre-filter numerator coefficients: {num_pre}")
+    print(f"Pre-filter denominator coefficients: {den_pre}")
     
     # Frequency Response and Group Delay Plot
     # ------------------------------------------------
@@ -376,6 +470,7 @@ def PolyphaseFilterBank(h, M, x):
 
     Eout = np.zeros((M,len(x)//M))
     for mm in range(M):    
+        
         x_slice = x[0:len(x)-mm]
         zeros = np.zeros(mm, dtype=x.dtype)
         
@@ -395,84 +490,6 @@ def PolyphaseFilterBank(h, M, x):
         v[:,nn] = M*np.fft.ifft(Eout[:,nn])
         
     return v
-
-
-
-
-def PolyphaseFilterBankCircular(h, M, x):
-    """
-    Polyphase filter bank using a circular input buffer.
-
-    This version keeps the same input/output behavior as PolyphaseFilterBank,
-    but updates only one sample of the input buffer at each iteration.
-    """
-
-    h = np.asarray(h)
-    x = np.asarray(x)
-
-    if M <= 0:
-        raise ValueError("M deve ser maior que zero.")
-
-    #===================================================
-    # Decomposicao Polifasica
-    #===================================================
-
-    Nf = int(np.ceil(len(h)/M))
-    dtype = np.result_type(h, x, float)
-    E = np.zeros((M, Nf), dtype=dtype)
-
-    for kk in range(M):
-        hh = np.array(h[kk::M], dtype=dtype)
-        hh_padded = np.pad(hh, (0, Nf - len(hh)), 'constant')
-        E[kk, :] = hh_padded
-
-    #===================================================
-    # Aplicacao dos Filtros com Buffer Circular
-    #===================================================
-
-    output_size = len(x)//M
-    Eout = np.zeros((M, output_size), dtype=dtype)
-
-    buffer = np.zeros(M, dtype=dtype)
-    buffer_head = 0
-    phase_state = np.zeros((M, Nf), dtype=dtype)
-    output_idx = 0
-
-    for nn in range(len(x)):
-        buffer_head = buffer_head - 1
-        if buffer_head < 0:
-            buffer_head = M - 1
-
-        buffer[buffer_head] = x[nn]
-            # criado para evitar erro nas colunas -> output_idx < output_size
-        if (nn % M) == 0 and output_idx < output_size: 
-            idx = buffer_head
-
-            for mm in range(M):
-                phase_state[mm, 1:] = phase_state[mm, :-1]
-                phase_state[mm, 0] = buffer[idx]
-                Eout[mm, output_idx] = np.dot(E[mm], phase_state[mm])
-
-                idx = idx + 1
-                if idx == M:
-                    idx = 0
-
-            output_idx = output_idx + 1
-
-    #===================================================
-    # Aplicacao da IDFT
-    #===================================================
-
-    v = np.zeros((M, output_size), dtype=complex)
-
-    for nn in range(output_size):
-        v[:,nn] = M*np.fft.ifft(Eout[:,nn])
-
-    return v
-
-
-
-
 
 def kf_trend_poly(f, Ts, order, q, r):
     """
@@ -528,7 +545,7 @@ def kf_trend_poly(f, Ts, order, q, r):
 
     # Inicialização
     x = np.zeros((M, 1))
-    x[0, 0] = 60.0
+    x[0, 0] = 60
     P = 1e6 * np.eye(M)
 
     x_hist = np.zeros((M, N))
