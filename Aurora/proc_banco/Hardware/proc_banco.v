@@ -7,12 +7,25 @@ output [0:0] req_in,
 output [2:0] out_en,
 input  itr);
 
+/* verilator tracing_off */
+
 wire cheguei;
 wire proc_req_in, proc_out_en;
 wire [0:0] addr_in;
 wire [1:0] addr_out;
 
 `ifdef __ICARUS__
+ `ifndef YANC_SIM_VIS
+  `define YANC_SIM_VIS
+ `endif
+`endif
+`ifdef YANC_TRACE
+ `ifndef YANC_SIM_VIS
+  `define YANC_SIM_VIS
+ `endif
+`endif
+
+`ifdef YANC_SIM_VIS
 wire mem_wr;
 wire [12:0] mem_addr_wr;
 wire [8:0] pc_sim_val;
@@ -61,10 +74,10 @@ processor#(.NUBITS(32),
 .SF_GRE(1),
 .POP(1),
 .F2I(1),
-.DFILE("C:/Users/Ricardo/Documents/Dissertacao/Aurora/proc_banco/Hardware/proc_banco_data.mif"),
-.IFILE("C:/Users/Ricardo/Documents/Dissertacao/Aurora/proc_banco/Hardware/proc_banco_inst.mif"))
+.DFILE("C:/Users/usuario1/Documents/GitHub/Filtro_Digital/Aurora/proc_banco/Hardware/proc_banco_data.mif"),
+.IFILE("C:/Users/usuario1/Documents/GitHub/Filtro_Digital/Aurora/proc_banco/Hardware/proc_banco_inst.mif"))
 
-`ifdef __ICARUS__
+`ifdef YANC_SIM_VIS
 p_proc_banco (clk, rst, in, out, addr_in, addr_out, proc_req_in, proc_out_en, itr, cheguei, mem_wr, mem_addr_wr,pc_sim_val);
 `else
 p_proc_banco (clk, rst, in, out, addr_in, addr_out, proc_req_in, proc_out_en, itr, cheguei);
@@ -73,11 +86,13 @@ p_proc_banco (clk, rst, in, out, addr_in, addr_out, proc_req_in, proc_out_en, it
 assign req_in = proc_req_in;
 addr_dec #(3) dec_out(proc_out_en, addr_out, out_en);
 
+/* verilator tracing_on */
+
 // ----------------------------------------------------------------------------
 // Simulation -----------------------------------------------------------------
 // ----------------------------------------------------------------------------
 
-`ifdef __ICARUS__
+`ifdef YANC_SIM_VIS
 
 // I/O ------------------------------------------------------------------------
 
@@ -91,28 +106,35 @@ reg out_en_sim_1 = 0;
 reg signed [31:0] out_sig_2 = 0;
 reg out_en_sim_2 = 0;
 
+always @ (posedge clk) begin
+   if (req_in == 1) in_sim_0 <= in;
+end
 always @ (*) begin
-   if (req_in == 1) in_sim_0 = in;
    req_in_sim_0 = req_in == 1;
 end
 
-always @ (*) begin
+always @ (posedge clk) begin
    if (out_en == 1) out_sig_0 <= out;
-   out_en_sim_0 = out_en == 1;
    if (out_en == 2) out_sig_1 <= out;
-   out_en_sim_1 = out_en == 2;
    if (out_en == 4) out_sig_2 <= out;
+end
+always @ (*) begin
+   out_en_sim_0 = out_en == 1;
+   out_en_sim_1 = out_en == 2;
    out_en_sim_2 = out_en == 4;
 end
 
 // variables ------------------------------------------------------------------
 
+/* verilator tracing_off */  // float decode helpers (not traced)
+reg signed [23:0] sm_me2; always @ (*) sm_me2 = (out[31]) ? -$signed({1'b0, out[22:0]}) : $signed({1'b0, out[22:0]});
+reg signed [7:0] e_me2; always @ (*)  e_me2 = $signed(out[30:23]);
+/* verilator tracing_on */
+
 reg [31:0] me1_f_main_v_sample_count_e_ = 0;
 reg [31:0] me1_f_main_v_output_count_e_ = 0;
 reg [31:0] me1_f_main_v_M_e_ = 0;
 reg [31:0] me1_f_main_v_fft_limit_e_ = 0;
-integer sm_me2; always @ (*) sm_me2 = (out[31]) ? -out[22:0] : out[22:0];
-integer  e_me2; always @ (*)  e_me2 = $signed(out[30:23]);
 real me2_f_main_v_vector_count_e_ = 0.0;
 reg [31:0] me1_f_main_v_buffer_head_e_ = 0;
 reg [31:0] me1_f_main_v_mm_e_ = 0;
@@ -124,8 +146,10 @@ reg [31:0] me1_f_main_v_ind_e_ = 0;
 reg [31:0] me1_f_main_v_sind_e_ = 0;
 reg [31:0] me1_f_main_v_q_e_ = 0;
 reg [31:0] me1_f_main_v_j_e_ = 0;
-reg [31:0] me3_f_main_v_temp_i_e_ = 31'dx;
-reg [31:0] me3_f_main_v_temp_e_ = 31'dx;
+/* verilator tracing_off */  // comp raw halves (joined below, not traced)
+reg [31:0] me3_f_main_v_temp_i_e_ /* verilator public_flat */ = 32'dx;
+reg [31:0] me3_f_main_v_temp_e_ /* verilator public_flat */ = 32'dx;
+/* verilator tracing_on */
 
 always @ (posedge clk) begin
    if (mem_addr_wr == 769 && mem_wr) me1_f_main_v_sample_count_e_ <= out;
@@ -151,20 +175,22 @@ wire [16+32*2-1:0] comp_me3_f_main_v_temp_e_ = {8'd23, 8'd8, me3_f_main_v_temp_e
 
 // instructions ---------------------------------------------------------------
 
-reg [31:0] valr1=0;
 reg [31:0] valr2=0;
-reg [31:0] valr3=0;
-reg [31:0] valr4=0;
-reg [31:0] valr5=0;
-reg [31:0] valr6=0;
-reg [31:0] valr7=0;
-reg [31:0] valr8=0;
-reg [31:0] valr9=0;
-reg [31:0] valr10=0;
+/* verilator tracing_off */
+reg [31:0] valr1 /* verilator public_flat */=0;
+reg [31:0] valr3 /* verilator public_flat */=0;
+reg [31:0] valr4 /* verilator public_flat */=0;
+reg [31:0] valr5 /* verilator public_flat */=0;
+reg [31:0] valr6 /* verilator public_flat */=0;
+reg [31:0] valr7 /* verilator public_flat */=0;
+reg [31:0] valr8 /* verilator public_flat */=0;
+reg [31:0] valr9 /* verilator public_flat */=0;
+reg [31:0] valr10 /* verilator public_flat */=0;
+/* verilator tracing_on */
 
 reg [19:0] min [0:369-1];
 
-reg signed [19:0] linetab =-1;
+/* verilator tracing_off */ reg signed [19:0] linetab /* verilator public_flat */ =-1; /* verilator tracing_on */
 reg signed [19:0] linetabs=-1;
 
 initial	$readmemb("pc_proc_banco_mem.txt",min);
@@ -172,7 +198,7 @@ initial	$readmemb("pc_proc_banco_mem.txt",min);
 always @ (posedge clk) begin
 if (pc_sim_val < 369) linetab <= min[pc_sim_val];
 linetabs <= linetab;   
-valr1    <= pc_sim_val;
+valr1    <= {{(23){1'b0}}, pc_sim_val};
 valr2    <= valr1;
 valr3    <= valr2;
 valr4    <= valr3;

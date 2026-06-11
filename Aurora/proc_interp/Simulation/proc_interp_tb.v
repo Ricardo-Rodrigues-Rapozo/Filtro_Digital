@@ -17,12 +17,17 @@ always #500.000000 clk = ~clk;
 
 // processor instance ---------------------------------------------------------
 
+/* verilator tracing_off */
+
 reg  signed [31:0] proc_io_in = 0;
 wire signed [31:0] proc_io_out;
 wire [0:0] proc_req_in;
 wire [4:0] proc_out_en;
 
+/* verilator tracing_on */
 proc_interp proc(clk,rst,proc_io_in,proc_io_out,proc_req_in,proc_out_en,1'b0);
+
+/* verilator tracing_off */
 
 // input ports ----------------------------------------------------------------
 
@@ -33,11 +38,12 @@ reg req_in_0 = 0;
 
 // open a file for reading on each port
 initial begin
-    data_in_0 = $fopen("C:/Users/Ricardo/Documents/Dissertacao/Aurora/proc_interp/Simulation/input_0.txt", "r"); // place your input data in this file
+    data_in_0 = $fopen("C:/Users/usuario1/Documents/GitHub/Filtro_Digital/Aurora/proc_interp/Simulation/input_0.txt", "r"); // place your input data in this file
 end
 
 // decode input ports
 always @ (*) begin
+    proc_io_in = 0;
     // port 0 decoding
     if (proc_req_in == 1) proc_io_in = in_0;
     req_in_0 = proc_req_in == 1;
@@ -79,30 +85,30 @@ reg out_en_4 = 0;
 
 // open a file for writing on each port
 initial begin
-    data_out_0 = $fopen("C:/Users/Ricardo/Documents/Dissertacao/Aurora/proc_interp/Simulation/output_0.txt", "w"); // check the output data in this file
-    data_out_1 = $fopen("C:/Users/Ricardo/Documents/Dissertacao/Aurora/proc_interp/Simulation/output_1.txt", "w"); // check the output data in this file
-    data_out_2 = $fopen("C:/Users/Ricardo/Documents/Dissertacao/Aurora/proc_interp/Simulation/output_2.txt", "w"); // check the output data in this file
-    data_out_3 = $fopen("C:/Users/Ricardo/Documents/Dissertacao/Aurora/proc_interp/Simulation/output_3.txt", "w"); // check the output data in this file
-    data_out_4 = $fopen("C:/Users/Ricardo/Documents/Dissertacao/Aurora/proc_interp/Simulation/output_4.txt", "w"); // check the output data in this file
+    data_out_0 = $fopen("C:/Users/usuario1/Documents/GitHub/Filtro_Digital/Aurora/proc_interp/Simulation/output_0.txt", "w"); // check the output data in this file
+    data_out_1 = $fopen("C:/Users/usuario1/Documents/GitHub/Filtro_Digital/Aurora/proc_interp/Simulation/output_1.txt", "w"); // check the output data in this file
+    data_out_2 = $fopen("C:/Users/usuario1/Documents/GitHub/Filtro_Digital/Aurora/proc_interp/Simulation/output_2.txt", "w"); // check the output data in this file
+    data_out_3 = $fopen("C:/Users/usuario1/Documents/GitHub/Filtro_Digital/Aurora/proc_interp/Simulation/output_3.txt", "w"); // check the output data in this file
+    data_out_4 = $fopen("C:/Users/usuario1/Documents/GitHub/Filtro_Digital/Aurora/proc_interp/Simulation/output_4.txt", "w"); // check the output data in this file
 end
 
 // decode output ports
 always @ (*) begin
     // port 0 decoding
-    if (proc_out_en == 1) out_sig_0 <= proc_io_out;
-    out_en_0 = proc_out_en == 1;
+    out_sig_0 = proc_io_out;
+    out_en_0  = proc_out_en == 1;
     // port 1 decoding
-    if (proc_out_en == 2) out_sig_1 <= proc_io_out;
-    out_en_1 = proc_out_en == 2;
+    out_sig_1 = proc_io_out;
+    out_en_1  = proc_out_en == 2;
     // port 2 decoding
-    if (proc_out_en == 4) out_sig_2 <= proc_io_out;
-    out_en_2 = proc_out_en == 4;
+    out_sig_2 = proc_io_out;
+    out_en_2  = proc_out_en == 4;
     // port 3 decoding
-    if (proc_out_en == 8) out_sig_3 <= proc_io_out;
-    out_en_3 = proc_out_en == 8;
+    out_sig_3 = proc_io_out;
+    out_en_3  = proc_out_en == 8;
     // port 4 decoding
-    if (proc_out_en == 16) out_sig_4 <= proc_io_out;
-    out_en_4 = proc_out_en == 16;
+    out_sig_4 = proc_io_out;
+    out_en_4  = proc_out_en == 16;
 end
 
 // implement writing to the file
@@ -119,15 +125,14 @@ always @ (posedge clk) begin
     if (out_en_4 == 1'b1) begin $fdisplay(data_out_4, "%0d", out_sig_4); $fflush(data_out_4); end
 end
 
-integer progress, chrys;
+// signal registration, progress bar and finish ------------------------------
+
+integer chrys;
 
 always @ (posedge clk) if (proc.valr10 == 658) begin
     $display("Info: end of program!");
-    $fclose(progress);
     $finish;
 end
-
-// signal registration, progress bar and finish ------------------------------
 
 initial begin
 
@@ -207,14 +212,15 @@ initial begin
     $dumpvars(0,proc_interp_tb.proc.p_proc_interp.core.ula.delta_float);
     $dumpvars(0,proc_interp_tb.proc.p_proc_interp.core.ula.delta_int);
 
-    progress = $fopen("progress.txt", "w");
+    if ($test$plusargs("HEADER_ONLY")) begin #1; $dumpflush; $finish; end
+
     for (chrys = 10; chrys <= 100; chrys = chrys + 10) begin
-        #9000000.000000;
-        $fdisplay(progress,"%0d",chrys);
-        $fflush(progress);
+        #9000000.000000;  // wall-clock slice of the total sim time
+        $display("Progress: %0d%% complete", chrys);
+        $fflush;
     end
 
-    $fclose(progress);
+    $display("Simulation Complete!");
     $finish;
 
 end
