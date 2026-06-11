@@ -92,7 +92,7 @@ SF_DIV
 SET main_Tsc
 LOD 0.0
 SET main_T1
-LOD 0.0
+LOD 60.0
 SET main_fzc
 LOD 15360.0
 SET main_freq_amostragem
@@ -129,6 +129,68 @@ LOD 128
 SET main_atraso_amotras_media_movel
 LOD 0.0
 SET main_fvelho
+LOD 60.0
+SET main_freq_kalman
+LOD 0.0
+SET main_df
+LOD 1000000.0
+SET main_p00
+LOD 0.0
+SET main_p01
+LOD 0.0
+SET main_p10
+LOD 1000000.0
+SET main_p11
+I2F_M 1
+P_LOD 15360.0
+SF_DIV
+P_I2F_M 1
+P_LOD 15360.0
+SF_DIV
+SF_MLT
+P_I2F_M 1
+P_LOD 15360.0
+SF_DIV
+SF_MLT
+F_MLT 0.001
+P_LOD 3.0
+SF_DIV
+SET main_q00
+I2F_M 1
+P_LOD 15360.0
+SF_DIV
+P_I2F_M 1
+P_LOD 15360.0
+SF_DIV
+SF_MLT
+F_MLT 0.001
+P_LOD 2.0
+SF_DIV
+SET main_q01
+I2F_M 1
+P_LOD 15360.0
+SF_DIV
+P_I2F_M 1
+P_LOD 15360.0
+SF_DIV
+SF_MLT
+F_MLT 0.001
+P_LOD 2.0
+SF_DIV
+SET main_q10
+LOD 15360.0
+F_DIV 0.001
+SET main_q11
+LOD 0.0
+SET main_freq_pred
+LOD 0.0
+SET main_df_pred
+LOD 1.0
+SET main_R
+LOD 0
+SET main_cont_kalman
+LOD 512
+SET main_descarte_kalman
 LOD 0
 SET main_j
 LOD 0
@@ -149,12 +211,12 @@ LOD 0
 SET main_c_index
 LOD 0
 SET main_read_c_idx
-#array main_buffer_atraso_x 2 511
+#array main_buffer_atraso_x 2 255
 #array main_num_pre_BSP 2 6
 #array main_den_pre_BSP 2 2
 #array main_buffer_entrada_prefiltro 2 6
 #array main_buffer_saida_prefiltro 2 2
-LOD 383
+LOD 255
 SET main_atraso_geral
 #array main_buffer_entrada_farrow 2 4
 LOD 0.0
@@ -401,7 +463,7 @@ SF_DIV
 SET main_fzc
 LOD main_T2
 SET main_T1
-I2F_M 0
+LOD 0.0
 SET main_Tsc
 @Lif1else LOD main_acc
 SET main_va
@@ -409,27 +471,80 @@ I2F_M 1000000
 F_MLT main_fzc
 F2I
 OUT 1
-LOD main_buffer_media_movel_idex
-LDI main_buffer_media_movel
-SET main_fvelho
-LOD main_buffer_media_movel_idex
-P_LOD main_fzc
-STI main_buffer_media_movel
-LOD main_fzc
-F_SU1 main_fvelho
-F_MLT main_w_coeff
-F_ADD main_fcc
-SET main_fcc
-LOD main_buffer_media_movel_idex
-ADD 1
-SET main_buffer_media_movel_idex
-LOD main_w_media
-LES main_buffer_media_movel_idex
+LOD main_descarte_kalman
+LES main_cont_kalman
 LIN
 JIZ Lif2else
-LOD 0
-SET main_buffer_media_movel_idex
-@Lif2else I2F_M 1000000
+LOD main_Ts
+F_MLT main_df
+F_ADD main_freq_kalman
+SET main_freq_pred
+LOD main_df
+SET main_df_pred
+LOD main_Ts
+F_MLT main_p10
+F_ADD main_p00
+P_LOD main_Ts
+F_MLT main_p01
+SF_ADD
+P_LOD main_Ts
+F_MLT main_Ts
+F_MLT main_p11
+SF_ADD
+F_ADD main_q00
+SET main_p00_pred
+LOD main_Ts
+F_MLT main_p11
+F_ADD main_p01
+F_ADD main_q01
+SET main_p01_pred
+LOD main_Ts
+F_MLT main_p11
+F_ADD main_p10
+F_ADD main_q10
+SET main_p10_pred
+LOD main_p11
+F_ADD main_q11
+SET main_p11_pred
+LOD main_fzc
+SET main_y_kalman
+F_SU1 main_freq_pred
+SET main_erro
+LOD main_p00_pred
+F_ADD main_R
+SET main_S_incerteza
+F_DIV main_p00_pred
+SET main_K0
+LOD main_S_incerteza
+F_DIV main_p10_pred
+SET main_K1
+LOD main_K0
+F_MLT main_erro
+F_ADD main_freq_pred
+SET main_freq_kalman
+LOD main_K1
+F_MLT main_erro
+F_ADD main_df_pred
+SET main_df
+LOD 1.0
+F_SU1 main_K0
+F_MLT main_p00_pred
+SET main_p00
+LOD 1.0
+F_SU1 main_K0
+F_MLT main_p01_pred
+SET main_p01
+LOD main_K1
+F_MLT main_p00_pred
+F_SU2 main_p10_pred
+SET main_p10
+LOD main_K1
+F_MLT main_p01_pred
+F_SU2 main_p11_pred
+SET main_p11
+LOD main_freq_kalman
+SET main_fcc
+I2F_M 1000000
 F_MLT main_fcc
 F2I
 OUT 2
@@ -459,7 +574,8 @@ F_MLT main_x_atrasado
 F2I
 OUT 3
 LOD 1023
-GRE main_cont_global
+LES main_cont_global
+LIN
 JIZ Lif5else
 LOD 0
 P_LOD 1
@@ -682,4 +798,10 @@ JIZ Lif8else
 LOD main_cont_global
 ADD 1
 SET main_cont_global
-@Lif8else @fim JMP fim
+@Lif8else @Lif2else LOD 2000
+LES main_cont_kalman
+JIZ Lif9else
+LOD main_cont_kalman
+ADD 1
+SET main_cont_kalman
+@Lif9else @fim JMP fim

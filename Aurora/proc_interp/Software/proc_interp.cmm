@@ -14,7 +14,7 @@ void main()
     int teste0=80;
     int cont_global = 0;                  // contador global de amostras processadas
     int teste=0;
-    // ----- IIR Bessel para ZC -----
+    // ----- IIR Bessel pré ZC -----
     float b_sos[9] "b_sos.txt";           // coeficientes do numerador das 3 secoes SOS do IIR
     float a_sos[9] "a_sos.txt";           // coeficientes do denominador das 3 secoes SOS do IIR
 
@@ -36,7 +36,7 @@ void main()
     float va              = 0.0;           // amostra anterior da saida do pre-filtro IIR
     float Tsc             = 1/60.0;        // tempo acumulado entre cruzamentos por zero
     float T1              = 0.0;           // correcao temporal do cruzamento anterior
-    float fzc             = 0.0;           // frequencia estimada pelo zero-crossing
+    float fzc             = 60.0;           // frequencia estimada pelo zero-crossing
     float freq_amostragem = 15360.0;       // frequencia de amostragem do sinal
     float sig             = 0.0;           // produto va*acc usado para detectar troca de sinal
     float Nb              = 0.0;           // fator de interpolacao do cruzamento atual
@@ -59,6 +59,35 @@ void main()
     int atraso_amotras_media_movel = 128;  // atraso aproximado da media movel de 512 amostras
     float fvelho = 0.0;                    //  
 
+    // ------- Filtro de Kalman ------
+    float freq_kalman   = 60.0;
+    float df            = 0.0;
+    float p00           = 1000000.0;
+    float p01           = 0.0;
+    float p10           = 0.0;
+    float p11           = 1000000.0;
+    float q00           = 0.001 * ( ( 1/15360.0) *  (1/15360.0) * (1/15360.0) ) / 3.0;//Ts**3 / 3.0
+    float q01           = 0.001 * ( ( 1/15360.0) *  (1/15360.0)  ) / 2.0;//Ts**2 / 2.0
+    float q10           = 0.001 * ( ( 1/15360.0) *  (1/15360.0)  ) / 2.0;//Ts**2 / 2.0
+    float q11           = 0.001 * 1/15360.0;///Ts
+    float freq_pred     = 0.0;
+    float df_pred       = 0.0;
+    float R             = 1.0;    
+    int cont_kalman     = 0;
+    int descarte_kalman = 512;  
+    float p00_pred;
+    float p01_pred;
+    float p10_pred;
+    float p11_pred;
+    float y_kalman;
+    float erro;
+    float S_incerteza;
+    float K0;
+    float K1;
+
+
+
+
     // ----- Temporarias -----
     int j = 0;                             // contador auxiliar mantido do molde antigo
     int read_idx = 0;                      // indice auxiliar mantido do molde antigo
@@ -75,7 +104,7 @@ void main()
     int c_index = 0;                       // indice circular do buffer de atraso do sinal
     int read_c_idx = 0;                    // indice auxiliar mantido do molde antigo
     int k;                                 // contador auxiliar mantido do molde antigo
-    float buffer_atraso_x[511];            // buffer circular que atrasa x em atraso_geral amostras
+    float buffer_atraso_x[255];            // buffer circular que atrasa x em atraso_geral amostras
 
     // ----- Prefiltro - B-Spline -----
     float num_pre_BSP[6];                  // numerador do pre-filtro B-Spline
@@ -85,7 +114,7 @@ void main()
     float dot_result;                      // resultado da parte FIR do pre-filtro B-Spline
     float freq_smoothed;                   // frequencia suavizada usada no interpolador
     int atraso_geral;                      // atraso aplicado ao sinal x antes do B-Spline
-    atraso_geral = 383;                    // 127 IIR + 128 ZC + 128 media movel
+    atraso_geral = 255;   //sugestão de mudar para 255                 // 127 IIR + 128 ZC + 128 media movel
 
     // ----- Farrow -----
     float buffer_entrada_farrow[4];        // quatro amostras usadas pela estrutura Farrow
@@ -160,142 +189,167 @@ void main()
             Tsc = Tsc + T1 - T2;
             fzc = 1 / (2*Tsc);
             T1 = T2;
-            Tsc = 0;
+            Tsc = 0.0;
         }
 
         va = acc;
         fout(1, fzc * 1000000);
 
-        // ========== FILTRO MEDIA MOVEL ==========
-        
-        fvelho = buffer_media_movel[buffer_media_movel_idex];
-        buffer_media_movel[buffer_media_movel_idex] = fzc;
-        
-        fcc = fcc + (fzc - fvelho)*w_coeff;
-        
-
-        buffer_media_movel_idex = buffer_media_movel_idex + 1;
-
-        if (buffer_media_movel_idex >= w_media)
-        {
-            buffer_media_movel_idex = 0;
-        }
-
-        fout(2, fcc * 1000000);
-
-        // ============================== Estrutura B-Spline ====================================== //
-
-        // ============================== atraso sinal x ============================== //
-        if (atraso_geral > 0)
-        {
-            x_atrasado = buffer_atraso_x[c_index];
-
-            buffer_atraso_x[c_index] = x;
-
-            c_index = c_index + 1;
-
-            if (c_index >= atraso_geral)
-            {
-                c_index = 0;
-            }
-        }
-        else
-        {
-            x_atrasado = x;
-        }
-
-        fout(3, x_atrasado * 1000000);
 
         // ============================ DESCARTE DE AMOSTRAS ================= //
-        if(cont_global > 1023)
+        if(cont_kalman >= descarte_kalman)
         {
-            // ============================ PREFILTRO ============================ //
-            buffer_entrada_prefiltro[0] = buffer_entrada_prefiltro[1];
-            buffer_entrada_prefiltro[1] = buffer_entrada_prefiltro[2];
-            buffer_entrada_prefiltro[2] = buffer_entrada_prefiltro[3];
-            buffer_entrada_prefiltro[3] = buffer_entrada_prefiltro[4];
-            buffer_entrada_prefiltro[4] = buffer_entrada_prefiltro[5];
-            buffer_entrada_prefiltro[5] = x_atrasado;
 
-            dot_result = buffer_entrada_prefiltro[0] * num_pre_BSP[0] +
-                         buffer_entrada_prefiltro[1] * num_pre_BSP[1] +
-                         buffer_entrada_prefiltro[2] * num_pre_BSP[2] +
-                         buffer_entrada_prefiltro[3] * num_pre_BSP[3] +
-                         buffer_entrada_prefiltro[4] * num_pre_BSP[4] +
-                         buffer_entrada_prefiltro[5] * num_pre_BSP[5];
+            // ========== FILTRO DE Kalman ==========
+            freq_pred = freq_kalman + Ts * df;
+            df_pred = df;
+            p00_pred = p00 + Ts * p10 + Ts * p01 + Ts * Ts * p11 + q00;
+            p01_pred = p01 + Ts * p11 + q01;
+            p10_pred = p10 + Ts * p11 + q10;
+            p11_pred = p11 + q11;
 
-            buffer_saida_prefiltro[1] = dot_result - den_pre_BSP[1]*buffer_saida_prefiltro[0];
-            buffer_saida_prefiltro[0] = buffer_saida_prefiltro[1];
+            y_kalman = fzc;
+            
+            erro = y_kalman - freq_pred;
 
-            // ============================ FARROW ============================ //
-            buffer_entrada_farrow[0] = buffer_entrada_farrow[1];
-            buffer_entrada_farrow[1] = buffer_entrada_farrow[2];
-            buffer_entrada_farrow[2] = buffer_entrada_farrow[3];
-            buffer_entrada_farrow[3] = buffer_saida_prefiltro[1];
+            S_incerteza = p00_pred + R;
 
-            freq_smoothed = fcc;
+            K0 = p00_pred / S_incerteza;
+            K1 = p10_pred / S_incerteza;
+            freq_kalman = freq_pred + K0 * erro;
+            df = df_pred + K1 * erro;
 
-            // ============================== atraso freq_mean ============================== //
-            buffer_freq[0] = buffer_freq[1];
-            buffer_freq[1] = buffer_freq[2];
-            buffer_freq[2] = buffer_freq[3];
-            buffer_freq[3] = buffer_freq[4];
-            buffer_freq[4] = buffer_freq[5];
-            buffer_freq[5] = buffer_freq[6];
-            buffer_freq[6] = freq_smoothed;
 
-            freq_atrasada = buffer_freq[0];
+            p00 = (1.0 - K0) * p00_pred;
+            p01 = (1.0 - K0) * p01_pred;
+            p10 = p10_pred - K1 * p00_pred;
+            p11 = p11_pred - K1 * p01_pred;
 
-            if(freq_atrasada != 0.0)
+
+            fcc = freq_kalman;
+
+            fout(2, fcc * 1000000);
+
+    
+            // ============================== Estrutura B-Spline ====================================== //
+
+            // ============================== atraso sinal x ============================== //
+            if (atraso_geral > 0)
             {
-                lambda_val = 60.0 / freq_atrasada;
+                x_atrasado = buffer_atraso_x[c_index];
+
+                buffer_atraso_x[c_index] = x;
+
+                c_index = c_index + 1;
+
+                if (c_index >= atraso_geral)
+                {
+                    c_index = 0;
+                }
             }
             else
             {
-                lambda_val = 0.0;
+                x_atrasado = x;
             }
 
-            fout(4, freq_atrasada * 1000000);
+            fout(3, x_atrasado * 1000000);
 
-            y = 0.0;
-            if (cnt > 6)
+            // ============================ DESCARTE DE AMOSTRAS ================= //
+            if(cont_global >= 1023)
             {
-                while(alfa < 1.0)
+                // ============================ PREFILTRO ============================ //
+                buffer_entrada_prefiltro[0] = buffer_entrada_prefiltro[1];
+                buffer_entrada_prefiltro[1] = buffer_entrada_prefiltro[2];
+                buffer_entrada_prefiltro[2] = buffer_entrada_prefiltro[3];
+                buffer_entrada_prefiltro[3] = buffer_entrada_prefiltro[4];
+                buffer_entrada_prefiltro[4] = buffer_entrada_prefiltro[5];
+                buffer_entrada_prefiltro[5] = x_atrasado;
+
+                dot_result = buffer_entrada_prefiltro[0] * num_pre_BSP[0] +
+                            buffer_entrada_prefiltro[1] * num_pre_BSP[1] +
+                            buffer_entrada_prefiltro[2] * num_pre_BSP[2] +
+                            buffer_entrada_prefiltro[3] * num_pre_BSP[3] +
+                            buffer_entrada_prefiltro[4] * num_pre_BSP[4] +
+                            buffer_entrada_prefiltro[5] * num_pre_BSP[5];
+
+                buffer_saida_prefiltro[1] = dot_result - den_pre_BSP[1]*buffer_saida_prefiltro[0];
+                buffer_saida_prefiltro[0] = buffer_saida_prefiltro[1];
+
+                // ============================ FARROW ============================ //
+                buffer_entrada_farrow[0] = buffer_entrada_farrow[1];
+                buffer_entrada_farrow[1] = buffer_entrada_farrow[2];
+                buffer_entrada_farrow[2] = buffer_entrada_farrow[3];
+                buffer_entrada_farrow[3] = buffer_saida_prefiltro[1];
+
+                freq_smoothed = fcc;
+
+                // ============================== atraso freq_mean ============================== //
+                buffer_freq[0] = buffer_freq[1];
+                buffer_freq[1] = buffer_freq[2];
+                buffer_freq[2] = buffer_freq[3];
+                buffer_freq[3] = buffer_freq[4];
+                buffer_freq[4] = buffer_freq[5];
+                buffer_freq[5] = buffer_freq[6];
+                buffer_freq[6] = freq_smoothed;
+
+                freq_atrasada = buffer_freq[0];
+
+                if(freq_atrasada != 0.0)
                 {
-                    H0 = (-0.1666666667*buffer_entrada_farrow[0])
-                       + (0.5*buffer_entrada_farrow[1])
-                       + (-0.5*buffer_entrada_farrow[2])
-                       + (0.1666666667*buffer_entrada_farrow[3]);
-
-                    H1 = (0.5*buffer_entrada_farrow[0])
-                       - (buffer_entrada_farrow[1])
-                       + (0.5*buffer_entrada_farrow[2]);
-
-                    H2 = (-0.5*buffer_entrada_farrow[0])
-                       + (0.5*buffer_entrada_farrow[2]);
-
-                    H3 = (0.1666666667*buffer_entrada_farrow[0])
-                       + (0.6666666667*buffer_entrada_farrow[1])
-                       + (0.1666666667*buffer_entrada_farrow[2]);
-
-                    y = ((H0 * alfa + H1) * alfa + H2) * alfa + H3;
-
-                    fout(0, y * 1000000);
-
-                    alfa = alfa + lambda_val;
+                    lambda_val = 60.0 / freq_atrasada;
+                }
+                else
+                {
+                    lambda_val = 0.0;
                 }
 
-                alfa = alfa - 1.0;
-            }
-            else
-            {
-                cnt = cnt + 1;
-            }
-        }
+                fout(4, freq_atrasada * 1000000);
 
-        if(cont_global < 10000)
-        {
-            cont_global = cont_global + 1;
+                y = 0.0;
+                if (cnt > 6)
+                {
+                    while(alfa < 1.0)
+                    {
+                        H0 = (-0.1666666667*buffer_entrada_farrow[0])
+                        + (0.5*buffer_entrada_farrow[1])
+                        + (-0.5*buffer_entrada_farrow[2])
+                        + (0.1666666667*buffer_entrada_farrow[3]);
+
+                        H1 = (0.5*buffer_entrada_farrow[0])
+                        - (buffer_entrada_farrow[1])
+                        + (0.5*buffer_entrada_farrow[2]);
+
+                        H2 = (-0.5*buffer_entrada_farrow[0])
+                        + (0.5*buffer_entrada_farrow[2]);
+
+                        H3 = (0.1666666667*buffer_entrada_farrow[0])
+                        + (0.6666666667*buffer_entrada_farrow[1])
+                        + (0.1666666667*buffer_entrada_farrow[2]);
+
+                        y = ((H0 * alfa + H1) * alfa + H2) * alfa + H3;
+
+                        fout(0, y * 1000000);
+
+                        alfa = alfa + lambda_val;
+                    }
+
+                    alfa = alfa - 1.0;
+                }
+                else
+                {
+                    cnt = cnt + 1;
+                }
+            }
+
+            if(cont_global < 10000)
+            {
+                cont_global = cont_global + 1;
+            }
         }
+        if(cont_kalman < 2000)
+        {
+            cont_kalman = cont_kalman + 1;
+        }
+        
     //}
 }

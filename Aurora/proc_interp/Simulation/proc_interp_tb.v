@@ -121,7 +121,7 @@ end
 
 integer progress, chrys;
 
-always @ (posedge clk) if (proc.valr10 == 658) begin
+always @ (posedge clk) if (proc.valr10 == 780) begin
     $display("Info: end of program!");
     $fclose(progress);
     $finish;
@@ -177,6 +177,21 @@ initial begin
     $dumpvars(0,proc_interp_tb.proc.me1_f_main_v_b_index_mean_e_);
     $dumpvars(0,proc_interp_tb.proc.me1_f_main_v_atraso_amotras_media_movel_e_);
     $dumpvars(0,proc_interp_tb.proc.me2_f_main_v_fvelho_e_);
+    $dumpvars(0,proc_interp_tb.proc.me2_f_main_v_freq_kalman_e_);
+    $dumpvars(0,proc_interp_tb.proc.me2_f_main_v_df_e_);
+    $dumpvars(0,proc_interp_tb.proc.me2_f_main_v_p00_e_);
+    $dumpvars(0,proc_interp_tb.proc.me2_f_main_v_p01_e_);
+    $dumpvars(0,proc_interp_tb.proc.me2_f_main_v_p10_e_);
+    $dumpvars(0,proc_interp_tb.proc.me2_f_main_v_p11_e_);
+    $dumpvars(0,proc_interp_tb.proc.me2_f_main_v_q00_e_);
+    $dumpvars(0,proc_interp_tb.proc.me2_f_main_v_q01_e_);
+    $dumpvars(0,proc_interp_tb.proc.me2_f_main_v_q10_e_);
+    $dumpvars(0,proc_interp_tb.proc.me2_f_main_v_q11_e_);
+    $dumpvars(0,proc_interp_tb.proc.me2_f_main_v_freq_pred_e_);
+    $dumpvars(0,proc_interp_tb.proc.me2_f_main_v_df_pred_e_);
+    $dumpvars(0,proc_interp_tb.proc.me2_f_main_v_R_e_);
+    $dumpvars(0,proc_interp_tb.proc.me1_f_main_v_cont_kalman_e_);
+    $dumpvars(0,proc_interp_tb.proc.me1_f_main_v_descarte_kalman_e_);
     $dumpvars(0,proc_interp_tb.proc.me1_f_main_v_j_e_);
     $dumpvars(0,proc_interp_tb.proc.me1_f_main_v_read_idx_e_);
     $dumpvars(0,proc_interp_tb.proc.me2_f_main_v_acc_e_);
@@ -192,6 +207,15 @@ initial begin
     $dumpvars(0,proc_interp_tb.proc.me1_f_main_v_cnt_e_);
     $dumpvars(0,proc_interp_tb.proc.me2_f_main_v_x_e_);
     $dumpvars(0,proc_interp_tb.proc.me2_f_main_v_Ts_e_);
+    $dumpvars(0,proc_interp_tb.proc.me2_f_main_v_p00_pred_e_);
+    $dumpvars(0,proc_interp_tb.proc.me2_f_main_v_p01_pred_e_);
+    $dumpvars(0,proc_interp_tb.proc.me2_f_main_v_p10_pred_e_);
+    $dumpvars(0,proc_interp_tb.proc.me2_f_main_v_p11_pred_e_);
+    $dumpvars(0,proc_interp_tb.proc.me2_f_main_v_y_kalman_e_);
+    $dumpvars(0,proc_interp_tb.proc.me2_f_main_v_erro_e_);
+    $dumpvars(0,proc_interp_tb.proc.me2_f_main_v_S_incerteza_e_);
+    $dumpvars(0,proc_interp_tb.proc.me2_f_main_v_K0_e_);
+    $dumpvars(0,proc_interp_tb.proc.me2_f_main_v_K1_e_);
     $dumpvars(0,proc_interp_tb.proc.me2_f_main_v_dot_result_e_);
     $dumpvars(0,proc_interp_tb.proc.me2_f_main_v_freq_smoothed_e_);
     $dumpvars(0,proc_interp_tb.proc.me2_f_main_v_freq_atrasada_e_);
