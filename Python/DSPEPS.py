@@ -174,7 +174,7 @@ def estima_f_zc(s, Ts, Nppc, plot_level=0):
             cnt = 0
 
         va = v[ii]
-        f_zc.append(f)
+        f_zc.append(f)## frequência ZC
     # f_zc = np.array(f_zc)
     
     # ================================================
@@ -516,7 +516,7 @@ def kf_trend_poly(f, Ts, order, q, r):
         out['Pdiag'] : diagonal de P ao longo do tempo (M x N)
     """
 
-    f = np.asarray(f).ravel()
+    f = np.asarray(f).ravel() ## garante que f seja um vetor 1D
     N = f.size
 
     # Define F, H, Q conforme a ordem
@@ -546,7 +546,7 @@ def kf_trend_poly(f, Ts, order, q, r):
     # Inicialização
     x = np.zeros((M, 1))
     x[0, 0] = 60
-    P = 1e6 * np.eye(M)
+    P = 1e6 * np.eye(M)  ## cria uma matriz identidade de tamanho MxM e multiplica por 1e6 para definir a incerteza inicial alta
 
     x_hist = np.zeros((M, N))
     Pdiag = np.zeros((M, N))
@@ -581,3 +581,180 @@ def kf_trend_poly(f, Ts, order, q, r):
         out["ddb"] = x_hist[2, :].reshape(-1, 1)
 
     return out
+
+
+
+def Kalman_filter(f, Ts, order, q, r):
+    """
+    Filtro de Kalman em baixo nivel para o caso de ordem 1.
+
+    Este codigo faz a mesma ideia do caso:
+
+        x = [frequencia]
+            [ROCOF     ]
+
+    mas sem escrever as contas como multiplicacao de matrizes.
+
+    Entradas:
+        f     : frequencia medida pelo zero-crossing, amostra por amostra
+        Ts    : periodo de amostragem
+        order : por enquanto esta funcao escalar implementa apenas order = 1
+        q     : intensidade do ruido de processo
+        r     : variancia do ruido de medicao
+
+    Saidas:
+        fout : frequencia estimada pelo Kalman
+        df   : ROCOF estimado pelo Kalman
+    """
+
+
+    # Garante vetor 1D em ponto flutuante. Isso evita perda de casas decimais
+    # caso f venha como inteiro.
+    f = np.asarray(f, dtype=float).ravel()
+
+    # Vetores de saida: guardam o estado corrigido em cada amostra.
+    fout = np.zeros_like(f, dtype=float)  # frequencia estimada
+    df = np.zeros_like(f, dtype=float)    # derivada da frequencia, ou ROCOF
+
+    # Estados internos do filtro.
+    # freq  corresponde a x[0].
+    # rocof corresponde a x[1].
+    freq = 60.0
+    rocof = 0.0
+
+    # Matriz P aberta em quatro escalares:
+    #
+    #     P = [p00 p01]
+    #         [p10 p11]
+    #
+    # p00: incerteza da frequencia.
+    # p11: incerteza do ROCOF.
+    # p01/p10: acoplamento entre erro de frequencia e erro de ROCOF.
+    #
+    # Comeca grande porque no inicio o filtro ainda nao confia no estado
+    # inicial escolhido acima.
+    p00 = 1e6
+    p01 = 0.0
+    p10 = 0.0
+    p11 = 1e6
+
+    # Matriz Q aberta em escalares. Esta e a mesma Q usada no modelo
+    # matricial de ordem 1:
+    #
+    #     Q = q * [Ts^3/3  Ts^2/2]
+    #             [Ts^2/2  Ts    ]
+    #
+    # Q representa o quanto aceitamos que o modelo "freq + Ts*rocof"
+    # esteja errado entre uma amostra e outra.
+    q00 = q * Ts**3 / 3.0
+    q01 = q * Ts**2 / 2.0
+    q10 = q * Ts**2 / 2.0
+    q11 = q * Ts
+
+    # R e a variancia do ruido de medicao. Aqui a medicao e f[i].
+    R = r
+
+    for i in range(len(f)):
+        # ==============================================================
+        # 1) Predicao do estado
+        # ==============================================================
+        # Modelo:
+        #     freq[k]  = freq[k-1] + Ts * rocof[k-1]
+        #     rocof[k] = rocof[k-1]
+        #
+        # Esta e a forma escalar de:
+        #     x = F @ x
+        freq_pred = freq + Ts * rocof
+        rocof_pred = rocof
+
+        # ==============================================================
+        # 2) Predicao da incerteza P
+        # ==============================================================
+        # Esta e a forma escalar de:
+        #     P = F @ P @ F.T + Q
+        #
+        # com:
+        #     F = [1 Ts]
+        #         [0  1]
+        p00_pred = p00 + Ts*p10 + Ts*p01 + Ts*Ts*p11 + q00
+        p01_pred = p01 + Ts*p11 + q01
+        p10_pred = p10 + Ts*p11 + q10
+        p11_pred = p11 + q11
+
+        # ==============================================================
+        # 3) Medicao do "sensor"
+        # ==============================================================
+        # No seu projeto, f[i] e a frequencia medida pelo zero-crossing.
+        y = f[i]
+
+        # ==============================================================
+        # 4) Erro de predicao, tambem chamado inovacao
+        # ==============================================================
+        # H = [1 0], entao H*x pega apenas a frequencia prevista.
+        #
+        # Forma matricial:
+        #     erro = y - (H @ x)[0, 0]
+        erro = y - freq_pred
+
+        # ==============================================================
+        # 5) Incerteza da inovacao
+        # ==============================================================
+        # Forma matricial:
+        #     S = H @ P @ H.T + R
+        #
+        # Como H = [1 0], isso vira apenas:
+        #     S = p00_pred + R
+        S = p00_pred + R
+
+        # ==============================================================
+        # 6) Ganho de Kalman
+        # ==============================================================
+        # Forma matricial:
+        #     K = (P @ H.T) / S
+        #
+        # Como H.T = [1; 0], isso vira:
+        #     K0 = p00_pred / S
+        #     K1 = p10_pred / S
+        #
+        # K0 corrige a frequencia.
+        # K1 corrige o ROCOF.
+        K0 = p00_pred / S
+        K1 = p10_pred / S
+
+        # ==============================================================
+        # 7) Correcao do estado
+        # ==============================================================
+        # Forma matricial:
+        #     x = x + K * erro
+        #
+        # Forma escalar:
+        #     freq  = freq_pred  + K0 * erro
+        #     rocof = rocof_pred + K1 * erro
+        freq = freq_pred + K0 * erro
+        rocof = rocof_pred + K1 * erro
+
+        # ==============================================================
+        # 8) Correcao da incerteza P
+        # ==============================================================
+        # Forma matricial:
+        #     P = (I - K @ H) @ P
+        #
+        # Com H = [1 0] e K = [K0; K1], a matriz (I - K@H) fica:
+        #
+        #     [1-K0   0]
+        #     [-K1    1]
+        #
+        # Multiplicando essa matriz por P_pred, obtemos:
+        p00 = (1.0 - K0) * p00_pred
+        p01 = (1.0 - K0) * p01_pred
+        p10 = p10_pred - K1 * p00_pred
+        p11 = p11_pred - K1 * p01_pred
+
+        # ==============================================================
+        # 9) Salva as saidas deste instante
+        # ==============================================================
+        # Estas duas variaveis sao o estado corrigido pelo Kalman.
+        fout[i] = freq
+        df[i] = rocof
+
+    return fout, df

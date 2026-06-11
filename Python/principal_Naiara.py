@@ -3,8 +3,9 @@ from scipy.signal import lfilter
 from sinaisIEC60255_118 import signal_frequency, frequency_ramp, modulation
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
-from DSPEPS import downsample, estima_f_zc, BSplineInterp, FlatTopFilterBase, PolyphaseFilterBank, kf_trend_poly
+from DSPEPS import Kalman_filter, downsample, estima_f_zc, BSplineInterp, FlatTopFilterBase, PolyphaseFilterBank, kf_trend_poly
 from auxiliares import TVE, wrap_to_pi
+import matplotlib.pyplot as plt
 
 # ===================================================
 # Basic Parameters for Signal Generation
@@ -84,6 +85,33 @@ r = 1;      # se a senoide for forte, aumente
 
 out = kf_trend_poly(f_zc_m, Ts, 1, q, r)
 freq = out["b"].squeeze() #
+freq_kalman, rocof_kalman = Kalman_filter(f_zc_m, Ts, 1, q, r)
+
+N_kalman = min(len(freq), len(freq_kalman))
+sample_kalman = np.arange(N_kalman)
+freq_ref_plot = freq[:N_kalman]
+freq_low_plot = freq_kalman[:N_kalman]
+diff_kalman_mhz = 1000.0 * (freq_low_plot - freq_ref_plot)
+max_diff_mhz = np.max(np.abs(diff_kalman_mhz)) if N_kalman > 0 else 0.0
+
+fig_kalman, ax_kalman = plt.subplots(2, 1, sharex=True, figsize=(12, 7))
+
+ax_kalman[0].plot(sample_kalman, freq_ref_plot, label="Kalman matricial", linewidth=2.0)
+ax_kalman[0].plot(sample_kalman, freq_low_plot, label="Kalman baixo nivel", linestyle="--", linewidth=1.6)
+ax_kalman[0].set_ylabel("Frequencia [Hz]")
+ax_kalman[0].set_title("Comparacao das respostas do Kalman")
+ax_kalman[0].grid(True, alpha=0.35)
+ax_kalman[0].legend()
+
+ax_kalman[1].plot(sample_kalman, diff_kalman_mhz, color="crimson", linewidth=1.4)
+ax_kalman[1].axhline(0.0, color="black", linewidth=0.8, alpha=0.7)
+ax_kalman[1].set_xlabel("Amostra")
+ax_kalman[1].set_ylabel("Diferenca [mHz]")
+ax_kalman[1].set_title(f"Baixo nivel - matricial | max = {max_diff_mhz:.6g} mHz")
+ax_kalman[1].grid(True, alpha=0.35)
+
+fig_kalman.tight_layout()
+plt.show()
 
 delay = np.zeros(total_delay+1)
 delay[-1] = 1.0
