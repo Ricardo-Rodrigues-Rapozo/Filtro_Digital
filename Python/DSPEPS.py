@@ -294,7 +294,6 @@ def estima_f_zc(s, Ts, Nppc, plot_level=0):
     print(f"Total estimated delay: {total_delay} samples")
     
     return f_zc_m, zc_m_delay, f_zc, zc_delay, total_delay
-
 def BSplineInterp(x, f0, f, M, Fs, plot_level=0):
     """
     B-spline Interpolation using Farrow Structure 
@@ -325,9 +324,6 @@ def BSplineInterp(x, f0, f, M, Fs, plot_level=0):
     
     num_pre = -6.0 * (s ** exps)[::-1] # fliplr equivalent
     den_pre = np.array([1.0, -s])
-    
-    print(f"Pre-filter numerator coefficients: {num_pre}")
-    print(f"Pre-filter denominator coefficients: {den_pre}")
     
     # Frequency Response and Group Delay Plot
     # ------------------------------------------------
@@ -402,7 +398,7 @@ def BSplineInterp(x, f0, f, M, Fs, plot_level=0):
             alfa -= 1.0
     
     y = np.array(y)
-    return y
+    return y 
 
 def FlatTopFilterBank(x, f0, hmax, Fs):
     

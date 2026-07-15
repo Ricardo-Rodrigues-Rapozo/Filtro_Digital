@@ -23,7 +23,7 @@ fork
 	clk <= 1'b0;
 	rst_geral <= 1'b1;
 	#40 rst_geral <= 1'b0;
-	#80000000 $finish;
+	#45000000 $finish;
 	
 	$display ("termionou");
 join

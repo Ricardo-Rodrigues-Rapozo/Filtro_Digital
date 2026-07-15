@@ -24,7 +24,7 @@ processor#(.NUBITS(32),
 .NBOPER(13),
 .NUGAIN(128),
 .MDATAS(5669),
-.MINSTS(369),
+.MINSTS(371),
 .SDEPTH(5),
 .DDEPTH(5),
 .NBIOIN(1),
@@ -59,6 +59,7 @@ processor#(.NUBITS(32),
 .F_ADD(1),
 .P_I2F_M(1),
 .SF_GRE(1),
+.F2I_M(1),
 .POP(1),
 .F2I(1),
 .DFILE("C:/Users/Ricardo/Documents/Dissertacao/Aurora/proc_banco/Hardware/proc_banco_data.mif"),
@@ -162,7 +163,7 @@ reg [31:0] valr8=0;
 reg [31:0] valr9=0;
 reg [31:0] valr10=0;
 
-reg [19:0] min [0:369-1];
+reg [19:0] min [0:371-1];
 
 reg signed [19:0] linetab =-1;
 reg signed [19:0] linetabs=-1;
@@ -170,7 +171,7 @@ reg signed [19:0] linetabs=-1;
 initial	$readmemb("pc_proc_banco_mem.txt",min);
 
 always @ (posedge clk) begin
-if (pc_sim_val < 369) linetab <= min[pc_sim_val];
+if (pc_sim_val < 371) linetab <= min[pc_sim_val];
 linetabs <= linetab;   
 valr1    <= pc_sim_val;
 valr2    <= valr1;

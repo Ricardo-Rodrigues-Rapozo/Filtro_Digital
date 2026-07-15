@@ -573,7 +573,7 @@ SET main_x_atrasado
 F_MLT main_x_atrasado
 F2I
 OUT 3
-LOD 1023
+LOD 512
 LES main_cont_global
 LIN
 JIZ Lif5else
