@@ -328,7 +328,7 @@ PFT_sapho = np.unwrap(np.angle(X_sapho))
 # ===================================================
 # Phase Correction python 
 # ===================================================
-delta_f = freq - f0
+delta_f = freq - f0 ## so incluir aqui a frequencia aqui que foi decimada no proc.cmm
 correc = np.zeros(len(delta_f))
 
 # Trapezoidal Integration (without error accumulation)

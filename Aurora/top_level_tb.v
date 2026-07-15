@@ -9,7 +9,7 @@ reg signed [31:0] data = 32'd0;
 wire signed [31:0] out0_interp,out1_interp,out2_interp,out3_interp,out4_interp;
 wire signed [31:0] out0_banco;
 wire        [4:0]  out_en_interp;
-wire        [2:0]  out_en_banco;
+wire        [3:0]  out_en_banco;
 
 
 // Variaveis intermediarias para Leitura

@@ -7,12 +7,25 @@ output [0:0] req_in,
 output [4:0] out_en,
 input  itr);
 
+/* verilator tracing_off */
+
 wire cheguei;
 wire proc_req_in, proc_out_en;
 wire [0:0] addr_in;
 wire [2:0] addr_out;
 
 `ifdef __ICARUS__
+ `ifndef YANC_SIM_VIS
+  `define YANC_SIM_VIS
+ `endif
+`endif
+`ifdef YANC_TRACE
+ `ifndef YANC_SIM_VIS
+  `define YANC_SIM_VIS
+ `endif
+`endif
+
+`ifdef YANC_SIM_VIS
 wire mem_wr;
 wire [9:0] mem_addr_wr;
 wire [9:0] pc_sim_val;
@@ -63,7 +76,7 @@ processor#(.NUBITS(32),
 .DFILE("C:/Users/Ricardo/Documents/Dissertacao/Aurora/proc_interp/Hardware/proc_interp_data.mif"),
 .IFILE("C:/Users/Ricardo/Documents/Dissertacao/Aurora/proc_interp/Hardware/proc_interp_inst.mif"))
 
-`ifdef __ICARUS__
+`ifdef YANC_SIM_VIS
 p_proc_interp (clk, rst, in, out, addr_in, addr_out, proc_req_in, proc_out_en, itr, cheguei, mem_wr, mem_addr_wr,pc_sim_val);
 `else
 p_proc_interp (clk, rst, in, out, addr_in, addr_out, proc_req_in, proc_out_en, itr, cheguei);
@@ -72,11 +85,13 @@ p_proc_interp (clk, rst, in, out, addr_in, addr_out, proc_req_in, proc_out_en, i
 assign req_in = proc_req_in;
 addr_dec #(5) dec_out(proc_out_en, addr_out, out_en);
 
+/* verilator tracing_on */
+
 // ----------------------------------------------------------------------------
 // Simulation -----------------------------------------------------------------
 // ----------------------------------------------------------------------------
 
-`ifdef __ICARUS__
+`ifdef YANC_SIM_VIS
 
 // I/O ------------------------------------------------------------------------
 
@@ -94,33 +109,40 @@ reg out_en_sim_3 = 0;
 reg signed [31:0] out_sig_4 = 0;
 reg out_en_sim_4 = 0;
 
+always @ (posedge clk) begin
+   if (req_in == 1) in_sim_0 <= in;
+end
 always @ (*) begin
-   if (req_in == 1) in_sim_0 = in;
    req_in_sim_0 = req_in == 1;
 end
 
-always @ (*) begin
+always @ (posedge clk) begin
    if (out_en == 1) out_sig_0 <= out;
-   out_en_sim_0 = out_en == 1;
    if (out_en == 2) out_sig_1 <= out;
-   out_en_sim_1 = out_en == 2;
    if (out_en == 4) out_sig_2 <= out;
-   out_en_sim_2 = out_en == 4;
    if (out_en == 8) out_sig_3 <= out;
-   out_en_sim_3 = out_en == 8;
    if (out_en == 16) out_sig_4 <= out;
+end
+always @ (*) begin
+   out_en_sim_0 = out_en == 1;
+   out_en_sim_1 = out_en == 2;
+   out_en_sim_2 = out_en == 4;
+   out_en_sim_3 = out_en == 8;
    out_en_sim_4 = out_en == 16;
 end
 
 // variables ------------------------------------------------------------------
+
+/* verilator tracing_off */  // float decode helpers (not traced)
+reg signed [23:0] sm_me2; always @ (*) sm_me2 = (out[31]) ? -$signed({1'b0, out[22:0]}) : $signed({1'b0, out[22:0]});
+reg signed [7:0] e_me2; always @ (*)  e_me2 = $signed(out[30:23]);
+/* verilator tracing_on */
 
 reg [31:0] me1_f_main_v_teste0_e_ = 0;
 reg [31:0] me1_f_main_v_cont_global_e_ = 0;
 reg [31:0] me1_f_main_v_teste_e_ = 0;
 reg [31:0] me1_f_main_v_b_index_e_ = 0;
 reg [31:0] me1_f_main_v_k_idx_e_ = 0;
-integer sm_me2; always @ (*) sm_me2 = (out[31]) ? -out[22:0] : out[22:0];
-integer  e_me2; always @ (*)  e_me2 = $signed(out[30:23]);
 real me2_f_main_v_acc_b_e_ = 0.0;
 real me2_f_main_v_acc_a_e_ = 0.0;
 real me2_f_main_v_va_e_ = 0.0;
@@ -274,20 +296,22 @@ end
 
 // instructions ---------------------------------------------------------------
 
-reg [31:0] valr1=0;
 reg [31:0] valr2=0;
-reg [31:0] valr3=0;
-reg [31:0] valr4=0;
-reg [31:0] valr5=0;
-reg [31:0] valr6=0;
-reg [31:0] valr7=0;
-reg [31:0] valr8=0;
-reg [31:0] valr9=0;
-reg [31:0] valr10=0;
+/* verilator tracing_off */
+reg [31:0] valr1 /* verilator public_flat */=0;
+reg [31:0] valr3 /* verilator public_flat */=0;
+reg [31:0] valr4 /* verilator public_flat */=0;
+reg [31:0] valr5 /* verilator public_flat */=0;
+reg [31:0] valr6 /* verilator public_flat */=0;
+reg [31:0] valr7 /* verilator public_flat */=0;
+reg [31:0] valr8 /* verilator public_flat */=0;
+reg [31:0] valr9 /* verilator public_flat */=0;
+reg [31:0] valr10 /* verilator public_flat */=0;
+/* verilator tracing_on */
 
 reg [19:0] min [0:781-1];
 
-reg signed [19:0] linetab =-1;
+/* verilator tracing_off */ reg signed [19:0] linetab /* verilator public_flat */ =-1; /* verilator tracing_on */
 reg signed [19:0] linetabs=-1;
 
 initial	$readmemb("pc_proc_interp_mem.txt",min);
@@ -295,7 +319,7 @@ initial	$readmemb("pc_proc_interp_mem.txt",min);
 always @ (posedge clk) begin
 if (pc_sim_val < 781) linetab <= min[pc_sim_val];
 linetabs <= linetab;   
-valr1    <= pc_sim_val;
+valr1    <= {{(22){1'b0}}, pc_sim_val};
 valr2    <= valr1;
 valr3    <= valr2;
 valr4    <= valr3;

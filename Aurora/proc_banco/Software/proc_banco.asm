@@ -3,8 +3,8 @@ NOP
 #NUBITS 32
 #NDSTAC 5
 #SDEPTH 5
-#NUIOIN 1
-#NUIOOU 3
+#NUIOIN 2
+#NUIOOU 4
 #NBMANT 23
 #NBEXPO 8
 #FFTSIZ 8
@@ -14,6 +14,8 @@ NOP
 #arrays wpv 3 128 "wpv.txt"
 #arrays wpv_i 4 128 "wpv.txt"
 @main LOD 0
+SET main_frequencia_from_int
+LOD 0
 SET main_sample_count
 LOD 0
 SET main_output_count
@@ -61,6 +63,8 @@ SF_DIV
 STI main_buffer
 LOD 1
 OUT 2
+INN 1
+SET main_frequencia_from_int
 NEG_M 1
 ADD main_M
 EQU main_sample_count
@@ -340,6 +344,8 @@ SET main_mmax
 JMP Lwh2
 @Lwh2end LOD 4
 OUT 2
+LOD main_frequencia_from_int
+OUT 0
 @Lwh5 LOD main_vector_count
 P_I2F_M 50
 SF_GRE

@@ -2,11 +2,12 @@ module top_proc_banco(input clk,
 			input rst_geral, 
 			input rst_proc,
 			input signed [31:0] in0,
+			input signed [31:0]in1,
 			output reg signed [31:0] out0,
 			output reg signed [31:0] out1,
 			output reg signed [31:0] out2,
-			output wire req_in,
-			output wire [2:0]out_en
+			output wire [1:0]req_in,
+			output wire [3:0]out_en
 		 );
 		 
 
@@ -16,7 +17,8 @@ reg signed [31:0] in_proc;
 always @(*)
 begin
 		case(req_in)
-		1'b1: in_proc = in0;
+		2'b01: in_proc = in0;
+		2'b10:in_proc = in1;
 		default : in_proc = 31'd0;
 		endcase
 end
