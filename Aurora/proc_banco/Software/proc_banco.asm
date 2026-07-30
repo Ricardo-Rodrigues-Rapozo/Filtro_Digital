@@ -25,9 +25,13 @@ SET main_output_count
 #array main_E 2 2048
 LOD 8
 SET main_E_arr_size
+LOD 0
+SET main_freq_count
 #arrays main_Ehh 2 2048 "Ehh.txt"
 LOD 8
 SET main_Ehh_arr_size
+LOD 0
+SET main_freq_started
 LOD 256
 SET main_M
 SET main_fft_limit
@@ -42,8 +46,6 @@ LOD 0
 SET main_buffer_head
 @fim JMP fim
 #ITRAD
-LOD 0
-OUT 2
 LOD 1
 OUT 1
 NEG_M 1
@@ -61,14 +63,35 @@ I2F
 P_LOD 1000000.0
 SF_DIV
 STI main_buffer
-LOD 1
-OUT 2
 INN 1
 SET main_frequencia_from_int
-NEG_M 1
+LOD 0
+EQU main_freq_started
+JIZ Lif2else
+LOD 0
+GRE main_frequencia_from_int
+JIZ Lif3else
+LOD main_frequencia_from_int
+OUT 0
+LOD 1
+SET main_freq_started
+LOD 0
+SET main_freq_count
+@Lif3else JMP Lif2end
+@Lif2else LOD main_freq_count
+ADD 1
+SET main_freq_count
+LOD 256
+EQU main_freq_count
+JIZ Lif4else
+LOD main_frequencia_from_int
+OUT 0
+LOD 0
+SET main_freq_count
+@Lif4else @Lif2end NEG_M 1
 ADD main_M
 EQU main_sample_count
-JIZ Lif2else
+JIZ Lif5else
 LOD 0
 SET main_sample_count
 LOD 0
@@ -236,15 +259,11 @@ SET main_ii
 LOD main_M
 LES main_ii
 LIN
-JIZ Lif3else
+JIZ Lif6else
 LOD 0
 SET main_ii
-@Lif3else LOD 2
-OUT 2
-JMP Lwh1
-@Lwh1end LOD 3
-OUT 2
-LOD 1
+@Lif6else JMP Lwh1
+@Lwh1end LOD 1
 SET main_mmax
 @Lwh2 LOD main_M
 LES main_mmax
@@ -342,11 +361,7 @@ JMP Lwh3
 @Lwh3end LOD main_istep
 SET main_mmax
 JMP Lwh2
-@Lwh2end LOD 4
-OUT 2
-LOD main_frequencia_from_int
-OUT 0
-@Lwh5 LOD main_vector_count
+@Lwh2end @Lwh5 LOD main_vector_count
 P_I2F_M 50
 SF_GRE
 LIN
@@ -386,12 +401,10 @@ SET main_vector_count
 JMP Lwh5
 @Lwh5end I2F_M 0
 SET main_vector_count
-LOD 5
-OUT 2
-JMP Lif2end
-@Lif2else LOD main_sample_count
+JMP Lif5end
+@Lif5else LOD main_sample_count
 ADD 1
 SET main_sample_count
-@Lif2end LOD 0
+@Lif5end LOD 0
 OUT 1
 @fim JMP fim

@@ -17,8 +17,8 @@ reg signed [31:0] in_proc;
 always @(*)
 begin
 		case(req_in)
-		2'b01: in_proc = in0;
-		2'b10:in_proc = in1;
+		2'b01: in_proc = in0;// se o estado for 2'b01, in_proc recebe in0
+		2'b10:in_proc = in1;// se ... 
 		default : in_proc = 31'd0;
 		endcase
 end
@@ -52,6 +52,7 @@ begin
 			out1 <= out_proc;
 		if(out_en[2])
 			out2 <= out_proc;
+
 	end
 end
 

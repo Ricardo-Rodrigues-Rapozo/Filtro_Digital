@@ -303,8 +303,8 @@ void main()
                     lambda_val = 0.0;
                 }
 
+                
                 fout(4, freq_atrasada * 1000000);
-
                 y = 0.0;
                 if (cnt > 6)
                 {
@@ -327,9 +327,7 @@ void main()
                         + (0.1666666667*buffer_entrada_farrow[2]);
 
                         y = ((H0 * alfa + H1) * alfa + H2) * alfa + H3;
-
                         fout(0, y * 1000000);
-
                         alfa = alfa + lambda_val;
                     }
 

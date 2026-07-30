@@ -6,6 +6,7 @@ module top_level(input clk, rst_geral, rst_proc_interp,
 			output signed [31:0] out3_interp,
 			output signed [31:0] out4_interp,
 			output signed [31:0] out0_banco,
+			output signed [31:0] out2_banco,
 			output        [4:0]  out_en_interp,
 			output        [3:0]  out_en_banco
 		 );
@@ -31,39 +32,39 @@ top_proc_interp top_proc_interp_inst(
 wire signed[31:0] saida_fifo;
 wire signed[31:0] saida_fifo_freq;
 wire signed[31:0] out1_banco;
-wire signed[31:0] out2_banco;
-wire [7:0] usedw;
+wire [10:0] usedw_sig;
+wire [10:0] usedw_freq;
 wire [1:0]req_in_banco;
 wire rst_proc_banco;
 
-myFIFO	#(.WORD(32), .LENGTH(256), .ALMOST(2))
+myFIFO	#(.WORD(32), .LENGTH(2048), .ALMOST(2))
 	FIFO16x32_inst_my (
 	.clk ( clk ),
-	.data ( out0_interp ), // dado que entra na fifo 
-	.rdreq ( req_in_banco[0] ), //  momento para exportar arquivo da fifo 
+	.data ( out0_interp ), //  Dado que vai ser armazenado na FIFO
+	.rdreq ( req_in_banco[0] ), //  Sinal que habilita a leitura do dado pelo banco.cmm
 	.sclr ( rst_geral ),    // 
-	.wrreq ( out_en_interp[0] ),
-	.almost_empty (  ), // vai para 1 qu
+	.wrreq ( out_en_interp[0] ), // Dado que habilita a escrita na FIFO pela interp.cmm
+	.almost_empty (  ), // 
 	.empty (  ),
 	.full (  ),
-	.q (saida_fifo),  // saida da fifo 
-	.usedw ( usedw )  // numero de dados que exisetm na fifo
+	.q (saida_fifo),  // amostra atual a ser expelida pela FIFO 
+	.usedw ( usedw_sig )  // numero de dados que existe na fifo(quantidade)
 	);
 
 
 
-myFIFO	#(.WORD(32), .LENGTH(256), .ALMOST(2))
+myFIFO	#(.WORD(32), .LENGTH(2048), .ALMOST(2))
 	FIFO16x32_freq (
-	.clk ( clk ),
-	.data ( out2_interp ), // dado que entra na fifo 
-	.rdreq ( req_in_banco[1] ), //  momento para exportar arquivo da fifo 
+	.clk ( clk ),             //
+	.data ( out4_interp ), //  
+	.rdreq ( req_in_banco[1] ), //   
 	.sclr ( rst_geral ),    // 
-	.wrreq ( out_en_interp[2] ),
-	.almost_empty (  ), // vai para 1 qu
+	.wrreq ( out_en_interp[4] ),
+	.almost_empty (  ), // 
 	.empty (  ),
 	.full (  ),
-	.q (saida_fifo_freq),  // saida da fifo 
-	.usedw (  )  // numero de dados que exisetm na fifo
+	.q (saida_fifo_freq),  //
+	.usedw (usedw_freq)  // 
 	);
 
 
@@ -71,8 +72,9 @@ maq_estados apelido_maq_estados(
 			.clk(clk),
 			.rst_geral(rst_geral), 
 			.flag_proc_banco(out1_banco[0]),
-           .usedw_fifo(usedw),
-           .rst_proc_banco(rst_proc_banco)
+            .usedw_sig(usedw_sig),
+		    .usedw_freq(usedw_freq),
+            .rst_proc_banco(rst_proc_banco)
 		 );
 
 top_proc_banco top_proc_banco_inst(

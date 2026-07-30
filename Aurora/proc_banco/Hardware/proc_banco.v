@@ -36,14 +36,14 @@ processor#(.NUBITS(32),
 .NBEXPO(8),
 .NBOPER(13),
 .NUGAIN(128),
-.MDATAS(5670),
-.MINSTS(377),
+.MDATAS(5672),
+.MINSTS(390),
 .SDEPTH(5),
 .DDEPTH(5),
 .NBIOIN(1),
 .NBIOOU(2),
 .FFTSIZ(8),
-.ITRADD(24),
+.ITRADD(28),
 .LOD(1),
 .SET(1),
 .NEG_M(1),
@@ -59,6 +59,7 @@ processor#(.NUBITS(32),
 .STI(1),
 .INN(1),
 .EQU(1),
+.GRE(1),
 .MLT(1),
 .LDI(1),
 .SF_MLT(1),
@@ -107,8 +108,6 @@ reg signed [31:0] out_sig_0 = 0;
 reg out_en_sim_0 = 0;
 reg signed [31:0] out_sig_1 = 0;
 reg out_en_sim_1 = 0;
-reg signed [31:0] out_sig_2 = 0;
-reg out_en_sim_2 = 0;
 
 always @ (posedge clk) begin
    if (req_in == 1) in_sim_0 <= in;
@@ -122,12 +121,10 @@ end
 always @ (posedge clk) begin
    if (out_en == 1) out_sig_0 <= out;
    if (out_en == 2) out_sig_1 <= out;
-   if (out_en == 4) out_sig_2 <= out;
 end
 always @ (*) begin
    out_en_sim_0 = out_en == 1;
    out_en_sim_1 = out_en == 2;
-   out_en_sim_2 = out_en == 4;
 end
 
 // variables ------------------------------------------------------------------
@@ -140,6 +137,8 @@ reg signed [7:0] e_me2; always @ (*)  e_me2 = $signed(out[30:23]);
 reg [31:0] me1_f_main_v_frequencia_from_int_e_ = 0;
 reg [31:0] me1_f_main_v_sample_count_e_ = 0;
 reg [31:0] me1_f_main_v_output_count_e_ = 0;
+reg [31:0] me1_f_main_v_freq_count_e_ = 0;
+reg [31:0] me1_f_main_v_freq_started_e_ = 0;
 reg [31:0] me1_f_main_v_M_e_ = 0;
 reg [31:0] me1_f_main_v_fft_limit_e_ = 0;
 real me2_f_main_v_vector_count_e_ = 0.0;
@@ -162,21 +161,23 @@ always @ (posedge clk) begin
    if (mem_addr_wr == 769 && mem_wr) me1_f_main_v_frequencia_from_int_e_ <= out;
    if (mem_addr_wr == 770 && mem_wr) me1_f_main_v_sample_count_e_ <= out;
    if (mem_addr_wr == 771 && mem_wr) me1_f_main_v_output_count_e_ <= out;
-   if (mem_addr_wr == 5640 && mem_wr) me1_f_main_v_M_e_ <= out;
-   if (mem_addr_wr == 5641 && mem_wr) me1_f_main_v_fft_limit_e_ <= out;
-   if (mem_addr_wr == 5643 && mem_wr) me2_f_main_v_vector_count_e_ <= sm_me2*$pow(2.0,e_me2);
-   if (mem_addr_wr == 5644 && mem_wr) me1_f_main_v_buffer_head_e_ <= out;
-   if (mem_addr_wr == 5646 && mem_wr) me1_f_main_v_mm_e_ <= out;
-   if (mem_addr_wr == 5647 && mem_wr) me1_f_main_v_ii_e_ <= out;
-   if (mem_addr_wr == 5657 && mem_wr) me1_f_main_v_mmax_e_ <= out;
-   if (mem_addr_wr == 5658 && mem_wr) me1_f_main_v_istep_e_ <= out;
-   if (mem_addr_wr == 5659 && mem_wr) me1_f_main_v_m_e_ <= out;
-   if (mem_addr_wr == 5660 && mem_wr) me1_f_main_v_ind_e_ <= out;
-   if (mem_addr_wr == 5661 && mem_wr) me1_f_main_v_sind_e_ <= out;
-   if (mem_addr_wr == 5662 && mem_wr) me1_f_main_v_q_e_ <= out;
-   if (mem_addr_wr == 5663 && mem_wr) me1_f_main_v_j_e_ <= out;
-   if (mem_addr_wr == 5666 && mem_wr) me3_f_main_v_temp_i_e_ <= out;
-   if (mem_addr_wr == 5667 && mem_wr) me3_f_main_v_temp_e_ <= out;
+   if (mem_addr_wr == 3590 && mem_wr) me1_f_main_v_freq_count_e_ <= out;
+   if (mem_addr_wr == 5640 && mem_wr) me1_f_main_v_freq_started_e_ <= out;
+   if (mem_addr_wr == 5642 && mem_wr) me1_f_main_v_M_e_ <= out;
+   if (mem_addr_wr == 5643 && mem_wr) me1_f_main_v_fft_limit_e_ <= out;
+   if (mem_addr_wr == 5645 && mem_wr) me2_f_main_v_vector_count_e_ <= sm_me2*$pow(2.0,e_me2);
+   if (mem_addr_wr == 5646 && mem_wr) me1_f_main_v_buffer_head_e_ <= out;
+   if (mem_addr_wr == 5648 && mem_wr) me1_f_main_v_mm_e_ <= out;
+   if (mem_addr_wr == 5649 && mem_wr) me1_f_main_v_ii_e_ <= out;
+   if (mem_addr_wr == 5659 && mem_wr) me1_f_main_v_mmax_e_ <= out;
+   if (mem_addr_wr == 5660 && mem_wr) me1_f_main_v_istep_e_ <= out;
+   if (mem_addr_wr == 5661 && mem_wr) me1_f_main_v_m_e_ <= out;
+   if (mem_addr_wr == 5662 && mem_wr) me1_f_main_v_ind_e_ <= out;
+   if (mem_addr_wr == 5663 && mem_wr) me1_f_main_v_sind_e_ <= out;
+   if (mem_addr_wr == 5664 && mem_wr) me1_f_main_v_q_e_ <= out;
+   if (mem_addr_wr == 5665 && mem_wr) me1_f_main_v_j_e_ <= out;
+   if (mem_addr_wr == 5668 && mem_wr) me3_f_main_v_temp_i_e_ <= out;
+   if (mem_addr_wr == 5669 && mem_wr) me3_f_main_v_temp_e_ <= out;
 end
 
 wire [16+32*2-1:0] comp_me3_f_main_v_temp_e_ = {8'd23, 8'd8, me3_f_main_v_temp_e_, me3_f_main_v_temp_i_e_};
@@ -196,7 +197,7 @@ reg [31:0] valr9 /* verilator public_flat */=0;
 reg [31:0] valr10 /* verilator public_flat */=0;
 /* verilator tracing_on */
 
-reg [19:0] min [0:377-1];
+reg [19:0] min [0:390-1];
 
 /* verilator tracing_off */ reg signed [19:0] linetab /* verilator public_flat */ =-1; /* verilator tracing_on */
 reg signed [19:0] linetabs=-1;
@@ -204,7 +205,7 @@ reg signed [19:0] linetabs=-1;
 initial	$readmemb("pc_proc_banco_mem.txt",min);
 
 always @ (posedge clk) begin
-if (pc_sim_val < 377) linetab <= min[pc_sim_val];
+if (pc_sim_val < 390) linetab <= min[pc_sim_val];
 linetabs <= linetab;   
 valr1    <= {{(23){1'b0}}, pc_sim_val};
 valr2    <= valr1;

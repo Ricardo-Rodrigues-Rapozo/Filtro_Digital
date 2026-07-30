@@ -73,9 +73,13 @@ void main()
     float vector_count;
     int buffer_head;
     int fft_limit;
-    
+    int freq_count = 0;
     float Ehh[256][8] "Ehh.txt";
-    
+    int  freq_decimada;
+    int freq_started = 0;
+
+
+
     M = 256;
     fft_limit=M;
     sample_count = (M - 1);
@@ -89,7 +93,7 @@ void main()
     #PRACA
     //while(1)
     //{
-        fout(2,0);
+        //fout(2,0);
         fout(1,1);
         
 
@@ -100,14 +104,37 @@ void main()
             buffer_head = M - 1;
         }
         buffer[buffer_head] = in(0) / 1000000.0;
-        fout(2,1);
+        //fout(2,1);
 
         frequencia_from_int = in(1);
 
-        
+        if(freq_started == 0)
+        {
+            if(frequencia_from_int > 0)
+            {
+                fout(0,frequencia_from_int);
+                freq_started = 1;
+                freq_count = 0;
+            }
+        }
+        else
+        {
+            freq_count = freq_count + 1;
+            if(freq_count == 256)
+            {
+                fout(0,frequencia_from_int);
+                freq_count = 0;
+            }
+        }
 
 
-         // ------------------- DECIMAÇÃO --------------------------------- //        
+
+
+        //fout(2,frequencia_from_int);
+
+
+         // ------------------- DECIMAÇÃO Banco --------------------------------- //        
+
         if(sample_count == (M - 1))
         {
             
@@ -148,9 +175,9 @@ void main()
                 {
                     ii = 0;
                 }
-                fout(2,2);  
+                //fout(2,2);  
             }
-            fout(2,3);
+            //fout(2,3);
             // ----------------------------------- CALCULO DA IFFT -----------------------// 
             int mmax = 1;
             while (mmax < M)
@@ -176,10 +203,9 @@ void main()
                 }
                 mmax = istep;
             }
-            fout(2,4);
-
-            out(0,frequencia_from_int);
+            //fout(2,4);
             
+            //out(0, frequencia_from_int);
             //iterar o valor que esta dentro do E0 ate o 50 
             while(vector_count <= 50)
             {
@@ -188,7 +214,7 @@ void main()
                 vector_count = vector_count + 1; 
             }
             vector_count = 0;
-            fout(2,5);
+            //fout(2,5);
         }
         else
         {

@@ -1,7 +1,8 @@
 module maq_estados
 (
 	input	clk, rst_geral, flag_proc_banco,
-	input [7:0] usedw_fifo,
+	input [10:0] usedw_sig,
+	input [10:0] usedw_freq,
 	output reg rst_proc_banco// out[1] o enable do registrador used_w - 1; out[0] o rst do proc dtw ;
 );
 
@@ -53,7 +54,7 @@ module maq_estados
 					if (flag_proc_banco==0)// o que é esse estimulo 
 						state <= S1;
 				S1:
-				    if(usedw_fifo>=1)//ta o codigo da ultima vez ate o momento ate porque inverteu a ordem da ordem que a conferencia ta sendo executada
+				    if((usedw_sig>0) & (usedw_freq>0))//ta o codigo da ultima vez ate o momento ate porque inverteu a ordem da ordem que a conferencia ta sendo executada
 					    state <= S2;
 				S2: 
 					state <= S3;

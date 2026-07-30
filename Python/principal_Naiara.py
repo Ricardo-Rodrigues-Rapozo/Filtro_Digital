@@ -33,12 +33,12 @@ hmag = 0.05
 Fr = 60
 SNR = 6000000
 
-f1 = 61
+f1 = 65
 Rf = 1
 fa = 54.75
 
-#x, Xr, fr, ROCOFr = signal_frequency(f1, (Nc + 300)*Nppc, f0, Fs, Fr, hmax, hmag, SNR)
-x, Xr, fr, ROCOFr = frequency_ramp(Rf, (Nc + 300)*Nppc, f0, fa, Fs, Fr, hmax, hmag, SNR)
+x, Xr, fr, ROCOFr = signal_frequency(f1, (Nc + 300)*Nppc, f0, Fs, Fr, hmax, hmag, SNR)
+#x, Xr, fr, ROCOFr = frequency_ramp(Rf, (Nc + 300)*Nppc, f0, fa, Fs, Fr, hmax, hmag, SNR)
 
 x_int = (x * 32768.0).astype(np.int32)    
 saida_sapho = Path(__file__).resolve().parents[1] / "Aurora" / "dados_simulacao" / "sinal_teste.txt"
@@ -268,20 +268,26 @@ fr = fr[:(Nc + fbDelay)*Nppc]
 X = PolyphaseFilterBank(h, M, xi)
 
 ARQ_SAPHO_BANCO = DADOS_DIR / "saida_banco0.txt"
-out = np.loadtxt(ARQ_SAPHO_BANCO)
-out = out[1:]
+out_banco = np.atleast_1d(np.loadtxt(ARQ_SAPHO_BANCO, dtype=float))
+
+#if len(out_banco) > 0 and out_banco[0] == 0.0:
+ #   out_banco = out_banco[1:]
 
 fasores_por_frame = hmax + 1
 escalares_por_frame = 2 * fasores_por_frame
-N_frames = len(out) // escalares_por_frame
-out = out[: N_frames * escalares_por_frame]
+amostras_por_frame = 1 + escalares_por_frame
 
-# Cada linha e um frame completo. O frame tem 51 fasores complexos
-# (DC, H1, ..., H50), mas no TXT isso vira 102 escalares:
-# real_DC, imag_DC, real_H1, imag_H1, ...
-frames = out.reshape(N_frames, escalares_por_frame)
-real = frames[:, 0::2] / 1_000_000.0
-imag = frames[:, 1::2] / 1_000_000.0
+N_frames = len(out_banco) // amostras_por_frame
+out_banco = out_banco[:N_frames * amostras_por_frame]
+
+frames_banco = out_banco.reshape(N_frames, amostras_por_frame)
+
+freq_sapho = frames_banco[1:, 0] / 1_000_000.0
+fasores_banco = frames_banco[:, 1:]
+
+real = fasores_banco[:, 0::2] / 1_000_000.0
+imag = fasores_banco[:, 1::2] / 1_000_000.0
+
 fasor_completo = (real + 1j * imag).T
 X_sapho = fasor_completo[1:hmax+1, :]
 
@@ -304,21 +310,30 @@ freq_sapho_banco = downsample(freq_sapho_banco,M)  ## sapho
 freq = np.concatenate((np.zeros(fbDelay), freq))
 fr = np.concatenate((np.zeros(fbDelay), fr))
 Xr = np.hstack((np.zeros((hmax, fbDelay)), Xr))
-freq_sapho_banco = np.concatenate((np.zeros(fbDelay), freq_sapho_banco))  ## sapho
+freq_sapho = np.concatenate((np.zeros(fbDelay), freq_sapho))  ## sapho
+freq_sapho_interpolada = np.concatenate((np.zeros(fbDelay), freq_sapho_banco))  ## sapho
 # Adjusting the length of the signals to match the number of samples of X
 # --------------------------------------------------------------------------------------------------------------------------------------
 freq = freq[:-fbDelay]
 fr = fr[:-fbDelay]
 Xr = Xr[:,:-fbDelay]
-freq_sapho_banco = freq_sapho_banco[:-fbDelay]  ## sapho
+freq_sapho = freq_sapho[:-fbDelay]  ## sapho
+freq_sapho_interpolada = freq_sapho_interpolada[:-fbDelay]  ## sapho
 
-N_fasor = min(X.shape[1], X_sapho.shape[1], Xr.shape[1], len(freq), len(freq_sapho_banco))
+
+N_fasor = min(X.shape[1], X_sapho.shape[1], Xr.shape[1], len(freq), len(freq_sapho))
 X = X[:, :N_fasor]
 X_sapho = X_sapho[:, :N_fasor]
 Xr = Xr[:, :N_fasor]
 freq = freq[:N_fasor]
-freq_sapho_banco = freq_sapho_banco[:N_fasor]
+freq_sapho = freq_sapho[:N_fasor]
 fr = fr[:N_fasor]
+freq_sapho_interpolada = freq_sapho_interpolada[:N_fasor]  ## sapho
+
+np.savetxt('freq_sapho_int4.txt',1_000_000 * freq_sapho_interpolada, fmt='%.6e')
+np.savetxt('freq_sapho_decimada.txt', 1_000_000 * freq_sapho, fmt='%.6e')
+np.savetxt('freq_python_decimada.txt', freq, fmt='%.6e')
+
 
 AFT = 2*np.abs(X)   ##python
 PFT = np.unwrap(np.angle(X))
@@ -349,7 +364,7 @@ Xc = AFT*np.exp(1j*PFTc)
 # ===================================================
 # Phase Correction sapho 
 # ===================================================
-delta_f_sapho_banco = freq_sapho_banco - f0
+delta_f_sapho_banco = freq_sapho - f0
 correc_sapho_banco = np.zeros(len(delta_f_sapho_banco))
 
 # Trapezoidal Integration (without error accumulation)
