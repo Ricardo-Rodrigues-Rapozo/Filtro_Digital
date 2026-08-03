@@ -32,12 +32,12 @@ top_proc_interp top_proc_interp_inst(
 wire signed[31:0] saida_fifo;
 wire signed[31:0] saida_fifo_freq;
 wire signed[31:0] out1_banco;
-wire [10:0] usedw_sig;
-wire [10:0] usedw_freq;
+wire [15:0] usedw_sig;
+wire [15:0] usedw_freq;
 wire [1:0]req_in_banco;
 wire rst_proc_banco;
 
-myFIFO	#(.WORD(32), .LENGTH(2048), .ALMOST(2))
+myFIFO	#(.WORD(32), .LENGTH(16384), .ALMOST(2))
 	FIFO16x32_inst_my (
 	.clk ( clk ),
 	.data ( out0_interp ), //  Dado que vai ser armazenado na FIFO
@@ -53,7 +53,7 @@ myFIFO	#(.WORD(32), .LENGTH(2048), .ALMOST(2))
 
 
 
-myFIFO	#(.WORD(32), .LENGTH(2048), .ALMOST(2))
+myFIFO	#(.WORD(32), .LENGTH(16384), .ALMOST(2))
 	FIFO16x32_freq (
 	.clk ( clk ),             //
 	.data ( out4_interp ), //  

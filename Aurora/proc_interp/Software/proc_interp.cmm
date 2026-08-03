@@ -74,7 +74,7 @@ void main()
     float df_pred       = 0.0;
     float R             = 1.0;    
     int cont_kalman     = 0;
-    int descarte_kalman = 512;  
+    int descarte_kalman = 768;  
     float p00_pred;
     float p01_pred;
     float p10_pred;

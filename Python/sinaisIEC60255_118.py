@@ -185,14 +185,14 @@ def modulation(fm, kx, ka, N, f0, Fs, Frep, hmax, hmag, SNR):
     ruido = np.sqrt(var_ruido)*np.random.randn(len(t))
 
 
-    phi = np.random.uniform(-np.pi,np.pi)
+    phi = 0#np.random.uniform(-np.pi,np.pi)
     x = (1 + kx*np.cos(2*np.pi*fm*t))*np.cos(2*np.pi*f0*t + ka*np.cos(2*np.pi*fm*t - np.pi) + phi)
 
     X = np.zeros((hmax,len(t))) + 1j*np.zeros((hmax,len(t)))
     X[0,:] = (1)*(1 + kx*np.cos(2*np.pi*fm*t))*np.exp(1j*(ka*np.cos(2*np.pi*fm*t - np.pi) + phi))
 
     for hh in range(3,hmax+1):
-        phi = np.random.uniform(-np.pi,np.pi)
+        phi =  0#np.random.uniform(-np.pi,np.pi)
         x = x + hmag*(1 + kx*np.cos(2*np.pi*fm*t))*np.cos(2*np.pi*hh*f0*t + ka*np.cos(2*np.pi*fm*t - np.pi) + phi)
         
         X[hh-1,:] = (hmag)*(1 + kx*np.cos(2*np.pi*fm*t))*np.exp(1j*(ka*np.cos(2*np.pi*fm*t - np.pi) + phi))

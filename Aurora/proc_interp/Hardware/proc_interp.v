@@ -36,7 +36,7 @@ processor#(.NUBITS(32),
 .NBEXPO(8),
 .NBOPER(10),
 .NUGAIN(128),
-.MDATAS(690),
+.MDATAS(691),
 .MINSTS(781),
 .SDEPTH(5),
 .DDEPTH(5),
@@ -283,15 +283,15 @@ always @ (posedge clk) begin
    if (mem_addr_wr == 673 && mem_wr) me2_f_main_v_S_incerteza_e_ <= sm_me2*$pow(2.0,e_me2);
    if (mem_addr_wr == 674 && mem_wr) me2_f_main_v_K0_e_ <= sm_me2*$pow(2.0,e_me2);
    if (mem_addr_wr == 675 && mem_wr) me2_f_main_v_K1_e_ <= sm_me2*$pow(2.0,e_me2);
-   if (mem_addr_wr == 676 && mem_wr) me2_f_main_v_dot_result_e_ <= sm_me2*$pow(2.0,e_me2);
-   if (mem_addr_wr == 677 && mem_wr) me2_f_main_v_freq_smoothed_e_ <= sm_me2*$pow(2.0,e_me2);
-   if (mem_addr_wr == 678 && mem_wr) me2_f_main_v_freq_atrasada_e_ <= sm_me2*$pow(2.0,e_me2);
-   if (mem_addr_wr == 679 && mem_wr) me2_f_main_v_lambda_val_e_ <= sm_me2*$pow(2.0,e_me2);
-   if (mem_addr_wr == 680 && mem_wr) me2_f_main_v_y_e_ <= sm_me2*$pow(2.0,e_me2);
-   if (mem_addr_wr == 683 && mem_wr) me2_f_main_v_H0_e_ <= sm_me2*$pow(2.0,e_me2);
-   if (mem_addr_wr == 684 && mem_wr) me2_f_main_v_H1_e_ <= sm_me2*$pow(2.0,e_me2);
-   if (mem_addr_wr == 685 && mem_wr) me2_f_main_v_H2_e_ <= sm_me2*$pow(2.0,e_me2);
-   if (mem_addr_wr == 687 && mem_wr) me2_f_main_v_H3_e_ <= sm_me2*$pow(2.0,e_me2);
+   if (mem_addr_wr == 677 && mem_wr) me2_f_main_v_dot_result_e_ <= sm_me2*$pow(2.0,e_me2);
+   if (mem_addr_wr == 678 && mem_wr) me2_f_main_v_freq_smoothed_e_ <= sm_me2*$pow(2.0,e_me2);
+   if (mem_addr_wr == 679 && mem_wr) me2_f_main_v_freq_atrasada_e_ <= sm_me2*$pow(2.0,e_me2);
+   if (mem_addr_wr == 680 && mem_wr) me2_f_main_v_lambda_val_e_ <= sm_me2*$pow(2.0,e_me2);
+   if (mem_addr_wr == 681 && mem_wr) me2_f_main_v_y_e_ <= sm_me2*$pow(2.0,e_me2);
+   if (mem_addr_wr == 684 && mem_wr) me2_f_main_v_H0_e_ <= sm_me2*$pow(2.0,e_me2);
+   if (mem_addr_wr == 685 && mem_wr) me2_f_main_v_H1_e_ <= sm_me2*$pow(2.0,e_me2);
+   if (mem_addr_wr == 686 && mem_wr) me2_f_main_v_H2_e_ <= sm_me2*$pow(2.0,e_me2);
+   if (mem_addr_wr == 688 && mem_wr) me2_f_main_v_H3_e_ <= sm_me2*$pow(2.0,e_me2);
 end
 
 // instructions ---------------------------------------------------------------

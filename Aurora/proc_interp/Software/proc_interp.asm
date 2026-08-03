@@ -189,7 +189,7 @@ LOD 1.0
 SET main_R
 LOD 0
 SET main_cont_kalman
-LOD 512
+LOD 768
 SET main_descarte_kalman
 LOD 0
 SET main_j

@@ -1,8 +1,8 @@
 module maq_estados
 (
 	input	clk, rst_geral, flag_proc_banco,
-	input [10:0] usedw_sig,
-	input [10:0] usedw_freq,
+	input [15:0] usedw_sig,
+	input [15:0] usedw_freq,
 	output reg rst_proc_banco// out[1] o enable do registrador used_w - 1; out[0] o rst do proc dtw ;
 );
 

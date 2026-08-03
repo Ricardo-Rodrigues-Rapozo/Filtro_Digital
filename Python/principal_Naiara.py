@@ -33,12 +33,16 @@ hmag = 0.05
 Fr = 60
 SNR = 6000000
 
-f1 = 65
+f1 = 55
 Rf = 1
 fa = 54.75
+fm     = 0.1             # Hz  -> repetir o ensaio com fm = 5.0
+#kx, ka = 0.1, 0.0       # AM (Tabela 4, 1a linha)
+kx, ka = 0.0, 0.1        # PM (Tabela 4, 2a linha)
 
 x, Xr, fr, ROCOFr = signal_frequency(f1, (Nc + 300)*Nppc, f0, Fs, Fr, hmax, hmag, SNR)
 #x, Xr, fr, ROCOFr = frequency_ramp(Rf, (Nc + 300)*Nppc, f0, fa, Fs, Fr, hmax, hmag, SNR)
+#x, Xr, fr, ROCOFr = modulation(fm, kx, ka, (Nc + 300)*Nppc, f0, Fs, Fr, hmag=hmag, hmax=hmax, SNR=SNR)
 
 x_int = (x * 32768.0).astype(np.int32)    
 saida_sapho = Path(__file__).resolve().parents[1] / "Aurora" / "dados_simulacao" / "sinal_teste.txt"
@@ -79,13 +83,14 @@ fig.show()
 
 f_zc_m, zc_m_delay, f_zc, zc_delay, total_delay = estima_f_zc(x, 1/Fs, Nppc, plot_level=0)
 
-discard_samples = 2*int(np.ceil(total_delay / Nppc) * Nppc)
-f_zc_m = f_zc_m[discard_samples:]
-f_zc = f_zc[discard_samples:]
-x = x[discard_samples:]
-fr = fr[discard_samples:]
-ROCOFr = ROCOFr[discard_samples:]
-Xr = Xr[:, discard_samples:]
+#discard_samples = 2*int(np.ceil(total_delay / Nppc) * Nppc)
+discard_kalman = 3 * Nppc
+f_zc_m = f_zc_m[discard_kalman:]
+f_zc = f_zc[discard_kalman:]
+x = x[discard_kalman:]
+fr = fr[discard_kalman:]
+ROCOFr = ROCOFr[discard_kalman:]
+Xr = Xr[:, discard_kalman:]
 
 # Kalman filter to estimate the tendency of the frequency
 q = 1e-3;   # ajuste fino
@@ -148,7 +153,15 @@ fig = make_subplots(
     subplot_titles=("Freq ZC", "Freq ZC Smoothed")
 )
 
+f_zc_sapho_raw = np.loadtxt(DADOS_DIR / "saida_interp1.txt", dtype=float) / 1_000_000.0
+if len(f_zc_sapho_raw) > 1 and f_zc_sapho_raw[0] == 0.0:
+    f_zc_sapho_raw = f_zc_sapho_raw[1:]
+f_zc_sapho_raw = f_zc_sapho_raw[discard_kalman:]
+f_zc_sapho = np.where((f_zc_sapho_raw >= 40.0) & (f_zc_sapho_raw <= 80.0), f_zc_sapho_raw, np.nan)
+
 fig.add_trace(go.Scatter(y=f_zc, name="F ZC", mode='lines'), row=1, col=1)
+fig.add_trace(go.Scatter(y=f_zc_sapho, name="F ZC SAPHO", mode='lines'), row=1, col=1)
+fig.add_trace(go.Scatter(y=f_zc_sapho_raw, name="F ZC SAPHO bruto", mode='lines', visible='legendonly'), row=1, col=1)
 fig.add_trace(go.Scatter(y=fr2, name="Reference", mode='lines'), row=1, col=1)
 fig.add_trace(go.Scatter(y=f_zc_m, name="F ZC Smoothed", mode='lines'), row=2, col=1)
 fig.add_trace(go.Scatter(y=fr, name="Reference", mode='lines'), row=2, col=1)
@@ -156,6 +169,7 @@ fig.add_trace(go.Scatter(y=fr, name="Reference", mode='lines'), row=2, col=1)
 
 fig.update_yaxes(title_text="f (Hz)", row=1, col=1)
 fig.update_yaxes(title_text="f (Hz)", row=2, col=1)
+fig.update_yaxes(range=[50, 65], row=1, col=1)
 fig.update_xaxes(title_text="Samples", row=2, col=1)
 
 # 👇 aplica a TODOS os eixos
