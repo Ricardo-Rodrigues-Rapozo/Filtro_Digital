@@ -33,12 +33,12 @@ hmag = 0.05
 Fr = 60
 SNR = 6000000
 
-f1 = 55
+f1 = 57
 Rf = 1
 fa = 54.75
 fm     = 0.1             # Hz  -> repetir o ensaio com fm = 5.0
-#kx, ka = 0.1, 0.0       # AM (Tabela 4, 1a linha)
-kx, ka = 0.0, 0.1        # PM (Tabela 4, 2a linha)
+kx, ka = 0.1, 0.0       # AM (Tabela 4, 1a linha)
+#kx, ka = 0.0, 0.1        # PM (Tabela 4, 2a linha)
 
 x, Xr, fr, ROCOFr = signal_frequency(f1, (Nc + 300)*Nppc, f0, Fs, Fr, hmax, hmag, SNR)
 #x, Xr, fr, ROCOFr = frequency_ramp(Rf, (Nc + 300)*Nppc, f0, fa, Fs, Fr, hmax, hmag, SNR)
@@ -47,6 +47,9 @@ x, Xr, fr, ROCOFr = signal_frequency(f1, (Nc + 300)*Nppc, f0, Fs, Fr, hmax, hmag
 x_int = (x * 32768.0).astype(np.int32)    
 saida_sapho = Path(__file__).resolve().parents[1] / "Aurora" / "dados_simulacao" / "sinal_teste.txt"
 np.savetxt(saida_sapho, x_int, fmt='%d')
+saida_teste = Path(__file__).resolve().parents[1] / "Python"/"Testes"/"Off_nominal"/"offnominal_57hz.txt"
+np.savetxt(saida_teste, x_int, fmt='%d')
+
 # Plotting the input signal, reference frequency, and reference ROCOF
 # -------------------------------------------------------------------
 fig = make_subplots(
@@ -561,19 +564,19 @@ indh = np.arange(hmax)+1
 TVElim = 1 # Limit IEC/IEEE 60255-118-1 for TVE (%)
 fig = make_subplots(rows=3, cols=1, shared_xaxes=True, subplot_titles=("Magnitude Error", "Phase Error", "Total Vector Error (TVE)"))
 
-fig.add_trace(go.Scatter(x=indh, y=ErroAFTavg, name="Average Python", mode='lines+markers', marker_symbol='circle', line=dict(color='royalblue')), row=1, col=1)
-fig.add_trace(go.Scatter(x=indh, y=ErroAFT_saphoavg, name="Average SAPHO", mode='lines+markers', marker_symbol='diamond', line=dict(color='darkorange')), row=1, col=1)
-fig.add_trace(go.Scatter(x=np.concatenate([indh, indh[::-1]]),y=np.concatenate([ErroAFTavg, ErroAFTmax[::-1]]), fill='toself', fillcolor='rgba(65,105,225,0.2)', line=dict(color='rgba(255,255,255,0)'), name='Maximum Python'), row=1, col=1)
-fig.add_trace(go.Scatter(x=np.concatenate([indh, indh[::-1]]),y=np.concatenate([ErroAFT_saphoavg, ErroAFT_saphomax[::-1]]), fill='toself', fillcolor='rgba(255,140,0,0.18)', line=dict(color='rgba(255,255,255,0)'), name='Maximum SAPHO'), row=1, col=1)
-fig.add_trace(go.Scatter(x=indh, y=ErroPFTavg, name="Average Python", mode='lines+markers', marker_symbol='circle', line=dict(color='seagreen')), row=2, col=1)
-fig.add_trace(go.Scatter(x=indh, y=ErroPFT_saphoavg, name="Average SAPHO", mode='lines+markers', marker_symbol='diamond', line=dict(color='darkorange')), row=2, col=1)
-fig.add_trace(go.Scatter(x=np.concatenate([indh, indh[::-1]]),y=np.concatenate([ErroPFTavg, ErroPFTmax[::-1]]), fill='toself', fillcolor='rgba(60,179,113,0.2)', line=dict(color='rgba(255,255,255,0)'), name='Maximum Python'), row=2, col=1)
-fig.add_trace(go.Scatter(x=np.concatenate([indh, indh[::-1]]),y=np.concatenate([ErroPFT_saphoavg, ErroPFT_saphomax[::-1]]), fill='toself', fillcolor='rgba(255,140,0,0.18)', line=dict(color='rgba(255,255,255,0)'), name='Maximum SAPHO'), row=2, col=1)
-fig.add_trace(go.Scatter(x=indh, y=TVEFTavg, name="Average Python x referencia", mode='lines+markers', marker_symbol='circle', line=dict(color='crimson')), row=3, col=1)
-fig.add_trace(go.Scatter(x=indh, y=TVEFT_saphoavg, name="Average SAPHO x referencia", mode='lines+markers', marker_symbol='diamond', line=dict(color='darkorange')), row=3, col=1)
-fig.add_trace(go.Scatter(x=np.concatenate([indh, indh[::-1]]),y=np.concatenate([TVEFTavg, TVEFTmax[::-1]]), fill='toself', fillcolor='rgba(220,20,60,0.2)', line=dict(color='rgba(255,255,255,0)'), name='Maximum Python'), row=3, col=1)
-fig.add_trace(go.Scatter(x=np.concatenate([indh, indh[::-1]]),y=np.concatenate([TVEFT_saphoavg, TVEFT_saphomax[::-1]]), fill='toself', fillcolor='rgba(255,140,0,0.18)', line=dict(color='rgba(255,255,255,0)'), name='Maximum SAPHO'), row=3, col=1)
-fig.add_trace(go.Scatter(x=indh, y=TVElim*np.ones(len(TVEFTavg)),   name="Limit IEC/IEEE 60255-118-1", mode='lines',line=dict(color='black', dash='dot')), row=3, col=1)
+fig.add_trace(go.Scatter(x=indh, y=ErroAFTavg, name="Media Python", legendgroup="media_python", showlegend=True, mode='lines+markers', marker_symbol='circle', line=dict(color='royalblue')), row=1, col=1)
+fig.add_trace(go.Scatter(x=indh, y=ErroAFT_saphoavg, name="Media SAPHO", legendgroup="media_sapho", showlegend=True, mode='lines+markers', marker_symbol='diamond', line=dict(color='darkorange')), row=1, col=1)
+fig.add_trace(go.Scatter(x=np.concatenate([indh, indh[::-1]]),y=np.concatenate([ErroAFTavg, ErroAFTmax[::-1]]), fill='toself', fillcolor='rgba(65,105,225,0.2)', line=dict(color='rgba(255,255,255,0)'), name='Maximo Python', legendgroup="maximo_python", showlegend=True), row=1, col=1)
+fig.add_trace(go.Scatter(x=np.concatenate([indh, indh[::-1]]),y=np.concatenate([ErroAFT_saphoavg, ErroAFT_saphomax[::-1]]), fill='toself', fillcolor='rgba(255,140,0,0.18)', line=dict(color='rgba(255,255,255,0)'), name='Maximo SAPHO', legendgroup="maximo_sapho", showlegend=True), row=1, col=1)
+fig.add_trace(go.Scatter(x=indh, y=ErroPFTavg, name="Media Python", legendgroup="media_python", showlegend=False, mode='lines+markers', marker_symbol='circle', line=dict(color='royalblue')), row=2, col=1)
+fig.add_trace(go.Scatter(x=indh, y=ErroPFT_saphoavg, name="Media SAPHO", legendgroup="media_sapho", showlegend=False, mode='lines+markers', marker_symbol='diamond', line=dict(color='darkorange')), row=2, col=1)
+fig.add_trace(go.Scatter(x=np.concatenate([indh, indh[::-1]]),y=np.concatenate([ErroPFTavg, ErroPFTmax[::-1]]), fill='toself', fillcolor='rgba(65,105,225,0.2)', line=dict(color='rgba(255,255,255,0)'), name='Maximo Python', legendgroup="maximo_python", showlegend=False), row=2, col=1)
+fig.add_trace(go.Scatter(x=np.concatenate([indh, indh[::-1]]),y=np.concatenate([ErroPFT_saphoavg, ErroPFT_saphomax[::-1]]), fill='toself', fillcolor='rgba(255,140,0,0.18)', line=dict(color='rgba(255,255,255,0)'), name='Maximo SAPHO', legendgroup="maximo_sapho", showlegend=False), row=2, col=1)
+fig.add_trace(go.Scatter(x=indh, y=TVEFTavg, name="Media Python", legendgroup="media_python", showlegend=False, mode='lines+markers', marker_symbol='circle', line=dict(color='royalblue')), row=3, col=1)
+fig.add_trace(go.Scatter(x=indh, y=TVEFT_saphoavg, name="Media SAPHO", legendgroup="media_sapho", showlegend=False, mode='lines+markers', marker_symbol='diamond', line=dict(color='darkorange')), row=3, col=1)
+fig.add_trace(go.Scatter(x=np.concatenate([indh, indh[::-1]]),y=np.concatenate([TVEFTavg, TVEFTmax[::-1]]), fill='toself', fillcolor='rgba(65,105,225,0.2)', line=dict(color='rgba(255,255,255,0)'), name='Maximo Python', legendgroup="maximo_python", showlegend=False), row=3, col=1)
+fig.add_trace(go.Scatter(x=np.concatenate([indh, indh[::-1]]),y=np.concatenate([TVEFT_saphoavg, TVEFT_saphomax[::-1]]), fill='toself', fillcolor='rgba(255,140,0,0.18)', line=dict(color='rgba(255,255,255,0)'), name='Maximo SAPHO', legendgroup="maximo_sapho", showlegend=False), row=3, col=1)
+fig.add_trace(go.Scatter(x=indh, y=TVElim*np.ones(len(TVEFTavg)), name="Limite IEC/IEEE 60255-118-1", mode='lines', line=dict(color='black', dash='dot')), row=3, col=1)
 
 fig.update_yaxes(title_text="Error (%)", row=1, col=1)
 fig.update_yaxes(title_text="Error (°)", row=2, col=1)
