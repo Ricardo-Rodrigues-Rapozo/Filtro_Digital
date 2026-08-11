@@ -24,9 +24,19 @@ fork
 	clk <= 1'b0;
 	rst_geral <= 1'b1;
 	#40 rst_geral <= 1'b0;
-	//#85000000 $finish;
-	#350000000 $finish;
+	#220000000 $finish; // outros testes
+	//#420000000 $finish; // outros testes
+	//#120000000 $finish; // outros testes
+
 	$display ("termionou");
+	// off-nominal e modulações fm=5 ou fm=0.5
+                  //#220000000 $finish;
+
+// rampa M class 55 -> 65 Hz
+                  //#420000000 $finish;
+
+// rampa subida + descida
+#7987200000 $finish;
 join
 
 integer i, data_in1,data_out_interp0, data_out_interp1, data_out_interp2, data_out_interp3, data_out_interp4, data_out_banco0,data_out_banco2;//,data_out_1;

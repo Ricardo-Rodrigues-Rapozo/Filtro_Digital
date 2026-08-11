@@ -541,7 +541,7 @@ def kf_trend_poly(f, Ts, order, q, r):
 
     # Inicialização
     x = np.zeros((M, 1))
-    x[0, 0] = 60
+    x[0, 0] = 63
     P = 1e6 * np.eye(M)  ## cria uma matriz identidade de tamanho MxM e multiplica por 1e6 para definir a incerteza inicial alta
 
     x_hist = np.zeros((M, N))
@@ -577,6 +577,7 @@ def kf_trend_poly(f, Ts, order, q, r):
         out["ddb"] = x_hist[2, :].reshape(-1, 1)
 
     return out
+
 
 
 
@@ -616,6 +617,7 @@ def Kalman_filter(f, Ts, order, q, r):
     # freq  corresponde a x[0].
     # rocof corresponde a x[1].
     freq = 60.0
+    freq = 60
     rocof = 0.0
 
     # Matriz P aberta em quatro escalares:

@@ -43,7 +43,7 @@ void main()
     float T2              = 0.0;           // correcao temporal do cruzamento atual
     float Ts;                              // periodo de amostragem
     int atraso_amotras_filtro_pre_zc = 127; // atraso de grupo do IIR em 60 Hz
-
+    float cont_zc         = 0.0;
     // ----- Media movel 256 -----
     float w_coeff = 0.00390625;        // coeficientes do filtro de media movel
     int w_index = 0;                       // indice auxiliar mantido do molde antigo
@@ -60,32 +60,37 @@ void main()
     float fvelho = 0.0;                    //  
 
     // ------- Filtro de Kalman ------
-    float freq_kalman   = 60.0;
+    // O estado do filtro e o DESVIO em relacao a nominal (dfreq = f - 60), nao a
+    // frequencia absoluta. Como a translacao e constante, o 60 cancela na predicao
+    // e no erro: P, Q, R, K0 e K1 ficam identicos ao caso absoluto. O ganho e de
+    // resolucao: em float32, ULP(63 Hz) = 3.81e-6 contra ULP(3 Hz) = 2.38e-7, ou
+    // seja 16x mais fino, o que evita que a correcao K0*erro seja absorvida pelo
+    // arredondamento quando o ganho do Kalman cai.
+    float f_nominal     = 60.0;
+    float dfreq         = 0.0;             // estado: desvio da nominal, parte de 60 Hz
     float df            = 0.0;
     float p00           = 1000000.0;
     float p01           = 0.0;
     float p10           = 0.0;
     float p11           = 1000000.0;
-    float q00           = 0.001 * ( ( 1/15360.0) *  (1/15360.0) * (1/15360.0) ) / 3.0;//Ts**3 / 3.0
-    float q01           = 0.001 * ( ( 1/15360.0) *  (1/15360.0)  ) / 2.0;//Ts**2 / 2.0
-    float q10           = 0.001 * ( ( 1/15360.0) *  (1/15360.0)  ) / 2.0;//Ts**2 / 2.0
-    float q11           = 0.001 * 1/15360.0;///Ts
-    float freq_pred     = 0.0;
+    float q00           = 0.01 * ( ( 1/15360.0) *  (1/15360.0) * (1/15360.0) ) / 3.0;//Ts**3 / 3.0
+    float q01           = 0.01 * ( ( 1/15360.0) *  (1/15360.0)  ) / 2.0;//Ts**2 / 2.0
+    float q10           = 0.01 * ( ( 1/15360.0) *  (1/15360.0)  ) / 2.0;//Ts**2 / 2.0
+    float q11           = 0.01 * 1/15360.0;///Ts
+    float dfreq_pred    = 0.0;
     float df_pred       = 0.0;
-    float R             = 1.0;    
+    float R             = 1.0;
     int cont_kalman     = 0;
-    int descarte_kalman = 768;  
+    int descarte_kalman = 768;
+    float erro          = 0.0;
     float p00_pred;
     float p01_pred;
     float p10_pred;
     float p11_pred;
     float y_kalman;
-    float erro;
     float S_incerteza;
     float K0;
     float K1;
-
-
 
 
     // ----- Temporarias -----
@@ -180,8 +185,9 @@ void main()
         // ========== ZERO-CROSSING ==========
         Ts = (1.0 / freq_amostragem);
         sig = va * acc;
-        Tsc = Ts + Tsc;
-
+        cont_zc = cont_zc + 1;
+        //Tsc = Ts + Tsc;
+        Tsc = cont_zc *Ts;
         if(sig < 0)
         {
             Nb = acc / (acc - va);
@@ -190,6 +196,7 @@ void main()
             fzc = 1 / (2*Tsc);
             T1 = T2;
             Tsc = 0.0;
+            cont_zc = 0.0;
         }
 
         va = acc;
@@ -201,22 +208,24 @@ void main()
         {
 
             // ========== FILTRO DE Kalman ==========
-            freq_pred = freq_kalman + Ts * df;
+            // Estado em desvio da nominal: o termo constante f_nominal cancela na
+            // predicao e no erro, entao a recursao abaixo e a mesma do caso absoluto.
+            dfreq_pred = dfreq + Ts * df;
             df_pred = df;
             p00_pred = p00 + Ts * p10 + Ts * p01 + Ts * Ts * p11 + q00;
             p01_pred = p01 + Ts * p11 + q01;
             p10_pred = p10 + Ts * p11 + q10;
             p11_pred = p11 + q11;
 
-            y_kalman = fzc;
-            
-            erro = y_kalman - freq_pred;
+            y_kalman = fzc - f_nominal;   // medida convertida para desvio
+
+            erro = y_kalman - dfreq_pred;
 
             S_incerteza = p00_pred + R;
 
             K0 = p00_pred / S_incerteza;
             K1 = p10_pred / S_incerteza;
-            freq_kalman = freq_pred + K0 * erro;
+            dfreq = dfreq_pred + K0 * erro;
             df = df_pred + K1 * erro;
 
 
@@ -226,7 +235,7 @@ void main()
             p11 = p11_pred - K1 * p01_pred;
 
 
-            fcc = freq_kalman;
+            fcc = f_nominal + dfreq;      // volta para Hz absoluto na saida
 
             fout(2, fcc * 1000000);
 
@@ -255,7 +264,7 @@ void main()
             fout(3, x_atrasado * 1000000);
 
             // ============================ DESCARTE DE AMOSTRAS ================= //
-            if(cont_global >= 512)
+            if(cont_global >= 34816)
             {
                 // ============================ PREFILTRO ============================ //
                 buffer_entrada_prefiltro[0] = buffer_entrada_prefiltro[1];
@@ -339,7 +348,7 @@ void main()
                 }
             }
 
-            if(cont_global < 10000)
+            if(cont_global < 348160)
             {
                 cont_global = cont_global + 1;
             }

@@ -104,6 +104,8 @@ LOD 0.0
 SET main_T2
 LOD 127
 SET main_atraso_amotras_filtro_pre_zc
+LOD 0.0
+SET main_cont_zc
 LOD 0.00390625
 SET main_w_coeff
 LOD 0
@@ -130,7 +132,9 @@ SET main_atraso_amotras_media_movel
 LOD 0.0
 SET main_fvelho
 LOD 60.0
-SET main_freq_kalman
+SET main_f_nominal
+LOD 0.0
+SET main_dfreq
 LOD 0.0
 SET main_df
 LOD 1000000.0
@@ -152,7 +156,7 @@ P_I2F_M 1
 P_LOD 15360.0
 SF_DIV
 SF_MLT
-F_MLT 0.001
+F_MLT 0.01
 P_LOD 3.0
 SF_DIV
 SET main_q00
@@ -163,7 +167,7 @@ P_I2F_M 1
 P_LOD 15360.0
 SF_DIV
 SF_MLT
-F_MLT 0.001
+F_MLT 0.01
 P_LOD 2.0
 SF_DIV
 SET main_q01
@@ -174,15 +178,15 @@ P_I2F_M 1
 P_LOD 15360.0
 SF_DIV
 SF_MLT
-F_MLT 0.001
+F_MLT 0.01
 P_LOD 2.0
 SF_DIV
 SET main_q10
 LOD 15360.0
-F_DIV 0.001
+F_DIV 0.01
 SET main_q11
 LOD 0.0
-SET main_freq_pred
+SET main_dfreq_pred
 LOD 0.0
 SET main_df_pred
 LOD 1.0
@@ -191,6 +195,8 @@ LOD 0
 SET main_cont_kalman
 LOD 768
 SET main_descarte_kalman
+LOD 0.0
+SET main_erro
 LOD 0
 SET main_j
 LOD 0
@@ -437,8 +443,10 @@ SET main_Ts
 LOD main_va
 F_MLT main_acc
 SET main_sig
-LOD main_Ts
-F_ADD main_Tsc
+I2F_M 1
+F_ADD main_cont_zc
+SET main_cont_zc
+F_MLT main_Ts
 SET main_Tsc
 LOD main_sig
 P_I2F_M 0
@@ -465,6 +473,8 @@ LOD main_T2
 SET main_T1
 LOD 0.0
 SET main_Tsc
+LOD 0.0
+SET main_cont_zc
 @Lif1else LOD main_acc
 SET main_va
 I2F_M 1000000
@@ -477,8 +487,8 @@ LIN
 JIZ Lif2else
 LOD main_Ts
 F_MLT main_df
-F_ADD main_freq_kalman
-SET main_freq_pred
+F_ADD main_dfreq
+SET main_dfreq_pred
 LOD main_df
 SET main_df_pred
 LOD main_Ts
@@ -507,8 +517,9 @@ LOD main_p11
 F_ADD main_q11
 SET main_p11_pred
 LOD main_fzc
+F_SU1 main_f_nominal
 SET main_y_kalman
-F_SU1 main_freq_pred
+F_SU1 main_dfreq_pred
 SET main_erro
 LOD main_p00_pred
 F_ADD main_R
@@ -520,8 +531,8 @@ F_DIV main_p10_pred
 SET main_K1
 LOD main_K0
 F_MLT main_erro
-F_ADD main_freq_pred
-SET main_freq_kalman
+F_ADD main_dfreq_pred
+SET main_dfreq
 LOD main_K1
 F_MLT main_erro
 F_ADD main_df_pred
@@ -542,7 +553,8 @@ LOD main_K1
 F_MLT main_p01_pred
 F_SU2 main_p11_pred
 SET main_p11
-LOD main_freq_kalman
+LOD main_f_nominal
+F_ADD main_dfreq
 SET main_fcc
 I2F_M 1000000
 F_MLT main_fcc
@@ -573,7 +585,7 @@ SET main_x_atrasado
 F_MLT main_x_atrasado
 F2I
 OUT 3
-LOD 512
+LOD 34816
 LES main_cont_global
 LIN
 JIZ Lif5else
@@ -792,7 +804,7 @@ JMP Lif7end
 @Lif7else LOD main_cnt
 ADD 1
 SET main_cnt
-@Lif7end @Lif5else LOD 10000
+@Lif7end @Lif5else LOD 348160
 LES main_cont_global
 JIZ Lif8else
 LOD main_cont_global

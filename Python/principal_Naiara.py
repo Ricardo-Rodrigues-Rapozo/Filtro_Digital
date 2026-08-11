@@ -33,12 +33,12 @@ hmag = 0.05
 Fr = 60
 SNR = 6000000
 
-f1 = 57
+f1 = 55
 Rf = 1
 fa = 54.75
-fm     = 0.1             # Hz  -> repetir o ensaio com fm = 5.0
-kx, ka = 0.1, 0.0       # AM (Tabela 4, 1a linha)
-#kx, ka = 0.0, 0.1        # PM (Tabela 4, 2a linha)
+fm     = 5            # Hz  -> repetir o ensaio com fm = 5.0
+#kx, ka = 0.1, 0.0       # AM (Tabela 4, 1a linha)
+kx, ka = 0.0, 0.1      # PM (Tabela 4, 2a linha)
 
 x, Xr, fr, ROCOFr = signal_frequency(f1, (Nc + 300)*Nppc, f0, Fs, Fr, hmax, hmag, SNR)
 #x, Xr, fr, ROCOFr = frequency_ramp(Rf, (Nc + 300)*Nppc, f0, fa, Fs, Fr, hmax, hmag, SNR)
@@ -96,14 +96,15 @@ ROCOFr = ROCOFr[discard_kalman:]
 Xr = Xr[:, discard_kalman:]
 
 # Kalman filter to estimate the tendency of the frequency
-q = 1e-3;   # ajuste fino
+#q = 1e-3;   # ajuste fino
+q = 1e-2
 r = 1;      # se a senoide for forte, aumente
 
 out = kf_trend_poly(f_zc_m, Ts, 1, q, r)
 freq = out["b"].squeeze() #
 freq_kalman, rocof_kalman = Kalman_filter(f_zc_m, Ts, 1, q, r)
 freq_sapho = np.loadtxt(Path(__file__).resolve().parents[1] / "Aurora" / "dados_simulacao" / "saida_interp2.txt", dtype=float) / 1000000.0
-freq_sapho = freq_sapho[(freq_sapho > 40.0) & (freq_sapho < 80.0)]
+#freq_sapho = freq_sapho[(freq_sapho > 40.0) & (freq_sapho < 80.0)]
 N_kalman = min(len(freq), len(freq_kalman), len(freq_sapho))
 sample_kalman = np.arange(N_kalman)
 freq_ref_plot = freq[:N_kalman]
@@ -160,8 +161,8 @@ f_zc_sapho_raw = np.loadtxt(DADOS_DIR / "saida_interp1.txt", dtype=float) / 1_00
 if len(f_zc_sapho_raw) > 1 and f_zc_sapho_raw[0] == 0.0:
     f_zc_sapho_raw = f_zc_sapho_raw[1:]
 f_zc_sapho_raw = f_zc_sapho_raw[discard_kalman:]
-f_zc_sapho = np.where((f_zc_sapho_raw >= 40.0) & (f_zc_sapho_raw <= 80.0), f_zc_sapho_raw, np.nan)
-
+#f_zc_sapho = np.where((f_zc_sapho_raw >= 40.0) & (f_zc_sapho_raw <= 80.0), f_zc_sapho_raw, np.nan)
+f_zc_sapho = f_zc_sapho_raw
 fig.add_trace(go.Scatter(y=f_zc, name="F ZC", mode='lines'), row=1, col=1)
 fig.add_trace(go.Scatter(y=f_zc_sapho, name="F ZC SAPHO", mode='lines'), row=1, col=1)
 fig.add_trace(go.Scatter(y=f_zc_sapho_raw, name="F ZC SAPHO bruto", mode='lines', visible='legendonly'), row=1, col=1)
@@ -190,7 +191,8 @@ fig.show()
 
 # Discarding the initial samples to align the time axes of all signals
 # --------------------------------------------------------------------
-discard_samples = 2*int(np.ceil(total_delay / Nppc) * Nppc)
+#discard_samples = 2*int(np.ceil(total_delay / Nppc) * Nppc)
+discard_samples = 34816
 print("Discarding the first", discard_samples)
 
 freq = freq[discard_samples:discard_samples+(Nc+200)*Nppc]
@@ -200,12 +202,16 @@ fr = fr[discard_samples:discard_samples+(Nc+200)*Nppc]
 Xr = Xr[:, discard_samples:discard_samples+(Nc+200)*Nppc]
 ROCOFr = ROCOFr[discard_samples:discard_samples+(Nc+200)*Nppc]
 
+
+
 # Plotting the reference frequency and the zero-crossing frequency estimation
 # ---------------------------------------------------------------------------
+freq_sapho_banco = np.loadtxt(DADOS_DIR / "saida_interp4.txt", dtype=float) / 1_000_000.0
+
 fig = go.Figure()
 fig.add_trace(go.Scatter(y=fr, name="Reference", mode='lines'))
 fig.add_trace(go.Scatter(y=freq, name="Zero Crossing", mode='lines'))
-
+fig.add_trace(go.Scatter(y=freq_sapho_banco, name="SAPHO", mode='lines'))
 fig.update_yaxes(title_text="Frequency (Hz)")
 fig.update_xaxes(title_text="Time (s)")
 
@@ -281,7 +287,7 @@ xi = xi[:(Nc + fbDelay)*Nppc]
 Xr = Xr[:,:(Nc + fbDelay)*Nppc]
 freq = freq[:(Nc + fbDelay)*Nppc]
 fr = fr[:(Nc + fbDelay)*Nppc]
-
+freq_sapho_banco = freq_sapho_banco[:(Nc + fbDelay)*Nppc]
 X = PolyphaseFilterBank(h, M, xi)
 
 ARQ_SAPHO_BANCO = DADOS_DIR / "saida_banco0.txt"
@@ -313,14 +319,16 @@ X  = X[1:hmax+1,:]  ## Python
 # Downsampling the frequency, fr and Xr to match the decimation factor of the polyphase filter bank
 # ---------------------------------------------------------------------------------------------
 freq = downsample(freq,M)
+freq_sapho_banco = downsample(freq_sapho_banco,M)
 Xr = downsample(Xr,M)
 fr = downsample(fr,M)
-freq_sapho_banco = np.loadtxt(DADOS_DIR / "saida_interp4.txt", dtype=float) / 1_000_000.0
-freq_sapho_banco_valida = np.flatnonzero((freq_sapho_banco > 40.0) & (freq_sapho_banco < 80.0))
-if len(freq_sapho_banco_valida) > 0:
-    freq_sapho_banco = freq_sapho_banco[freq_sapho_banco_valida[0]:]
-freq_sapho_banco = freq_sapho_banco[:(Nc + fbDelay)*Nppc]
-freq_sapho_banco = downsample(freq_sapho_banco,M)  ## sapho 
+#freq_sapho_banco = np.loadtxt(DADOS_DIR / "saida_interp4.txt", dtype=float) / 1_000_000.0
+#freq_sapho_banco_valida = np.flatnonzero((freq_sapho_banco > 40.0) & (freq_sapho_banco < 80.0))
+#freq_sapho_banco_valida = freq_sapho_banco 
+#if len(freq_sapho_banco_valida) > 0:
+    #freq_sapho_banco = freq_sapho_banco[freq_sapho_banco_valida[0]:]
+#freq_sapho_banco = freq_sapho_banco[:(Nc + fbDelay)*Nppc]
+#freq_sapho_banco = downsample(freq_sapho_banco,M)  ## sapho 
 
 # Compensating the delay introduced by the polyphase filter bank, which is equal to half the length of the filter divided by the decimation factor
 # --------------------------------------------------------------------------------------------------------------------------------------
@@ -368,7 +376,7 @@ for nn in range(1, len(delta_f)):
     if(nn >= fbDelay+1):
         correc[nn] = correc[nn-1] + np.pi*(delta_f[nn] + delta_f[nn-1])*(M*Ts) 
 
-correc = correc  - 1.4*np.pi/180 # para alinhar a fase do primeiro harmonico com a fase do referencial, considerando o atraso introduzido pelo filtro de média móvel e pelo filtro de interpolação
+correc = correc  - 1.3937*np.pi/180  # para alinhar a fase do primeiro harmonico com a fase do referencial, considerando o atraso introduzido pelo filtro de média móvel e pelo filtro de interpolação
 # Multiplies the correction by each harmonic (h = 1:50)
 h = np.arange(1, 51).reshape(-1, 1)   # shape (50, 1)
 correcH = h*correc
@@ -389,7 +397,7 @@ for nn in range(1, len(delta_f_sapho_banco)):
     if(nn >= fbDelay+1):
         correc_sapho_banco[nn] = correc_sapho_banco[nn-1] + np.pi*(delta_f_sapho_banco[nn] + delta_f_sapho_banco[nn-1])*(M*Ts) 
 
-correc_sapho_banco = correc_sapho_banco  - 1.4*np.pi/180 # para alinhar a fase do primeiro harmonico com a fase do referencial, considerando o atraso introduzido pelo filtro de média móvel e pelo filtro de interpolação
+correc_sapho_banco = correc_sapho_banco  - 1.3651*np.pi/180 - 0.029*np.pi/180 # para alinhar a fase do primeiro harmonico com a fase do referencial, considerando o atraso introduzido pelo filtro de média móvel e pelo filtro de interpolação
 # Multiplies the correction by each harmonic (h = 1:50)
 h = np.arange(1, 51).reshape(-1, 1)   # shape (50, 1)
 correcH_sapho = h*correc_sapho_banco
@@ -397,6 +405,14 @@ correcH_sapho = h*correc_sapho_banco
 PFTc_sapho = np.unwrap((PFT_sapho) + np.unwrap(correcH_sapho)) 
 Xc_sapho = AFT_sapho*np.exp(1j*PFTc_sapho)
 
+plt.figure()
+plt.plot(correc*180/np.pi, label="Python")
+plt.plot(correc_sapho_banco*180/np.pi, label="SAPHO")
+plt.xlabel("Sample")
+plt.ylabel("Phase Correction (degrees)")
+plt.legend()
+plt.title("Phase Correction Comparison")
+plt.show()
 # ===================================================
 # Bank Output Comparison
 # ===================================================
