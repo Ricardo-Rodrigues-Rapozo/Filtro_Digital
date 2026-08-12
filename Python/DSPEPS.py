@@ -487,7 +487,7 @@ def PolyphaseFilterBank(h, M, x):
         
     return v
 
-def kf_trend_poly(f, Ts, order, q, r):
+def kf_trend_poly(f, f_ini, Ts, order, q, r):
     """
     kf_trend_poly
     Estima tendência polinomial (ordem 0/1/2) em f[k] via Filtro de Kalman.
@@ -541,7 +541,7 @@ def kf_trend_poly(f, Ts, order, q, r):
 
     # Inicialização
     x = np.zeros((M, 1))
-    x[0, 0] = 63
+    x[0, 0] = f_ini
     P = 1e6 * np.eye(M)  ## cria uma matriz identidade de tamanho MxM e multiplica por 1e6 para definir a incerteza inicial alta
 
     x_hist = np.zeros((M, N))
