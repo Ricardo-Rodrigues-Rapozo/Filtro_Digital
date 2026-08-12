@@ -37,7 +37,7 @@ processor#(.NUBITS(32),
 .NBOPER(10),
 .NUGAIN(128),
 .MDATAS(693),
-.MINSTS(764),
+.MINSTS(793),
 .SDEPTH(5),
 .DDEPTH(5),
 .NBIOIN(1),
@@ -313,7 +313,7 @@ reg [31:0] valr9 /* verilator public_flat */=0;
 reg [31:0] valr10 /* verilator public_flat */=0;
 /* verilator tracing_on */
 
-reg [19:0] min [0:764-1];
+reg [19:0] min [0:793-1];
 
 /* verilator tracing_off */ reg signed [19:0] linetab /* verilator public_flat */ =-1; /* verilator tracing_on */
 reg signed [19:0] linetabs=-1;
@@ -321,7 +321,7 @@ reg signed [19:0] linetabs=-1;
 initial	$readmemb("pc_proc_interp_mem.txt",min);
 
 always @ (posedge clk) begin
-if (pc_sim_val < 764) linetab <= min[pc_sim_val];
+if (pc_sim_val < 793) linetab <= min[pc_sim_val];
 linetabs <= linetab;   
 valr1    <= {{(22){1'b0}}, pc_sim_val};
 valr2    <= valr1;

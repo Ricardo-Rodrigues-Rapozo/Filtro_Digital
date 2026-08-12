@@ -129,7 +129,7 @@ end
 
 integer chrys;
 
-always @ (posedge clk) if (proc.valr10 == 763) begin
+always @ (posedge clk) if (proc.valr10 == 792) begin
     $display("Info: end of program!");
     $finish;
 end
