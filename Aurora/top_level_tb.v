@@ -24,7 +24,7 @@ fork
 	clk <= 1'b0;
 	rst_geral <= 1'b1;
 	#40 rst_geral <= 1'b0;
-	#220000000 $finish; // outros testes
+	#280000000 $finish; // outros testes
 	//#420000000 $finish; // outros testes
 	//#120000000 $finish; // outros testes
 
