@@ -104,7 +104,6 @@ out = kf_trend_poly(f_zc_m, Ts, 1, q, r)
 freq = out["b"].squeeze() #
 freq_kalman, rocof_kalman = Kalman_filter(f_zc_m, Ts, 1, q, r)
 freq_sapho = np.loadtxt(Path(__file__).resolve().parents[1] / "Aurora" / "dados_simulacao" / "saida_interp2.txt", dtype=float) / 1000000.0
-#freq_sapho = freq_sapho[(freq_sapho > 40.0) & (freq_sapho < 80.0)]
 N_kalman = min(len(freq), len(freq_kalman), len(freq_sapho))
 sample_kalman = np.arange(N_kalman)
 freq_ref_plot = freq[:N_kalman]
@@ -117,9 +116,9 @@ max_diff_sapho_mhz = np.max(np.abs(diff_sapho_mhz)) if N_kalman > 0 else 0.0
 
 fig_kalman, ax_kalman = plt.subplots(2, 1, sharex=True, figsize=(12, 7))
 
-ax_kalman[0].plot(sample_kalman, freq_ref_plot, label="Kalman matricial", linewidth=2.0)
-ax_kalman[0].plot(sample_kalman, freq_low_plot, label="Kalman baixo nivel", linestyle="--", linewidth=1.6)
-ax_kalman[0].plot(sample_kalman, freq_sapho_plot, label="Kalman SAPHO", linestyle=":", linewidth=1.8)
+ax_kalman[0].plot(freq_ref_plot[1:], label="Kalman matricial", linewidth=2.0)
+ax_kalman[0].plot(freq_low_plot[:], label="Kalman baixo nivel", linestyle="--", linewidth=1.6)
+ax_kalman[0].plot( freq_sapho_plot[1:], label="Kalman SAPHO", linestyle=":", linewidth=1.8)
 ax_kalman[0].set_ylabel("Frequencia [Hz]")
 ax_kalman[0].set_title("Comparacao das respostas do Kalman")
 ax_kalman[0].grid(True, alpha=0.35)
@@ -144,7 +143,7 @@ x = lfilter(delay, [1.0], x)
 freq = freq_kalman
 # para alinhar o tempo de f_zc, fr, Xr e ROCOFr com o tempo de x, considerando o delay introduzido pelo filtro de média móvel
 # ---------------------------------------------------------------------------------------------------------------------------
-fr2 = np.concatenate((np.zeros(zc_delay), fr)) 
+#fr2 = np.concatenate((np.zeros(zc_delay), fr)) 
 fr = np.concatenate((np.zeros(total_delay), fr)) 
 Xr = np.hstack((np.zeros((hmax, total_delay)), Xr)) 
 ROCOFr  = np.concatenate((np.zeros(total_delay), ROCOFr)) 
@@ -166,7 +165,7 @@ f_zc_sapho = f_zc_sapho_raw
 fig.add_trace(go.Scatter(y=f_zc, name="F ZC", mode='lines'), row=1, col=1)
 fig.add_trace(go.Scatter(y=f_zc_sapho, name="F ZC SAPHO", mode='lines'), row=1, col=1)
 fig.add_trace(go.Scatter(y=f_zc_sapho_raw, name="F ZC SAPHO bruto", mode='lines', visible='legendonly'), row=1, col=1)
-fig.add_trace(go.Scatter(y=fr2, name="Reference", mode='lines'), row=1, col=1)
+#fig.add_trace(go.Scatter(y=fr2, name="Reference", mode='lines'), row=1, col=1)
 fig.add_trace(go.Scatter(y=f_zc_m, name="F ZC Smoothed", mode='lines'), row=2, col=1)
 fig.add_trace(go.Scatter(y=fr, name="Reference", mode='lines'), row=2, col=1)
 

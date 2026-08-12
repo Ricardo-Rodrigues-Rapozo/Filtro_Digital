@@ -73,7 +73,7 @@ begin
 	
 	else 
 	begin
-		if(cont_rst_proc < 32'd650)   // tempo de processamento do código interp.cmm
+		if(cont_rst_proc < 32'd1000)   // tempo de processamento do código interp.cmm
 			cont_rst_proc <= cont_rst_proc + 32'd1;
 		else
 			cont_rst_proc <= 32'd0;
@@ -81,7 +81,7 @@ begin
 	
 end
 
-wire rst_proc_interp = (cont_rst_proc == 32'd649) ? 1 : 0;
+wire rst_proc_interp = (cont_rst_proc == 32'd999) ? 1 : 0;
 
 always@(posedge clk)
 begin
