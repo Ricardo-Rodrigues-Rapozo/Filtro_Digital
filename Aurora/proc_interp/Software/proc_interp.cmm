@@ -261,7 +261,6 @@ void main()
                 x_atrasado = x;
             }
 
-            fout(3, x_atrasado * 1000000);
 
             // ============================ DESCARTE DE AMOSTRAS ================= //
             if(cont_global >= 34816)
@@ -312,7 +311,7 @@ void main()
                     lambda_val = 0.0;
                 }
 
-                
+                fout(3, x_atrasado * 1000000);
                 fout(4, freq_smoothed * 1000000);
                 y = 0.0;
                 if (cnt > 6)

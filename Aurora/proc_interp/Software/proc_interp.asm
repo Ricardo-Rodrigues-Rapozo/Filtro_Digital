@@ -581,11 +581,7 @@ SET main_c_index
 @Lif4else JMP Lif3end
 @Lif3else LOD main_x
 SET main_x_atrasado
-@Lif3end I2F_M 1000000
-F_MLT main_x_atrasado
-F2I
-OUT 3
-LOD 34816
+@Lif3end LOD 34816
 LES main_cont_global
 LIN
 JIZ Lif5else
@@ -719,6 +715,10 @@ JMP Lif6end
 @Lif6else LOD 0.0
 SET main_lambda_val
 @Lif6end I2F_M 1000000
+F_MLT main_x_atrasado
+F2I
+OUT 3
+I2F_M 1000000
 F_MLT main_freq_smoothed
 F2I
 OUT 4
