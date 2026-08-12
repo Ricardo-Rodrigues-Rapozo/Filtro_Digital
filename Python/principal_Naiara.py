@@ -40,8 +40,8 @@ fm     = 5            # Hz  -> repetir o ensaio com fm = 5.0
 #kx, ka = 0.1, 0.0       # AM (Tabela 4, 1a linha)
 kx, ka = 0.0, 0.1      # PM (Tabela 4, 2a linha)
 
-x, Xr, fr, ROCOFr = signal_frequency(f1, (Nc + 300)*Nppc, f0, Fs, Fr, hmax, hmag, SNR)
-#x, Xr, fr, ROCOFr = frequency_ramp(Rf, (Nc + 300)*Nppc, f0, fa, Fs, Fr, hmax, hmag, SNR)
+#x, Xr, fr, ROCOFr = signal_frequency(f1, (Nc + 300)*Nppc, f0, Fs, Fr, hmax, hmag, SNR)
+x, Xr, fr, ROCOFr = frequency_ramp(Rf, (Nc + 300)*Nppc, f0, fa, Fs, Fr, hmax, hmag, SNR)
 #x, Xr, fr, ROCOFr = modulation(fm, kx, ka, (Nc + 300)*Nppc, f0, Fs, Fr, hmag=hmag, hmax=hmax, SNR=SNR)
 
 x_int = (x * 32768.0).astype(np.int32)    
@@ -292,8 +292,8 @@ X = PolyphaseFilterBank(h, M, xi)
 ARQ_SAPHO_BANCO = DADOS_DIR / "saida_banco0.txt"
 out_banco = np.atleast_1d(np.loadtxt(ARQ_SAPHO_BANCO, dtype=float))
 
-#if len(out_banco) > 0 and out_banco[0] == 0.0:
- #   out_banco = out_banco[1:]
+if len(out_banco) > 0 and out_banco[0] == 0.0:
+   out_banco = out_banco[1:]
 
 fasores_por_frame = hmax + 1
 escalares_por_frame = 2 * fasores_por_frame
@@ -375,7 +375,7 @@ for nn in range(1, len(delta_f)):
     if(nn >= fbDelay+1):
         correc[nn] = correc[nn-1] + np.pi*(delta_f[nn] + delta_f[nn-1])*(M*Ts) 
 
-correc = correc  - 1.3937*np.pi/180  # para alinhar a fase do primeiro harmonico com a fase do referencial, considerando o atraso introduzido pelo filtro de média móvel e pelo filtro de interpolação
+correc = correc  - 1.4*np.pi/180  # para alinhar a fase do primeiro harmonico com a fase do referencial, considerando o atraso introduzido pelo filtro de média móvel e pelo filtro de interpolação
 # Multiplies the correction by each harmonic (h = 1:50)
 h = np.arange(1, 51).reshape(-1, 1)   # shape (50, 1)
 correcH = h*correc
