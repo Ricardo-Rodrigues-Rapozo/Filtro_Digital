@@ -30,11 +30,25 @@ SAIDA_DIR = DADOS_DIR / "analise_saidas"
 f_zc_sapho = np.loadtxt(Path(__file__).resolve().parents[1] / "Aurora" / "dados_simulacao" / "saida_interp1.txt", dtype=float) / 1000000.0
 f_zc_sapho = f_zc_sapho[1:]  # Remove the first sample, which is zero
 
-freq_sapho = np.loadtxt(Path(__file__).resolve().parents[1] / "Aurora" / "dados_simulacao" / "saida_interp2.txt", dtype=float) / 1000000.0
-freq_sapho = freq_sapho[1:]  # Remove the first sample, which is zero
+# O SAPHO despeja o DESVIO (fout 2 = dfreq), nao a frequencia absoluta: os 60 Hz sao
+# somados aqui. Materializar 65 Hz em float32 custava meio ULP de vies (3.87e-6 Hz),
+# que a integral da correcao de fase transformava em ~1% de TVE em h=50.
+_freq_sapho_raw = np.loadtxt(Path(__file__).resolve().parents[1] / "Aurora" / "dados_simulacao" / "saida_interp2.txt", dtype=float) / 1000000.0 + 60.0
+freq_sapho = _freq_sapho_raw[1:]  # Remove the first sample, which is zero
 
-freq_desc_sapho = np.loadtxt(Path(__file__).resolve().parents[1] / "Aurora" / "dados_simulacao" / "saida_interp4.txt", dtype=float) / 1000000.0
-freq_desc_sapho = freq_desc_sapho[1:]  # Remove the first sample, which is zero
+# saida_interp4.txt e exatamente saida_interp2.txt deslocada de um numero fixo de amostras
+# (verificado: 100.0000% identicas, diferenca maxima zero). Derivamos a serie daqui em vez
+# de ler o arquivo, porque o fout(4) tem de continuar despejando a frequencia ABSOLUTA --
+# esse canal alimenta a FIFO16x32_freq do proc_banco (top_level.v:59) -- e o absoluto
+# carrega meio ULP de 65 Hz de vies (3.9e-6 Hz), que a integral da correcao de fase
+# transforma em ~1% de TVE em h=50. O fout(2) despeja o desvio e nao tem esse vies.
+#
+# O deslocamento sao os descartes do firmware entre um fout e o outro. Ele NAO e constante
+# entre builds (nesta compilacao vale 136*Nppc = 34816; num build de agosto valia 512),
+# entao e medido pela diferenca de comprimento em vez de cravado no codigo.
+_n_interp4 = len(np.loadtxt(Path(__file__).resolve().parents[1] / "Aurora" / "dados_simulacao" / "saida_interp4.txt", dtype=float))
+_offset_interp4 = len(_freq_sapho_raw) - _n_interp4
+freq_desc_sapho = freq_sapho[_offset_interp4:]
 
 x_atras_sapho = np.loadtxt(Path(__file__).resolve().parents[1] / "Aurora" / "dados_simulacao" / "saida_interp3.txt", dtype=float) / 1000000.0
 x_atras_sapho = x_atras_sapho[1:]  # Remove the first sample, which is zero
@@ -80,16 +94,16 @@ SNR = 1000000000000000000
 Rf = 1
 fa = 54.75
 
-fm = 5
+fm = 0.5
 kx = 0.0
 ka = 0.1
 
 # Geração do Sinal de Referência para Comparação
 #=========================================================================================
 
-# x, Xr, fr, ROCOFr = signal_frequency(f1, 600*Nppc, f0, Fs, Frep, hmax, hmag, SNR)
-x, Xr, fr, ROCOFr = frequency_ramp(Rf, 800*Nppc, f0, fa, Fs, Frep, hmax, hmag, SNR)
-# x, Xr, fr, ROCOFr = modulation(fm, kx, ka, 600*Nppc, f0, Fs, Frep, hmax, hmag, SNR)
+#x, Xr, fr, ROCOFr = signal_frequency(f1, 600*Nppc, f0, Fs, Frep, hmax, hmag, SNR)
+#x, Xr, fr, ROCOFr = frequency_ramp(Rf, 800*Nppc, f0, fa, Fs, Frep, hmax, hmag, SNR)
+x, Xr, fr, ROCOFr = modulation(fm, kx, ka, 600*Nppc, f0, Fs, Frep, hmax, hmag, SNR)
 
 
 # Salva o sinal gerado em arquivo de texto para uso no SAPHO
@@ -154,8 +168,8 @@ ROCOFr = ROCOFr[discard_samples:]
 Xr = Xr[:, discard_samples:]
 
 # Kalman filter to estimate the tendency of the frequency
-q = 1e-1;   # ajuste fino
-r = 1;      # se a senoide for forte, aumente
+q = 1e-2;   # ajuste fino
+r = 20;      # se a senoide for forte, aumente
 
 f_ini = fa
 out = kf_trend_poly(f_zc, f_ini, Ts, 1, q, r)
@@ -305,7 +319,7 @@ Xr = np.hstack((np.zeros((hmax, fbDelay)), Xr))
 # Adjusting the length of the signals to match the number of samples of X
 # --------------------------------------------------------------------------------------------------------------------------------------
 
-tam = min(X.shape[1], freq.shape[0])
+tam = min(X.shape[1], freq.shape[0], X_sapho.shape[1])
 
 freq = freq[:tam]
 freq_desc_sapho = freq_desc_sapho[:tam]
@@ -332,7 +346,7 @@ for nn in range(1, len(delta_f)):
     if(nn >= fbDelay+1):
         correc[nn] = correc[nn-1] + np.pi*(delta_f[nn] + delta_f[nn-1])*(M*Ts) 
 
-correc = correc - 1.4*np.pi/180 #1*np.pi/128 #
+correc = correc -2*np.pi/Nppc #1*np.pi/128 #
 
 # Multiplies the correction by each harmonic (h = 1:50)
 h = np.arange(1, hmax+1).reshape(-1, 1)   # shape (50, 1)
@@ -352,7 +366,7 @@ for nn in range(1, len(delta_f_sapho)):
     if(nn >= fbDelay+1):
         correc_sapho[nn] = correc_sapho[nn-1] + np.pi*(delta_f_sapho[nn] + delta_f_sapho[nn-1])*(M*Ts) 
 
-correc_sapho = correc_sapho - 1.4*np.pi/180#1*np.pi/128 #
+correc_sapho = correc_sapho -2*np.pi/Nppc #1*np.pi/128 #
 
 # Multiplies the correction by each harmonic (h = 1:50)
 h = np.arange(1, hmax+1).reshape(-1, 1)   # shape (50, 1)
@@ -373,7 +387,7 @@ for nn in range(1, len(delta_f_sapho_fifo)):
     if(nn >= fbDelay+1):
         correc_sapho_fifo[nn] = correc_sapho_fifo[nn-1] + np.pi*(delta_f_sapho_fifo[nn] + delta_f_sapho_fifo[nn-1])*(M*Ts) 
 
-correc_sapho_fifo = correc_sapho_fifo - 1.4*np.pi/180#1*np.pi/128 #
+correc_sapho_fifo = correc_sapho_fifo -2*np.pi/Nppc #1*np.pi/128 #
 
 # Multiplies the correction by each harmonic (h = 1:50)
 h = np.arange(1, hmax+1).reshape(-1, 1)   # shape (50, 1)
@@ -470,7 +484,6 @@ Xc    = Xc[:,2*fbDelay:]
 Xc_sapho    = Xc_sapho[:,2*fbDelay:]
 Xc_sapho_fifo    = Xc_sapho_fifo[:,2*fbDelay:]
 Xr    = Xr[:,2*fbDelay:] 
-
     
 ErroAFT = 100*np.abs(AFT - Aref)/Aref            # Magnitude Error (%)
 ErroAFT_sapho = 100*np.abs(AFT_sapho - Aref)/Aref            # Magnitude Error (%)

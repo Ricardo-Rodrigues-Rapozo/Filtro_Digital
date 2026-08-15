@@ -129,7 +129,7 @@ end
 
 integer chrys;
 
-always @ (posedge clk) if (proc.valr10 == 792) begin
+always @ (posedge clk) if (proc.valr10 == 810) begin
     $display("Info: end of program!");
     $finish;
 end
@@ -200,6 +200,7 @@ initial begin
     $dumpvars(0,proc_interp_tb.proc.me1_f_main_v_cont_kalman_e_);
     $dumpvars(0,proc_interp_tb.proc.me1_f_main_v_descarte_kalman_e_);
     $dumpvars(0,proc_interp_tb.proc.me2_f_main_v_erro_e_);
+    $dumpvars(0,proc_interp_tb.proc.me2_f_main_v_comp_dfreq_e_);
     $dumpvars(0,proc_interp_tb.proc.me1_f_main_v_j_e_);
     $dumpvars(0,proc_interp_tb.proc.me1_f_main_v_read_idx_e_);
     $dumpvars(0,proc_interp_tb.proc.me2_f_main_v_acc_e_);
@@ -215,6 +216,8 @@ initial begin
     $dumpvars(0,proc_interp_tb.proc.me1_f_main_v_cnt_e_);
     $dumpvars(0,proc_interp_tb.proc.me2_f_main_v_x_e_);
     $dumpvars(0,proc_interp_tb.proc.me2_f_main_v_Ts_e_);
+    $dumpvars(0,proc_interp_tb.proc.me2_f_main_v_kah_u_e_);
+    $dumpvars(0,proc_interp_tb.proc.me2_f_main_v_kah_t_e_);
     $dumpvars(0,proc_interp_tb.proc.me2_f_main_v_p00_pred_e_);
     $dumpvars(0,proc_interp_tb.proc.me2_f_main_v_p01_pred_e_);
     $dumpvars(0,proc_interp_tb.proc.me2_f_main_v_p10_pred_e_);

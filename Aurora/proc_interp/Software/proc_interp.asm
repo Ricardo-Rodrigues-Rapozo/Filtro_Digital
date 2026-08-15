@@ -156,7 +156,7 @@ P_I2F_M 1
 P_LOD 15360.0
 SF_DIV
 SF_MLT
-F_MLT 0.01
+F_MLT 0.1
 P_LOD 3.0
 SF_DIV
 SET main_q00
@@ -167,7 +167,7 @@ P_I2F_M 1
 P_LOD 15360.0
 SF_DIV
 SF_MLT
-F_MLT 0.01
+F_MLT 0.1
 P_LOD 2.0
 SF_DIV
 SET main_q01
@@ -178,18 +178,18 @@ P_I2F_M 1
 P_LOD 15360.0
 SF_DIV
 SF_MLT
-F_MLT 0.01
+F_MLT 0.1
 P_LOD 2.0
 SF_DIV
 SET main_q10
 LOD 15360.0
-F_DIV 0.01
+F_DIV 0.1
 SET main_q11
 LOD 0.0
 SET main_dfreq_pred
 LOD 0.0
 SET main_df_pred
-LOD 1.0
+LOD 20.0
 SET main_R
 LOD 0
 SET main_cont_kalman
@@ -197,6 +197,8 @@ LOD 768
 SET main_descarte_kalman
 LOD 0.0
 SET main_erro
+LOD 0.0
+SET main_comp_dfreq
 LOD 0
 SET main_j
 LOD 0
@@ -487,7 +489,15 @@ LIN
 JIZ Lif2else
 LOD main_Ts
 F_MLT main_df
-F_ADD main_dfreq
+F_SU1 main_comp_dfreq
+SET main_kah_u
+LOD main_dfreq
+F_ADD main_kah_u
+SET main_kah_t
+F_SU1 main_dfreq
+F_SU1 main_kah_u
+SET main_comp_dfreq
+LOD main_kah_t
 SET main_dfreq_pred
 LOD main_df
 SET main_df_pred
@@ -531,7 +541,15 @@ F_DIV main_p10_pred
 SET main_K1
 LOD main_K0
 F_MLT main_erro
-F_ADD main_dfreq_pred
+F_SU1 main_comp_dfreq
+SET main_kah_u
+LOD main_dfreq_pred
+F_ADD main_kah_u
+SET main_kah_t
+F_SU1 main_dfreq_pred
+F_SU1 main_kah_u
+SET main_comp_dfreq
+LOD main_kah_t
 SET main_dfreq
 LOD main_K1
 F_MLT main_erro
@@ -557,7 +575,7 @@ LOD main_f_nominal
 F_ADD main_dfreq
 SET main_fcc
 I2F_M 1000000
-F_MLT main_fcc
+F_MLT main_dfreq
 F2I
 OUT 2
 LOD 0

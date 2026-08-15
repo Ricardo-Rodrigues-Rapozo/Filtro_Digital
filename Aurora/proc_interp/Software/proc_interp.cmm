@@ -73,13 +73,13 @@ void main()
     float p01           = 0.0;
     float p10           = 0.0;
     float p11           = 1000000.0;
-    float q00           = 0.01 * ( ( 1/15360.0) *  (1/15360.0) * (1/15360.0) ) / 3.0;//Ts**3 / 3.0
-    float q01           = 0.01 * ( ( 1/15360.0) *  (1/15360.0)  ) / 2.0;//Ts**2 / 2.0
-    float q10           = 0.01 * ( ( 1/15360.0) *  (1/15360.0)  ) / 2.0;//Ts**2 / 2.0
-    float q11           = 0.01 * 1/15360.0;///Ts
+    float q00           = 0.1 * ( ( 1/15360.0) *  (1/15360.0) * (1/15360.0) ) / 3.0;//Ts**3 / 3.0
+    float q01           = 0.1 * ( ( 1/15360.0) *  (1/15360.0)  ) / 2.0;//Ts**2 / 2.0
+    float q10           = 0.1 * ( ( 1/15360.0) *  (1/15360.0)  ) / 2.0;//Ts**2 / 2.0
+    float q11           = 0.1 * 1/15360.0;///Ts
     float dfreq_pred    = 0.0;
     float df_pred       = 0.0;
-    float R             = 1.0;
+    float R             = 20.0;
     int cont_kalman     = 0;
     int descarte_kalman = 768;
     float erro          = 0.0;
@@ -91,8 +91,10 @@ void main()
     float S_incerteza;
     float K0;
     float K1;
-
-
+    float comp_dfreq = 0.0;
+    float kah_u;
+    float kah_t;
+    
     // ----- Temporarias -----
     int j = 0;                             // contador auxiliar mantido do molde antigo
     int read_idx = 0;                      // indice auxiliar mantido do molde antigo
@@ -210,7 +212,12 @@ void main()
             // ========== FILTRO DE Kalman ==========
             // Estado em desvio da nominal: o termo constante f_nominal cancela na
             // predicao e no erro, entao a recursao abaixo e a mesma do caso absoluto.
-            dfreq_pred = dfreq + Ts * df;
+            //dfreq_pred = dfreq + Ts * df;
+            kah_u      = Ts * df - comp_dfreq;
+            kah_t      = dfreq + kah_u;
+            comp_dfreq = (kah_t - dfreq) - kah_u;
+            dfreq_pred = kah_t;
+
             df_pred = df;
             p00_pred = p00 + Ts * p10 + Ts * p01 + Ts * Ts * p11 + q00;
             p01_pred = p01 + Ts * p11 + q01;
@@ -225,8 +232,12 @@ void main()
 
             K0 = p00_pred / S_incerteza;
             K1 = p10_pred / S_incerteza;
-            dfreq = dfreq_pred + K0 * erro;
-            df = df_pred + K1 * erro;
+            //dfreq = dfreq_pred + K0 * erro;
+            kah_u      = K0 * erro - comp_dfreq;
+            kah_t      = dfreq_pred + kah_u;
+            comp_dfreq = (kah_t - dfreq_pred) - kah_u;
+            dfreq      = kah_t;
+            df         = df_pred + K1 * erro;
 
 
             p00 = (1.0 - K0) * p00_pred;
@@ -237,7 +248,7 @@ void main()
 
             fcc = f_nominal + dfreq;      // volta para Hz absoluto na saida
 
-            fout(2, fcc * 1000000);
+            fout(2, dfreq * 1000000);   // desvio, nao o absoluto: soma-se 60 Hz na analise
 
     
             // ============================== Estrutura B-Spline ====================================== //
@@ -312,7 +323,8 @@ void main()
                 }
 
                 fout(3, x_atrasado * 1000000);
-                fout(4, freq_smoothed * 1000000);
+                fout(4, freq_smoothed * 1000000);    // ABSOLUTO: alimenta a FIFO16x32_freq
+                                                     // do proc_banco (top_level.v:59)
                 y = 0.0;
                 if (cnt > 6)
                 {
