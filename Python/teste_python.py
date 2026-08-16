@@ -36,19 +36,8 @@ f_zc_sapho = f_zc_sapho[1:]  # Remove the first sample, which is zero
 _freq_sapho_raw = np.loadtxt(Path(__file__).resolve().parents[1] / "Aurora" / "dados_simulacao" / "saida_interp2.txt", dtype=float) / 1000000.0 + 60.0
 freq_sapho = _freq_sapho_raw[1:]  # Remove the first sample, which is zero
 
-# saida_interp4.txt e exatamente saida_interp2.txt deslocada de um numero fixo de amostras
-# (verificado: 100.0000% identicas, diferenca maxima zero). Derivamos a serie daqui em vez
-# de ler o arquivo, porque o fout(4) tem de continuar despejando a frequencia ABSOLUTA --
-# esse canal alimenta a FIFO16x32_freq do proc_banco (top_level.v:59) -- e o absoluto
-# carrega meio ULP de 65 Hz de vies (3.9e-6 Hz), que a integral da correcao de fase
-# transforma em ~1% de TVE em h=50. O fout(2) despeja o desvio e nao tem esse vies.
-#
-# O deslocamento sao os descartes do firmware entre um fout e o outro. Ele NAO e constante
-# entre builds (nesta compilacao vale 136*Nppc = 34816; num build de agosto valia 512),
-# entao e medido pela diferenca de comprimento em vez de cravado no codigo.
-_n_interp4 = len(np.loadtxt(Path(__file__).resolve().parents[1] / "Aurora" / "dados_simulacao" / "saida_interp4.txt", dtype=float))
-_offset_interp4 = len(_freq_sapho_raw) - _n_interp4
-freq_desc_sapho = freq_sapho[_offset_interp4:]
+freq_desc_sapho = np.loadtxt(Path(__file__).resolve().parents[1] / "Aurora" / "dados_simulacao" / "saida_interp4.txt", dtype=float) / 1000000.0 + 50
+freq_desc_sapho = freq_desc_sapho[1:]  # Remove the first sample, which is zero
 
 x_atras_sapho = np.loadtxt(Path(__file__).resolve().parents[1] / "Aurora" / "dados_simulacao" / "saida_interp3.txt", dtype=float) / 1000000.0
 x_atras_sapho = x_atras_sapho[1:]  # Remove the first sample, which is zero
@@ -69,7 +58,7 @@ out_banco = out_banco[:N_frames * amostras_por_frame]
 
 frames_banco = out_banco.reshape(N_frames, amostras_por_frame)
 
-freq_banco_sapho = frames_banco[:, 0] / 1_000_000.0
+freq_banco_sapho = frames_banco[:, 0] / 1_000_000.0 + 50
 fasores_banco = frames_banco[:, 1:]
 
 real = fasores_banco[:, 0::2] / 1_000_000.0
@@ -92,9 +81,9 @@ hmag = 0.05
 SNR = 1000000000000000000
 
 Rf = 1
-fa = 54.75
+fa = 52.68
 
-fm = 0.5
+fm = 5
 kx = 0.0
 ka = 0.1
 
@@ -102,7 +91,7 @@ ka = 0.1
 #=========================================================================================
 
 #x, Xr, fr, ROCOFr = signal_frequency(f1, 600*Nppc, f0, Fs, Frep, hmax, hmag, SNR)
-#x, Xr, fr, ROCOFr = frequency_ramp(Rf, 800*Nppc, f0, fa, Fs, Frep, hmax, hmag, SNR)
+#x, Xr, fr, ROCOFr = frequency_ramp(Rf, 760*Nppc, f0, fa, Fs, Frep, hmax, hmag, SNR)
 x, Xr, fr, ROCOFr = modulation(fm, kx, ka, 600*Nppc, f0, Fs, Frep, hmax, hmag, SNR)
 
 
@@ -112,8 +101,8 @@ x, Xr, fr, ROCOFr = modulation(fm, kx, ka, 600*Nppc, f0, Fs, Frep, hmax, hmag, S
 x_int = (x * 32768.0).astype(np.int32)    
 saida_sapho = Path(__file__).resolve().parents[1] / "Aurora" / "dados_simulacao" / "sinal_teste.txt"
 np.savetxt(saida_sapho, x_int, fmt='%d')
-saida_teste = Path(__file__).resolve().parents[1] / "Python"/"Testes"/"Off_nominal"/"offnominal_57hz.txt"
-np.savetxt(saida_teste, x_int, fmt='%d')
+# saida_teste = Path(__file__).resolve().parents[1] / "Python"/"Testes"/"rampa"/"offnominal_65hz.txt"
+# np.savetxt(saida_teste, x_int, fmt='%d')
 
 # Plot dos Sinais para Comparação
 # --------------------------------------
@@ -168,7 +157,7 @@ ROCOFr = ROCOFr[discard_samples:]
 Xr = Xr[:, discard_samples:]
 
 # Kalman filter to estimate the tendency of the frequency
-q = 1e-2;   # ajuste fino
+q = 1e-1;   # ajuste fino
 r = 20;      # se a senoide for forte, aumente
 
 f_ini = fa

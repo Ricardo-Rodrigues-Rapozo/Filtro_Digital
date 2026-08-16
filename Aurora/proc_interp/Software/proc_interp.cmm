@@ -149,6 +149,17 @@ void main()
     num_pre_BSP[0] =  1.60769515;
     den_pre_BSP[0] = 1.0;
     den_pre_BSP[1] = 0.26794919;
+
+    // ----------------------- ATRASO DO FILTRO PRE BS PARA VALIDAR FREQ NO PYTHON --------
+    float dfreq_atrasada;
+    float buffer_dfreq[7];                  // buffer que atrasa a frequencia em 6 amostras
+    buffer_dfreq[0] = 0.0;
+    buffer_dfreq[1] = 0.0;
+    buffer_dfreq[2] = 0.0;
+    buffer_dfreq[3] = 0.0;
+    buffer_dfreq[4] = 0.0;
+    buffer_dfreq[5] = 0.0;
+    buffer_dfreq[6] = 0.0;
     return;
     //while (1)
     #PRACA
@@ -323,8 +334,8 @@ void main()
                 }
 
                 fout(3, x_atrasado * 1000000);
-                fout(4, freq_smoothed * 1000000);    // ABSOLUTO: alimenta a FIFO16x32_freq
-                                                     // do proc_banco (top_level.v:59)
+               //fout(4, freq_smoothed * 1000000);    // ABSOLUTO: alimenta a FIFO16x32_freq
+                fout(4, (dfreq + 10.0) * 1000000);
                 y = 0.0;
                 if (cnt > 6)
                 {

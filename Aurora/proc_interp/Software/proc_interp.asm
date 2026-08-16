@@ -277,6 +277,28 @@ STI main_den_pre_BSP
 LOD 1
 P_LOD 0.26794919
 STI main_den_pre_BSP
+#array main_buffer_dfreq 2 7
+LOD 0
+P_LOD 0.0
+STI main_buffer_dfreq
+LOD 1
+P_LOD 0.0
+STI main_buffer_dfreq
+LOD 2
+P_LOD 0.0
+STI main_buffer_dfreq
+LOD 3
+P_LOD 0.0
+STI main_buffer_dfreq
+LOD 4
+P_LOD 0.0
+STI main_buffer_dfreq
+LOD 5
+P_LOD 0.0
+STI main_buffer_dfreq
+LOD 6
+P_LOD 0.0
+STI main_buffer_dfreq
 @fim JMP fim
 #ITRAD
 INN 0
@@ -736,8 +758,10 @@ SET main_lambda_val
 F_MLT main_x_atrasado
 F2I
 OUT 3
-I2F_M 1000000
-F_MLT main_freq_smoothed
+LOD main_dfreq
+F_ADD 10.0
+P_I2F_M 1000000
+SF_MLT
 F2I
 OUT 4
 LOD 0.0
