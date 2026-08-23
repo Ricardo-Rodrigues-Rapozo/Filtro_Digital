@@ -1,8 +1,8 @@
 NOP
 #PRNAME proc_interp
 #NUBITS 32
-#NDSTAC 5
-#SDEPTH 5
+#NDSTAC 10
+#SDEPTH 10
 #NUIOIN 1
 #NUIOOU 5
 #NBMANT 23
@@ -193,7 +193,7 @@ LOD 20.0
 SET main_R
 LOD 0
 SET main_cont_kalman
-LOD 768
+LOD 1024
 SET main_descarte_kalman
 LOD 0.0
 SET main_erro
@@ -277,28 +277,6 @@ STI main_den_pre_BSP
 LOD 1
 P_LOD 0.26794919
 STI main_den_pre_BSP
-#array main_buffer_dfreq 2 7
-LOD 0
-P_LOD 0.0
-STI main_buffer_dfreq
-LOD 1
-P_LOD 0.0
-STI main_buffer_dfreq
-LOD 2
-P_LOD 0.0
-STI main_buffer_dfreq
-LOD 3
-P_LOD 0.0
-STI main_buffer_dfreq
-LOD 4
-P_LOD 0.0
-STI main_buffer_dfreq
-LOD 5
-P_LOD 0.0
-STI main_buffer_dfreq
-LOD 6
-P_LOD 0.0
-STI main_buffer_dfreq
 @fim JMP fim
 #ITRAD
 INN 0
@@ -621,7 +599,7 @@ SET main_c_index
 @Lif4else JMP Lif3end
 @Lif3else LOD main_x
 SET main_x_atrasado
-@Lif3end LOD 34816
+@Lif3end LOD 307200
 LES main_cont_global
 LIN
 JIZ Lif5else

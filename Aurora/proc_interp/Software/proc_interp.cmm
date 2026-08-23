@@ -1,7 +1,7 @@
 #PRNAME proc_interp
 #NUBITS 32
-#NDSTAC 5
-#SDEPTH 5
+#NDSTAC 10
+#SDEPTH 10
 #NUIOIN 1
 #NUIOOU 5
 #NBMANT 23
@@ -81,7 +81,7 @@ void main()
     float df_pred       = 0.0;
     float R             = 20.0;
     int cont_kalman     = 0;
-    int descarte_kalman = 768;
+    int descarte_kalman = 1024;
     float erro          = 0.0;
     float p00_pred;
     float p01_pred;
@@ -150,16 +150,6 @@ void main()
     den_pre_BSP[0] = 1.0;
     den_pre_BSP[1] = 0.26794919;
 
-    // ----------------------- ATRASO DO FILTRO PRE BS PARA VALIDAR FREQ NO PYTHON --------
-    float dfreq_atrasada;
-    float buffer_dfreq[7];                  // buffer que atrasa a frequencia em 6 amostras
-    buffer_dfreq[0] = 0.0;
-    buffer_dfreq[1] = 0.0;
-    buffer_dfreq[2] = 0.0;
-    buffer_dfreq[3] = 0.0;
-    buffer_dfreq[4] = 0.0;
-    buffer_dfreq[5] = 0.0;
-    buffer_dfreq[6] = 0.0;
     return;
     //while (1)
     #PRACA
@@ -285,7 +275,7 @@ void main()
 
 
             // ============================ DESCARTE DE AMOSTRAS ================= //
-            if(cont_global >= 34816)
+            if(cont_global >= 307200)
             {
                 // ============================ PREFILTRO ============================ //
                 buffer_entrada_prefiltro[0] = buffer_entrada_prefiltro[1];

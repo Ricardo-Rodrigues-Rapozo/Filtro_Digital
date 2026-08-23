@@ -81,7 +81,7 @@ hmag = 0.05
 SNR = 1000000000000000000
 
 Rf = 1
-fa = 52.68
+fa = 35
 
 fm = 5
 kx = 0.0
@@ -91,8 +91,8 @@ ka = 0.1
 #=========================================================================================
 
 #x, Xr, fr, ROCOFr = signal_frequency(f1, 600*Nppc, f0, Fs, Frep, hmax, hmag, SNR)
-#x, Xr, fr, ROCOFr = frequency_ramp(Rf, 760*Nppc, f0, fa, Fs, Frep, hmax, hmag, SNR)
-x, Xr, fr, ROCOFr = modulation(fm, kx, ka, 600*Nppc, f0, Fs, Frep, hmax, hmag, SNR)
+x, Xr, fr, ROCOFr = frequency_ramp(Rf, 1820*Nppc, f0, fa, Fs, Frep, hmax, hmag, SNR)
+#x, Xr, fr, ROCOFr = modulation(fm, kx, ka, 600*Nppc, f0, Fs, Frep, hmax, hmag, SNR)
 
 
 # Salva o sinal gerado em arquivo de texto para uso no SAPHO
@@ -148,7 +148,7 @@ plt.tight_layout()
 # mplcursors.cursor(hover=True)
 plt.show(block=False)
 
-discard_samples = 3*Nppc
+discard_samples = 4*Nppc
 
 x = x[discard_samples:]
 f_zc = f_zc[discard_samples:]
@@ -196,7 +196,7 @@ ROCOFr  = np.concatenate((np.zeros(total_delay), ROCOFr))
 
 # Discarding the initial samples to align the time axes of all signals
 # --------------------------------------------------------------------
-discard_samples = 136*Nppc
+discard_samples = 1200*Nppc
 
 freq = freq[discard_samples:]
 x = x[discard_samples:]
