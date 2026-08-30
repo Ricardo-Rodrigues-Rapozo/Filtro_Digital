@@ -2,7 +2,7 @@
   "metadata": {
     "projectName": "interpolador",
     "createdAt": "2026-05-14T14:17:28.763Z",
-    "lastModified": "2026-08-19T21:27:09.244Z",
+    "lastModified": "2026-08-30T18:22:44.659Z",
     "computerName": "VINICIUS",
     "appVersion": "5.0.0",
     "projectPath": "C:\\Users\\Ricardo\\Documents\\Dissertacao\\Aurora",
@@ -23,8 +23,8 @@
         "exists": true
       }
     ],
-    "topLevelFile": "proc_interp\\Hardware\\proc_interp.v",
-    "testbenchFile": "proc_interp\\Simulation\\proc_interp_tb.v",
+    "topLevelFile": "top_level.v",
+    "testbenchFile": "top_level_tb.v",
     "synthesizableFiles": [
       {
         "name": "proc_banco.v",
@@ -34,7 +34,7 @@
       {
         "name": "proc_interp.v",
         "path": "proc_interp\\Hardware\\proc_interp.v",
-        "isTopLevel": true
+        "isTopLevel": false
       },
       {
         "name": "procTest_00.v",
@@ -44,7 +44,7 @@
       {
         "name": "top_level.v",
         "path": "top_level.v",
-        "isTopLevel": false
+        "isTopLevel": true
       },
       {
         "name": "top_proc_banco.v",
@@ -71,12 +71,12 @@
       {
         "name": "proc_interp_tb.v",
         "path": "proc_interp\\Simulation\\proc_interp_tb.v",
-        "isTopLevel": true
+        "isTopLevel": false
       },
       {
         "name": "top_level_tb.v",
         "path": "top_level_tb.v",
-        "isTopLevel": false
+        "isTopLevel": true
       }
     ]
   }
