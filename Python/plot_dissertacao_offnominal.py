@@ -182,9 +182,21 @@ def processar(f1, sha, f_ini=None):
     """Replica o pipeline de teste_python.py para um ensaio off-nominal."""
     if f_ini is None:
         f_ini = f1
-
-    # -- referencia analitica ------------------------------------------------
     x, Xr, fr, ROCOFr = signal_frequency(f1, N_AMOSTRAS, f0, Fs, Frep, hmax, hmag, SNR)
+    res = processar_sinal(x, Xr, fr, ROCOFr, sha, f_ini)
+    res["f1"] = f1
+    return res
+
+
+def processar_sinal(x, Xr, fr, ROCOFr, sha, f_ini, n_comum=None):
+    """Pipeline comum a qualquer ensaio, dado o sinal de referencia gerado.
+
+    Separado de `processar` para que o script da rampa
+    (plot_dissertacao_rampa.py) use exatamente o mesmo caminho de calculo,
+    trocando apenas o gerador do sinal e o `f_ini` do Kalman.
+    """
+    if n_comum is None:
+        n_comum = N_COMUM
 
     # -- saidas do SAPHO -----------------------------------------------------
     X_sapho, freq_banco_sapho = ler_banco(sha)
@@ -262,7 +274,7 @@ def processar(f1, sha, f_ini=None):
 
     # -- erros ----------------------------------------------------------------
     corte = 2 * fbDelay
-    sl = slice(corte, corte + N_COMUM)
+    sl = slice(corte, corte + n_comum)
 
     Aref = np.abs(Xr)[:, sl]
     Pref = np.unwrap(np.angle(Xr))[:, sl]
@@ -271,7 +283,6 @@ def processar(f1, sha, f_ini=None):
     # resultado nao-finito e descartado por H_VALIDAS.
     with np.errstate(divide="ignore", invalid="ignore"):
         res = dict(
-            f1=f1,
             tve_py=TVE(Xc[:, sl], Xr[:, sl]),
             tve_sa=TVE(Xc_s[:, sl], Xr[:, sl]),
             emag_py=100 * np.abs(AFT[:, sl] - Aref) / Aref,
@@ -281,6 +292,7 @@ def processar(f1, sha, f_ini=None):
             freq_sa=freq_sapho[sl],
             freq_py=freq[sl],
             correc_sa=correc_s[sl],
+            correc_py=correc[sl],
             n_frames_total=X_sapho.shape[1],
         )
     return res
@@ -330,18 +342,23 @@ def _media_movel(dif, janela=JANELA):
 
 
 def comparar_estagios(f1, sha):
-    """RMS movel da diferenca SAPHO - Python em cada etapa do pipeline.
+    x, _, _, _ = signal_frequency(f1, N_AMOSTRAS, f0, Fs, Frep, hmax, hmag, SNR)
+    return comparar_estagios_sinal(x, sha, f1, float(f1))
+
+
+def comparar_estagios_sinal(x, sha, f_ini, base_freq):
+    """Diferenca media SAPHO - Python em cada etapa do pipeline.
 
     O eixo de tempo e ABSOLUTO (desde o inicio da simulacao), porque as etapas
     comecam em instantes diferentes: ZC e Kalman cobrem o registro inteiro,
     enquanto o sinal atrasado e o interpolado so sao despejados apos os 1200
-    ciclos de descarte.
+    ciclos de descarte. `base_freq` e a frequencia usada para normalizar as
+    grandezas em Hz (a do ensaio no off-nominal, a media da rampa na rampa).
     """
-    x, _, _, _ = signal_frequency(f1, N_AMOSTRAS, f0, Fs, Frep, hmax, hmag, SNR)
     _, _, py_zc, _, total_delay = estima_f_zc(x, Ts, Nppc, plot_level=0)
 
     d1 = 4 * Nppc
-    py_kalman = kf_trend_poly(py_zc[d1:], f1, Ts, 1, Q_KALMAN, R_KALMAN)["b"].squeeze()
+    py_kalman = kf_trend_poly(py_zc[d1:], f_ini, Ts, 1, Q_KALMAN, R_KALMAN)["b"].squeeze()
 
     atraso = np.zeros(total_delay + 1)
     atraso[-1] = 1.0
@@ -363,7 +380,7 @@ def comparar_estagios(f1, sha):
     # Base de normalizacao: frequencia do ensaio para as grandezas em Hz, e a
     # amplitude eficaz do sinal para as grandezas em p.u. Sem isso nao daria
     # para pôr Hz e p.u. no mesmo eixo.
-    base = {"zc": float(f1), "kalman": float(f1),
+    base = {"zc": base_freq, "kalman": base_freq,
             "atraso": float(np.sqrt(np.mean(x ** 2))),
             "bspline": float(np.sqrt(np.mean(x ** 2)))}
 
@@ -616,6 +633,61 @@ def figura_estagios(estagios):
     salvar(fig, "figC_divergencia_por_estagio.pdf")
 
 
+# ==========================================================================
+# Figura D - a correcao de fase como integrador
+# ==========================================================================
+def figura_correcao(res, salvar_fn, nome):
+    """Mostra por que o erro sobe: a correcao de fase e um INTEGRADOR.
+
+    Painel de cima: a diferenca de frequencia entre o SAPHO e o modelo, que
+    alimenta a correcao. E praticamente PLANA, com uma media pequena.
+    Painel de baixo: a diferenca acumulada da propria correcao. E uma RAMPA.
+
+    Entrada plana com media b -> saida 2*pi*b*t rad = 360*b*t graus. Um viés
+    que nao se cancela vira erro de fase que cresce sem limite, e ainda e
+    multiplicado pela ordem harmonica (correcH = h * correc).
+    """
+    dfreq = res["freq_sa"] - res["freq_py"]
+    dcorr = (res["correc_sa"] - res["correc_py"]) * 180 / np.pi
+    dcorr = dcorr - dcorr[0]
+    t = np.arange(len(dcorr)) / Frep
+    b = float(np.mean(dfreq))
+
+    fig, axs = plt.subplots(2, 1, figsize=(6.3, 5.2), sharex=True)
+
+    axs[0].plot(t, dfreq * 1e6, color="#3b78b0", lw=0.8)
+    axs[0].axhline(b * 1e6, color=COR_TINTA, ls="--", lw=1.2)
+    # Folga no topo para o rotulo da media nao cair sobre o ruido do sinal
+    lo, hi = axs[0].get_ylim()
+    axs[0].set_ylim(lo, hi + 0.30 * (hi - lo))
+    axs[0].annotate(f"média = {b * 1e6:+.1f} " + r"$\mu$Hz",
+                    xy=(0.99, 0.97), xycoords="axes fraction",
+                    ha="right", va="top", fontsize=8.5, color=COR_TINTA)
+    axs[0].set_ylabel("Entrada do integrador:\n"
+                      r"$\hat{f}_{\rm SAPHO} - \hat{f}_{\rm Python}$ ($\mu$Hz)")
+    axs[0].set_title("(a) A diferença de frequência é praticamente constante",
+                     loc="left", fontsize=9.5)
+
+    axs[1].plot(t, dcorr, color="#762a83", lw=1.6, label="medido")
+    axs[1].plot(t, 360 * b * t, color=COR_TINTA, ls=":", lw=1.4,
+                label=r"previsto:  $360\,\bar{b}\,t$")
+    axs[1].set_ylabel("Saída do integrador:\ndiferença da correção (°)")
+    axs[1].set_xlabel("Tempo dentro da janela analisada (s)")
+    axs[1].set_title("(b) Mas a correção acumulada cresce sem limite",
+                     loc="left", fontsize=9.5)
+    axs[1].legend(loc="best", handlelength=2.4)
+
+    # A correcao e multiplicada por h: o que se ve em (b) e o caso h = 1.
+    axs[1].annotate(f"em $h$ = 50 isto vale {dcorr[-1] * 50:+.1f}°",
+                    xy=(0.5, 0.06), xycoords="axes fraction", ha="center",
+                    fontsize=8.5, color=COR_TINTA)
+
+    for ax in axs:
+        ax.set_xlim(0, t[-1])
+    fig.subplots_adjust(hspace=0.28)
+    salvar_fn(fig, nome)
+
+
 def salvar(fig, nome):
     SAIDA_DIR.mkdir(parents=True, exist_ok=True)
     try:
@@ -683,10 +755,19 @@ def main():
     print("  (o sinal atrasado nao entra na figura: e so o buffer de 255 "
           "amostras,\n   e sua diferenca e o piso de quantizacao Q15 da entrada)")
 
+    # A figura do integrador precisa de UM ensaio: usa-se o de maior deriva
+    # acumulada na correcao, que e o caso mais ilustrativo.
+    pior = max(dados, key=lambda f: abs(np.mean(dados[f]["freq_sa"] - dados[f]["freq_py"])))
+    d = (dados[pior]["correc_sa"] - dados[pior]["correc_py"]) * 180 / np.pi
+    print(f"\nIntegrador da correcao (f1 = {pior} Hz, maior deriva): entrada media "
+          f"{np.mean(dados[pior]['freq_sa'] - dados[pior]['freq_py'])*1e6:+.1f} uHz -> "
+          f"saida {d[-1]-d[0]:+.3f} graus em h=1 ({(d[-1]-d[0])*50:+.1f} em h=50)")
+
     print("\nGerando figuras ...")
     figura_envelope(est)
     figura_por_frequencia(est)
     figura_estagios(estagios)
+    figura_correcao(dados[pior], salvar, "figD_correcao_integrador.pdf")
 
 
 if __name__ == "__main__":

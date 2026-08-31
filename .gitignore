@@ -4,8 +4,10 @@ Python/Docs
 *.flock
 *.vcd
 
-# Script das figuras off-nominal e o que ele gera
+# Scripts das figuras da dissertacao e o que eles geram
 Python/plot_dissertacao_offnominal.py
+Python/plot_dissertacao_rampa.py
 Python/cache_offnominal/
+Python/cache_rampa/
 __pycache__/
 *.pyc
