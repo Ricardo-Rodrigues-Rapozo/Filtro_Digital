@@ -254,6 +254,10 @@ def processar_sinal(x, Xr, fr, ROCOFr, sha, f_ini, n_comum=None):
 
     freq = downsample(freq, M)
     Xr = downsample(Xr, M)
+    # fr = frequencia VERDADEIRA por frame. Nao entra em nenhum calculo do
+    # pipeline; e guardada para servir de referencia ideal na figura D.
+    fr = downsample(fr[:(len(fr) // Nppc) * Nppc], M)
+    fr = np.concatenate((np.zeros(fbDelay), fr))
 
     freq = np.concatenate((np.zeros(fbDelay), freq))
     Xr = np.hstack((np.zeros((hmax, fbDelay)), Xr))
@@ -291,6 +295,7 @@ def processar_sinal(x, Xr, fr, ROCOFr, sha, f_ini, n_comum=None):
             efas_sa=wrap_to_pi(PFTc_s[:, sl] - Pref) * 180 / np.pi,
             freq_sa=freq_sapho[sl],
             freq_py=freq[sl],
+            fr_frame=fr[:tam][sl],
             correc_sa=correc_s[sl],
             correc_py=correc[sl],
             n_frames_total=X_sapho.shape[1],
@@ -636,55 +641,54 @@ def figura_estagios(estagios):
 # ==========================================================================
 # Figura D - a correcao de fase como integrador
 # ==========================================================================
-def figura_correcao(res, salvar_fn, nome):
-    """Mostra por que o erro sobe: a correcao de fase e um INTEGRADOR.
+def _integral_fase(dfreq):
+    """Integral trapezoidal do desvio de frequencia, em graus.
 
-    Painel de cima: a diferenca de frequencia entre o SAPHO e o modelo, que
-    alimenta a correcao. E praticamente PLANA, com uma media pequena.
-    Painel de baixo: a diferenca acumulada da propria correcao. E uma RAMPA.
-
-    Entrada plana com media b -> saida 2*pi*b*t rad = 360*b*t graus. Um viés
-    que nao se cancela vira erro de fase que cresce sem limite, e ainda e
-    multiplicado pela ordem harmonica (correcH = h * correc).
+    Mesma recursao de `corrigir_fase`, mas na taxa de frame e devolvendo graus.
     """
-    dfreq = res["freq_sa"] - res["freq_py"]
-    dcorr = (res["correc_sa"] - res["correc_py"]) * 180 / np.pi
-    dcorr = dcorr - dcorr[0]
-    t = np.arange(len(dcorr)) / Frep
-    b = float(np.mean(dfreq))
+    c = np.zeros(len(dfreq))
+    for n in range(1, len(dfreq)):
+        c[n] = c[n - 1] + np.pi * (dfreq[n] + dfreq[n - 1]) / Frep
+    return c * 180 / np.pi
 
-    fig, axs = plt.subplots(2, 1, figsize=(6.3, 5.2), sharex=True)
 
-    axs[0].plot(t, dfreq * 1e6, color="#3b78b0", lw=0.8)
-    axs[0].axhline(b * 1e6, color=COR_TINTA, ls="--", lw=1.2)
-    # Folga no topo para o rotulo da media nao cair sobre o ruido do sinal
-    lo, hi = axs[0].get_ylim()
-    axs[0].set_ylim(lo, hi + 0.30 * (hi - lo))
-    axs[0].annotate(f"média = {b * 1e6:+.1f} " + r"$\mu$Hz",
-                    xy=(0.99, 0.97), xycoords="axes fraction",
-                    ha="right", va="top", fontsize=8.5, color=COR_TINTA)
-    axs[0].set_ylabel("Entrada do integrador:\n"
-                      r"$\hat{f}_{\rm SAPHO} - \hat{f}_{\rm Python}$ ($\mu$Hz)")
-    axs[0].set_title("(a) A diferença de frequência é praticamente constante",
-                     loc="left", fontsize=9.5)
+def figura_correcao(res, salvar_fn, nome, h_ref=50):
+    """Erro da correcao de fase: SAPHO e modelo em Python contra a ideal.
 
-    axs[1].plot(t, dcorr, color="#762a83", lw=1.6, label="medido")
-    axs[1].plot(t, 360 * b * t, color=COR_TINTA, ls=":", lw=1.4,
-                label=r"previsto:  $360\,\bar{b}\,t$")
-    axs[1].set_ylabel("Saída do integrador:\ndiferença da correção (°)")
-    axs[1].set_xlabel("Tempo dentro da janela analisada (s)")
-    axs[1].set_title("(b) Mas a correção acumulada cresce sem limite",
-                     loc="left", fontsize=9.5)
-    axs[1].legend(loc="best", handlelength=2.4)
+    Nao adianta plotar as duas correcoes brutas: elas chegam a milhares de
+    graus e diferem entre si por 1 parte em 100 mil, o que e sub-pixel em
+    qualquer escala. Aqui se plota o ERRO de cada uma em relacao a correcao
+    ideal - a integral da frequencia VERDADEIRA de referencia. Nessa escala as
+    duas curvas se separam visivelmente: a do modelo fica colada no zero e a do
+    SAPHO se afasta linearmente, que e o efeito do integrador.
 
-    # A correcao e multiplicada por h: o que se ve em (b) e o caso h = 1.
-    axs[1].annotate(f"em $h$ = 50 isto vale {dcorr[-1] * 50:+.1f}°",
-                    xy=(0.5, 0.06), xycoords="axes fraction", ha="center",
-                    fontsize=8.5, color=COR_TINTA)
+    RESSALVA para o texto: esta e a parcela do erro devida a correcao de fase,
+    nao o erro total. O interpolador reamostra usando f_estimada e a correcao
+    desfaz a reamostragem usando a MESMA f_estimada, entao um erro em
+    f_estimada entra duas vezes com sinais contrarios e as parcelas se cancelam
+    em boa parte. Em 57 Hz e h=50: +2,3 graus desta parcela contra -3,5 da
+    reamostragem, resultando em -1,2.
+    """
+    ideal = _integral_fase(res["fr_frame"] - f0)
+    erro_sa = (_integral_fase(res["freq_sa"] - f0) - ideal) * h_ref
+    erro_py = (_integral_fase(res["freq_py"] - f0) - ideal) * h_ref
+    t = np.arange(len(ideal)) / Frep
 
-    for ax in axs:
-        ax.set_xlim(0, t[-1])
-    fig.subplots_adjust(hspace=0.28)
+    fig, ax = plt.subplots(figsize=(6.3, 3.9))
+
+    ax.axhline(0, color=COR_TINTA, lw=1.0, ls="--")
+    ax.annotate("correção ideal", xy=(t[-1], 0), xytext=(-4, 4),
+                textcoords="offset points", ha="right", va="bottom",
+                fontsize=8.5, color=COR_TINTA)
+    ax.plot(t, erro_py, color=COR_PY, lw=1.6, ls=(0, (5, 2)),
+            label="Modelo em Python")
+    ax.plot(t, erro_sa, color=COR_SAPHO, lw=1.8, label="SAPHO")
+
+    ax.set_xlim(0, t[-1])
+    ax.margins(y=0.18)
+    ax.set_xlabel("Tempo dentro da janela analisada (s)")
+    ax.set_ylabel(f"Erro da correção de fase\nem $h$ = {h_ref} (°)")
+    ax.legend(loc="best", handlelength=2.4)
     salvar_fn(fig, nome)
 
 
