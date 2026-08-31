@@ -476,10 +476,13 @@ PAINEIS = [("tve", "TVE", "%", True),
            ("efas", "Erro de fase", "°", False)]
 
 
-def marcar_limite(ax):
-    ax.axhline(TVE_LIM, color=COR_LIM, ls="--", lw=1.1, zorder=6)
-    ax.annotate("Limite IEC/IEEE 60255-118-1 (1 %)", xy=(1.4, TVE_LIM),
-                xytext=(0, 4), textcoords="offset points", ha="left",
+def marcar_limite(ax, limite=TVE_LIM, x=1.4, ha="left"):
+    """Limite normativo de TVE. Vale 1 % nos ensaios estaticos e de rampa, e
+    3 % no ensaio de modulacao. `x`/`ha` reposicionam o rotulo quando ele
+    colidiria com a legenda."""
+    ax.axhline(limite, color=COR_LIM, ls="--", lw=1.1, zorder=6)
+    ax.annotate(f"Limite IEC/IEEE 60255-118-1 ({limite:g} %)", xy=(x, limite),
+                xytext=(0, 4), textcoords="offset points", ha=ha,
                 va="bottom", fontsize=8, color=COR_LIM)
 
 
@@ -676,10 +679,6 @@ def figura_correcao(res, salvar_fn, nome, h_ref=50):
 
     fig, ax = plt.subplots(figsize=(6.3, 3.9))
 
-    ax.axhline(0, color=COR_TINTA, lw=1.0, ls="--")
-    ax.annotate("correção ideal", xy=(t[-1], 0), xytext=(-4, 4),
-                textcoords="offset points", ha="right", va="bottom",
-                fontsize=8.5, color=COR_TINTA)
     ax.plot(t, erro_py, color=COR_PY, lw=1.6, ls=(0, (5, 2)),
             label="Modelo em Python")
     ax.plot(t, erro_sa, color=COR_SAPHO, lw=1.8, label="SAPHO")

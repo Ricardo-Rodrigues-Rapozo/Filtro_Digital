@@ -8,6 +8,8 @@ Python/Docs
 Python/plot_dissertacao_offnominal.py
 Python/plot_dissertacao_rampa.py
 Python/cache_offnominal/
+Python/cache_modulacao/
 Python/cache_rampa/
 __pycache__/
 *.pyc
+.claude/
