@@ -3,3 +3,9 @@ Aurora/Backup
 Python/Docs
 *.flock
 *.vcd
+Python\plot_dissertacao_offnominal.py
+# Artefatos gerados por plot_dissertacao_offnominal.py
+__pycache__/
+*.pyc
+Python/cache_offnominal/
+C:\Users\Ricardo\Documents\Dissertacao\Python\plot_dissertacao_offnominal.py
