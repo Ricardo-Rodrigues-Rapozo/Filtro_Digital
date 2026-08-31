@@ -76,7 +76,7 @@ Fs = f0 * Nppc
 Ts = 1/Fs
 Frep = 60.0
 
-f1 = 64
+f1 = 65
 hmag = 0.05
 SNR = 1000000000000000000
 
@@ -91,7 +91,7 @@ ka = 0.1
 #=========================================================================================
 
 x, Xr, fr, ROCOFr = signal_frequency(f1, 1600*Nppc, f0, Fs, Frep, hmax, hmag, SNR)
-#x, Xr, fr, ROCOFr = frequency_ramp(Rf, 1820*Nppc, f0, fa, Fs, Frep, hmax, hmag, SNR)
+x, Xr, fr, ROCOFr = frequency_ramp(Rf, 1820*Nppc, f0, fa, Fs, Frep, hmax, hmag, SNR)
 #x, Xr, fr, ROCOFr = modulation(fm, kx, ka, 600*Nppc, f0, Fs, Frep, hmax, hmag, SNR)
 
 
