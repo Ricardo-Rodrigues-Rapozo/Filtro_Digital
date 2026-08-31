@@ -91,8 +91,8 @@ ka = 0.1
 #=========================================================================================
 
 #x, Xr, fr, ROCOFr = signal_frequency(f1, 1600*Nppc, f0, Fs, Frep, hmax, hmag, SNR)
-x, Xr, fr, ROCOFr = frequency_ramp(Rf, 1820*Nppc, f0, fa, Fs, Frep, hmax, hmag, SNR)
-#x, Xr, fr, ROCOFr = modulation(fm, kx, ka, 600*Nppc, f0, Fs, Frep, hmax, hmag, SNR)
+#x, Xr, fr, ROCOFr = frequency_ramp(Rf, 1820*Nppc, f0, fa, Fs, Frep, hmax, hmag, SNR)
+x, Xr, fr, ROCOFr = modulation(fm, kx, ka, 1600*Nppc, f0, Fs, Frep, hmax, hmag, SNR)
 
 
 # Salva o sinal gerado em arquivo de texto para uso no SAPHO

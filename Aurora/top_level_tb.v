@@ -24,8 +24,8 @@ fork
 	clk <= 1'b0;
 	rst_geral <= 1'b1;
 	#40 rst_geral <= 1'b0;
-	#1865000000 $finish; // rampa 1820*Nppc amostras (35->65,3 Hz) = 620 frames uteis
-    //#1560000000 $finish;
+	//#1865000000 $finish; // rampa 1820*Nppc amostras (35->65,3 Hz) = 620 frames uteis
+    #1560000000 $finish;
 
 	$display ("termionou");
 	// off-nominal e modulações fm=5 ou fm=0.5

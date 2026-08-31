@@ -299,6 +299,109 @@ def carregar(f1, sha, recalc=False):
 
 
 # ==========================================================================
+# Comparacao estagio a estagio entre o SAPHO e o modelo em Python
+# ==========================================================================
+# Cada saida do interpolador corresponde a uma etapa do pipeline e alinha
+# indice a indice com a etapa equivalente em Python (lag 0, verificado).
+# O pre-filtro IIR NAO esta disponivel: o `fout(5, acc*1e6)` que o exportaria
+# esta comentado em proc_interp.cmm:186 e o testbench so abre os canais 0..4.
+ESTAGIOS = [
+    ("zc", "Zero-crossing", "saida_interp1.txt", "Hz"),
+    ("kalman", "Kalman", "saida_interp2.txt", "Hz"),
+    ("atraso", "Sinal atrasado", "saida_interp3.txt", "p.u."),
+    ("bspline", "B-spline (Farrow)", "saida_interp0.txt", "p.u."),
+]
+
+JANELA = 1024              # amostras por ponto (~1/15 s)
+DESCARTE_TRANSITORIO = 8 * Nppc
+
+
+def _media_movel(dif, janela=JANELA):
+    """Media do valor absoluto da diferenca, por janela.
+
+    Do valor absoluto, e nao da diferenca com sinal: o erro oscila em torno de
+    zero e a media simples daria ~0, escondendo a amplitude.
+    """
+    n = len(dif) // janela
+    if n == 0:
+        return np.array([]), np.array([])
+    d = dif[:n * janela].reshape(n, janela)
+    return np.mean(np.abs(d), axis=1), (np.arange(n) + 0.5) * janela
+
+
+def comparar_estagios(f1, sha):
+    """RMS movel da diferenca SAPHO - Python em cada etapa do pipeline.
+
+    O eixo de tempo e ABSOLUTO (desde o inicio da simulacao), porque as etapas
+    comecam em instantes diferentes: ZC e Kalman cobrem o registro inteiro,
+    enquanto o sinal atrasado e o interpolado so sao despejados apos os 1200
+    ciclos de descarte.
+    """
+    x, _, _, _ = signal_frequency(f1, N_AMOSTRAS, f0, Fs, Frep, hmax, hmag, SNR)
+    _, _, py_zc, _, total_delay = estima_f_zc(x, Ts, Nppc, plot_level=0)
+
+    d1 = 4 * Nppc
+    py_kalman = kf_trend_poly(py_zc[d1:], f1, Ts, 1, Q_KALMAN, R_KALMAN)["b"].squeeze()
+
+    atraso = np.zeros(total_delay + 1)
+    atraso[-1] = 1.0
+    x_at = lfilter(atraso, [1.0], x[d1:])
+
+    d2 = 1200 * Nppc
+    py_atraso = x_at[d2:]
+    freq = py_kalman[d2:]
+    n = min(len(py_atraso), len(freq))
+    py_bspline = BSplineInterp(py_atraso[:n], f0, freq[:n], MBSP, Fs, plot_level=0)
+
+    # Amostra de entrada correspondente ao indice 0 de cada fluxo
+    origem = {"zc": 0, "kalman": d1, "atraso": d1 + d2, "bspline": d1 + d2}
+    python = {"zc": py_zc, "kalman": py_kalman,
+              "atraso": py_atraso, "bspline": py_bspline}
+    escala = {"zc": (1e6, 0.0), "kalman": (1e6, -60.0),
+              "atraso": (1e6, 0.0), "bspline": (1e6, 0.0)}
+
+    # Base de normalizacao: frequencia do ensaio para as grandezas em Hz, e a
+    # amplitude eficaz do sinal para as grandezas em p.u. Sem isso nao daria
+    # para pôr Hz e p.u. no mesmo eixo.
+    base = {"zc": float(f1), "kalman": float(f1),
+            "atraso": float(np.sqrt(np.mean(x ** 2))),
+            "bspline": float(np.sqrt(np.mean(x ** 2)))}
+
+    res = {}
+    for chave, _, arquivo, _ in ESTAGIOS:
+        div, off = escala[chave]
+        sa = _git_show(sha, arquivo)[1:] / div - off
+        py = python[chave]
+        m = min(len(sa), len(py))
+        dif = sa[:m] - py[:m]
+
+        corte = DESCARTE_TRANSITORIO if chave in ("zc", "kalman") else 0
+        media, centro = _media_movel(dif[corte:])
+
+        # O B-spline sai na taxa reamostrada (lambda = f0/f1 amostras de
+        # entrada por amostra de saida); mapeia-se linearmente de volta para a
+        # taxa de entrada pela razao entre os comprimentos do proprio Python.
+        passo = (n / len(py_bspline)) if chave == "bspline" else 1.0
+        res[f"t_{chave}"] = (origem[chave] + corte + centro * passo) / Fs
+        res[f"dif_{chave}"] = media
+        res[f"med_{chave}"] = float(np.mean(np.abs(dif[corte:])))
+        res[f"base_{chave}"] = base[chave]
+    return res
+
+
+def carregar_estagios(f1, sha, recalc=False):
+    CACHE_DIR.mkdir(exist_ok=True)
+    arq = CACHE_DIR / f"estagios_f{f1}.npz"
+    if arq.exists() and not recalc:
+        with np.load(arq) as d:
+            return {k: d[k] for k in d.files}
+    print(f"  comparando estagios em {f1} Hz ...", flush=True)
+    res = comparar_estagios(f1, sha)
+    np.savez_compressed(arq, **res)
+    return res
+
+
+# ==========================================================================
 # Estatisticas
 # ==========================================================================
 def por_harmonica(m, reducao):
@@ -443,11 +546,87 @@ def figura_por_frequencia(est):
 
 
 
+# ==========================================================================
+# Figura C - divergencia SAPHO x Python etapa a etapa
+# ==========================================================================
+def figura_estagios(estagios):
+    """Onde, ao longo da cadeia, o hardware se afasta do modelo.
+
+    Painel unico. Como as etapas medem grandezas diferentes (Hz no
+    zero-crossing e no Kalman, p.u. no interpolado), tudo e normalizado pela
+    propria grandeza e mostrado como diferenca RELATIVA (adimensional) - so
+    assim as tres curvas dividem um eixo com significado. Escala logaritmica
+    porque elas cobrem quatro decadas.
+
+    O eixo do tempo comeca em zero no inicio da JANELA ANALISADA (~5 s). A
+    simulacao tem 1600 ciclos = 26,7 s, mas os primeiros 1200 ciclos sao
+    descarte de acomodacao e nao sao despejados pelo interpolador.
+
+    Por que o B-spline chega a ~4e-3 (verificado nas 10 frequencias,
+    medido/previsto = 0,67 +- 0,10): o interpolador INTEGRA a diferenca de
+    frequencia. Os ~4e-7 de diferenca relativa na saida do Kalman acumulam, em
+    5 s, um deslocamento de tempo de ~2 us. Num sinal com harmonicas ate
+    2850 Hz, 2 us aparecem como ~0,4 % de diferenca amostra a amostra:
+
+        dif_RMS = tau * 2*pi*f1 * sqrt(sum_h (A_h * h)^2 / 2)
+
+    Ou seja, e um deslocamento no TEMPO, nao um erro de amplitude - e por isso
+    que o TVE da fundamental fica em 0,05 % apesar dos 4000 ppm daqui. A
+    comparacao amostra a amostra e a metrica mais dura possivel para um sinal
+    reamostrado.
+    """
+    freqs = sorted(estagios)
+    # Verde/roxo/cinza de proposito: nas figuras A e B laranja e azul
+    # significam SAPHO e Python, e aqui TODA curva ja e uma diferenca.
+    series = [("zc", "Zero-crossing", "#1b7837"),
+              ("kalman", "Kalman", "#3b78b0"),
+              ("bspline", "B-spline (Farrow)", "#762a83")]
+
+    fig, ax = plt.subplots(figsize=(6.3, 3.9))
+
+    t0 = max(estagios[freqs[0]][f"t_{c}"][0] for c, _, _ in series)
+    menor, maior = np.inf, 0.0
+    for chave, nome, cor in series:
+        # Os fluxos tem comprimentos diferentes por frequencia (o B-spline
+        # emite mais amostras quanto maior f1): corta-se pelo mais curto.
+        n = min(len(estagios[f][f"dif_{chave}"]) for f in freqs)
+        t = estagios[freqs[0]][f"t_{chave}"][:n]
+        pilha = np.array([estagios[f][f"dif_{chave}"][:n] / estagios[f][f"base_{chave}"]
+                          for f in freqs])
+        m = t >= t0
+        # Tempo relativo ao inicio da janela analisada, nao ao inicio da
+        # simulacao: os primeiros 1200 ciclos sao descarte de acomodacao.
+        tj = t[m] - t0
+        ax.fill_between(tj, pilha.min(axis=0)[m], pilha.max(axis=0)[m],
+                        color=cor, alpha=0.18, linewidth=0)
+        ax.plot(tj, pilha.mean(axis=0)[m], color=cor, lw=1.5, label=nome)
+        menor = min(menor, pilha.min(axis=0)[m].min())
+        maior = max(maior, pilha.max(axis=0)[m].max())
+
+    # Limites colados nos dados: sem decada vazia no topo. A legenda fica FORA
+    # da area de plotagem, senao teria de haver folga so para acomoda-la.
+    ax.set_yscale("log")
+    ax.set_ylim(menor / 2.0, maior * 1.6)
+    ax.set_xlim(0, None)
+    ax.set_xlabel("Tempo dentro da janela analisada (s)")
+    ax.set_ylabel("Diferença média entre SAPHO\ne Python, relativa")
+    ax.grid(True, which="minor", linestyle=":", linewidth=0.4, alpha=0.25)
+    ax.legend(ncol=3, loc="lower left", bbox_to_anchor=(0, 1.01),
+              columnspacing=1.8, borderaxespad=0)
+    salvar(fig, "figC_divergencia_por_estagio.pdf")
+
+
 def salvar(fig, nome):
     SAIDA_DIR.mkdir(parents=True, exist_ok=True)
-    fig.savefig(SAIDA_DIR / nome)
-    plt.close(fig)
-    print(f"  gravado: {SAIDA_DIR / nome}")
+    try:
+        fig.savefig(SAIDA_DIR / nome)
+        print(f"  gravado: {SAIDA_DIR / nome}")
+    except PermissionError:
+        # Tipicamente o PDF esta aberto num visualizador: avisa e segue, para
+        # nao perder as demais figuras da rodada.
+        print(f"  NAO gravado (arquivo em uso): {SAIDA_DIR / nome}")
+    finally:
+        plt.close(fig)
 
 
 # ==========================================================================
@@ -487,9 +666,27 @@ def main():
           f"= {np.abs(est['eps_ef']).mean()/f0/ULP:.2f} ULP do float de 23 bits "
           f"(R2 minimo do ajuste em h = {est['r2'].min():.5f})")
 
+    print("\nDivergencia SAPHO x Python por estagio do pipeline")
+    print("(o pre-filtro IIR nao esta nos dados: fout(5) comentado no .cmm)")
+    estagios = {f1: carregar_estagios(f1, sha, recalc)
+                for f1, sha in sorted(COMMITS.items())}
+    print(f"{'estagio':>20} {'unid':>5} {'media |dif|':>12} {'relativa':>10} "
+          f"{'inicio':>10} {'fim':>10} {'razao':>7}")
+    for chave, nome, _, unid in ESTAGIOS:
+        med = np.mean([estagios[f][f"med_{chave}"] for f in estagios])
+        rel = np.mean([estagios[f][f"med_{chave}"] / estagios[f][f"base_{chave}"]
+                       for f in estagios])
+        ini = np.mean([estagios[f][f"dif_{chave}"][0] for f in estagios])
+        fim = np.mean([estagios[f][f"dif_{chave}"][-1] for f in estagios])
+        print(f"{nome:>20} {unid:>5} {med:>12.3e} {rel:>10.2e} {ini:>10.3e} "
+              f"{fim:>10.3e} {fim/ini:>7.1f}x")
+    print("  (o sinal atrasado nao entra na figura: e so o buffer de 255 "
+          "amostras,\n   e sua diferenca e o piso de quantizacao Q15 da entrada)")
+
     print("\nGerando figuras ...")
     figura_envelope(est)
     figura_por_frequencia(est)
+    figura_estagios(estagios)
 
 
 if __name__ == "__main__":
