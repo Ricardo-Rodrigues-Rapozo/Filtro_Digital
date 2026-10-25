@@ -83,16 +83,16 @@ SNR = 1000000000000000000
 Rf = 1
 fa = 35
 
-fm = 5
-kx = 0.1
-ka = 0.0
+fm = 0.5
+kx = 0.0
+ka = 0.1
 
 # Geração do Sinal de Referência para Comparação
 #=========================================================================================
 
-x, Xr, fr, ROCOFr = signal_frequency(f1, 1600*Nppc, f0, Fs, Frep, hmax, hmag, SNR)
+#x, Xr, fr, ROCOFr = signal_frequency(f1, 1600*Nppc, f0, Fs, Frep, hmax, hmag, SNR)
 #x, Xr, fr, ROCOFr = frequency_ramp(Rf, 1820*Nppc, f0, fa, Fs, Frep, hmax, hmag, SNR)
-#x, Xr, fr, ROCOFr = modulation(fm, kx, ka, 1600*Nppc, f0, Fs, Frep, hmax, hmag, SNR)
+x, Xr, fr, ROCOFr = modulation(fm, kx, ka, 1600*Nppc, f0, Fs, Frep, hmax, hmag, SNR)
 
 
 # Salva o sinal gerado em arquivo de texto para uso no SAPHO
