@@ -2,11 +2,11 @@
   "metadata": {
     "projectName": "interpolador",
     "createdAt": "2026-05-14T14:17:28.763Z",
-    "lastModified": "2026-08-30T18:22:44.659Z",
+    "lastModified": "2026-10-24T17:23:00.933Z",
     "computerName": "VINICIUS",
     "appVersion": "5.0.0",
     "projectPath": "C:\\Users\\Ricardo\\Documents\\Dissertacao\\Aurora",
-    "lastOpened": "2026-08-17T16:06:44.654Z"
+    "lastOpened": "2026-10-04T18:16:06.562Z"
   },
   "structure": {
     "basePath": "C:\\Users\\Ricardo\\Documents\\Dissertacao\\Aurora",
@@ -28,17 +28,17 @@
     "synthesizableFiles": [
       {
         "name": "proc_banco.v",
-        "path": "proc_banco\\Hardware\\proc_banco.v",
+        "path": "proc_banco\\proc_banco\\proc_banco.v",
         "isTopLevel": false
       },
       {
         "name": "proc_interp.v",
-        "path": "proc_interp\\Hardware\\proc_interp.v",
+        "path": "proc_interp\\proc_interp\\proc_interp.v",
         "isTopLevel": false
       },
       {
         "name": "procTest_00.v",
-        "path": "proc_banco\\Hardware\\procTest_00.v",
+        "path": "proc_banco\\procTest_00.v",
         "isTopLevel": false
       },
       {
@@ -65,12 +65,12 @@
     "testbenchFiles": [
       {
         "name": "proc_banco_tb.v",
-        "path": "proc_banco\\Simulation\\proc_banco_tb.v",
+        "path": "proc_banco\\proc_banco\\proc_banco_tb.v",
         "isTopLevel": false
       },
       {
         "name": "proc_interp_tb.v",
-        "path": "proc_interp\\Simulation\\proc_interp_tb.v",
+        "path": "proc_interp\\proc_interp\\proc_interp_tb.v",
         "isTopLevel": false
       },
       {

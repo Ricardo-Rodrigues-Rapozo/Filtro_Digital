@@ -10,6 +10,12 @@ input  itr);
 /* verilator tracing_off */
 
 wire cheguei;
+wire [0:0] lk_toma, lk_cade, lk_valeu, lk_taqui;
+wire [31:0] lk_cade_dado;
+wire [31:0] lk_toma_dado;
+assign lk_valeu[0] = 1'b0;
+assign lk_taqui[0] = 1'b0;
+assign lk_cade_dado[31:0] = 0;
 wire proc_req_in, proc_out_en;
 wire [0:0] addr_in;
 wire [1:0] addr_out;
@@ -36,19 +42,19 @@ processor#(.NUBITS(32),
 .NBEXPO(8),
 .NBOPER(13),
 .NUGAIN(128),
-.MDATAS(5672),
-.MINSTS(390),
+.MDATAS(5152),
+.MINSTS(387),
 .SDEPTH(5),
 .DDEPTH(5),
 .NBIOIN(1),
 .NBIOOU(2),
 .FFTSIZ(8),
-.ITRADD(28),
+.FROUND(2),
+.ITRADD(24),
 .LOD(1),
 .SET(1),
 .NEG_M(1),
 .ADD(1),
-.I2F_M(1),
 .OUT(1),
 .LES(1),
 .JIZ(1),
@@ -56,6 +62,7 @@ processor#(.NUBITS(32),
 .I2F(1),
 .P_LOD(1),
 .SF_DIV(1),
+.F_DIV(1),
 .STI(1),
 .INN(1),
 .EQU(1),
@@ -72,18 +79,17 @@ processor#(.NUBITS(32),
 .F_SU1(1),
 .ISI(1),
 .F_ADD(1),
-.P_I2F_M(1),
-.SF_GRE(1),
+.F_GRE(1),
 .F2I_M(1),
 .POP(1),
 .F2I(1),
-.DFILE("C:/Users/Ricardo/Documents/Dissertacao/Aurora/proc_banco/Hardware/proc_banco_data.mif"),
-.IFILE("C:/Users/Ricardo/Documents/Dissertacao/Aurora/proc_banco/Hardware/proc_banco_inst.mif"))
+.DFILE("proc_banco_data.mif"),
+.IFILE("proc_banco_inst.mif"))
 
 `ifdef YANC_SIM_VIS
-p_proc_banco (clk, rst, in, out, addr_in, addr_out, proc_req_in, proc_out_en, itr, cheguei, mem_wr, mem_addr_wr,pc_sim_val);
+p_proc_banco (clk, rst, in, out, addr_in, addr_out, proc_req_in, proc_out_en, itr, cheguei, lk_toma, lk_cade, lk_valeu, lk_taqui, lk_cade_dado, lk_toma_dado, mem_wr, mem_addr_wr,pc_sim_val);
 `else
-p_proc_banco (clk, rst, in, out, addr_in, addr_out, proc_req_in, proc_out_en, itr, cheguei);
+p_proc_banco (clk, rst, in, out, addr_in, addr_out, proc_req_in, proc_out_en, itr, cheguei, lk_toma, lk_cade, lk_valeu, lk_taqui, lk_cade_dado, lk_toma_dado);
 `endif
 
 addr_dec #(2) dec_in (proc_req_in, addr_in , req_in);
@@ -158,26 +164,26 @@ reg [31:0] me3_f_main_v_temp_e_ /* verilator public_flat */ = 32'dx;
 /* verilator tracing_on */
 
 always @ (posedge clk) begin
-   if (mem_addr_wr == 769 && mem_wr) me1_f_main_v_frequencia_from_int_e_ <= out;
+   if (mem_wr && (pc_sim_val == 3 || pc_sim_val == 45)) me1_f_main_v_frequencia_from_int_e_ <= out;
    if (mem_addr_wr == 770 && mem_wr) me1_f_main_v_sample_count_e_ <= out;
-   if (mem_addr_wr == 771 && mem_wr) me1_f_main_v_output_count_e_ <= out;
-   if (mem_addr_wr == 3590 && mem_wr) me1_f_main_v_freq_count_e_ <= out;
-   if (mem_addr_wr == 5640 && mem_wr) me1_f_main_v_freq_started_e_ <= out;
-   if (mem_addr_wr == 5642 && mem_wr) me1_f_main_v_M_e_ <= out;
-   if (mem_addr_wr == 5643 && mem_wr) me1_f_main_v_fft_limit_e_ <= out;
-   if (mem_addr_wr == 5645 && mem_wr) me2_f_main_v_vector_count_e_ <= sm_me2*$pow(2.0,e_me2);
-   if (mem_addr_wr == 5646 && mem_wr) me1_f_main_v_buffer_head_e_ <= out;
-   if (mem_addr_wr == 5648 && mem_wr) me1_f_main_v_mm_e_ <= out;
-   if (mem_addr_wr == 5649 && mem_wr) me1_f_main_v_ii_e_ <= out;
-   if (mem_addr_wr == 5659 && mem_wr) me1_f_main_v_mmax_e_ <= out;
-   if (mem_addr_wr == 5660 && mem_wr) me1_f_main_v_istep_e_ <= out;
-   if (mem_addr_wr == 5661 && mem_wr) me1_f_main_v_m_e_ <= out;
-   if (mem_addr_wr == 5662 && mem_wr) me1_f_main_v_ind_e_ <= out;
-   if (mem_addr_wr == 5663 && mem_wr) me1_f_main_v_sind_e_ <= out;
-   if (mem_addr_wr == 5664 && mem_wr) me1_f_main_v_q_e_ <= out;
-   if (mem_addr_wr == 5665 && mem_wr) me1_f_main_v_j_e_ <= out;
-   if (mem_addr_wr == 5668 && mem_wr) me3_f_main_v_temp_i_e_ <= out;
-   if (mem_addr_wr == 5669 && mem_wr) me3_f_main_v_temp_e_ <= out;
+   if (mem_wr && (pc_sim_val == 7 || pc_sim_val == 19)) me1_f_main_v_output_count_e_ <= out;
+   if (mem_addr_wr == 3075 && mem_wr) me1_f_main_v_freq_count_e_ <= out;
+   if (mem_addr_wr == 5124 && mem_wr) me1_f_main_v_freq_started_e_ <= out;
+   if (mem_addr_wr == 5126 && mem_wr) me1_f_main_v_M_e_ <= out;
+   if (mem_wr && (pc_sim_val == 14)) me1_f_main_v_fft_limit_e_ <= out;
+   if (mem_addr_wr == 5129 && mem_wr) me2_f_main_v_vector_count_e_ <= sm_me2*$pow(2.0,e_me2);
+   if (mem_addr_wr == 5130 && mem_wr) me1_f_main_v_buffer_head_e_ <= out;
+   if (mem_wr && (pc_sim_val == 76 || pc_sim_val == 233)) me1_f_main_v_mm_e_ <= out;
+   if (mem_wr && (pc_sim_val == 78 || pc_sim_val == 236 || pc_sim_val == 242)) me1_f_main_v_ii_e_ <= out;
+   if (mem_wr && (pc_sim_val == 245 || pc_sim_val == 340)) me1_f_main_v_mmax_e_ <= out;
+   if (mem_wr && (pc_sim_val == 251)) me1_f_main_v_istep_e_ <= out;
+   if (mem_addr_wr == 5142 && mem_wr) me1_f_main_v_m_e_ <= out;
+   if (mem_addr_wr == 5143 && mem_wr) me1_f_main_v_ind_e_ <= out;
+   if (mem_addr_wr == 5144 && mem_wr) me1_f_main_v_sind_e_ <= out;
+   if (mem_addr_wr == 5145 && mem_wr) me1_f_main_v_q_e_ <= out;
+   if (mem_addr_wr == 5146 && mem_wr) me1_f_main_v_j_e_ <= out;
+   if (mem_wr && (pc_sim_val == 290)) me3_f_main_v_temp_i_e_ <= out;
+   if (mem_addr_wr == 5149 && mem_wr) me3_f_main_v_temp_e_ <= out;
 end
 
 wire [16+32*2-1:0] comp_me3_f_main_v_temp_e_ = {8'd23, 8'd8, me3_f_main_v_temp_e_, me3_f_main_v_temp_i_e_};
@@ -197,7 +203,7 @@ reg [31:0] valr9 /* verilator public_flat */=0;
 reg [31:0] valr10 /* verilator public_flat */=0;
 /* verilator tracing_on */
 
-reg [19:0] min [0:390-1];
+reg [19:0] min [0:387-1];
 
 /* verilator tracing_off */ reg signed [19:0] linetab /* verilator public_flat */ =-1; /* verilator tracing_on */
 reg signed [19:0] linetabs=-1;
@@ -205,7 +211,7 @@ reg signed [19:0] linetabs=-1;
 initial	$readmemb("pc_proc_banco_mem.txt",min);
 
 always @ (posedge clk) begin
-if (pc_sim_val < 390) linetab <= min[pc_sim_val];
+if (pc_sim_val < 387) linetab <= min[pc_sim_val];
 linetabs <= linetab;   
 valr1    <= {{(23){1'b0}}, pc_sim_val};
 valr2    <= valr1;

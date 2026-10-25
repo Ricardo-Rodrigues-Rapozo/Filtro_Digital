@@ -43,8 +43,8 @@ reg req_in_1 = 0;
 
 // open a file for reading on each port
 initial begin
-    data_in_0 = $fopen("C:/Users/Ricardo/Documents/Dissertacao/Aurora/proc_banco/Simulation/input_0.txt", "r"); // place your input data in this file
-    data_in_1 = $fopen("C:/Users/Ricardo/Documents/Dissertacao/Aurora/proc_banco/Simulation/input_1.txt", "r"); // place your input data in this file
+    data_in_0 = $fopen("../input_0.txt", "r"); // place your input data in this file, beside the source
+    data_in_1 = $fopen("../input_1.txt", "r"); // place your input data in this file, beside the source
 end
 
 // decode input ports
@@ -81,8 +81,8 @@ reg out_en_1 = 0;
 
 // open a file for writing on each port
 initial begin
-    data_out_0 = $fopen("C:/Users/Ricardo/Documents/Dissertacao/Aurora/proc_banco/Simulation/output_0.txt", "w"); // check the output data in this file
-    data_out_1 = $fopen("C:/Users/Ricardo/Documents/Dissertacao/Aurora/proc_banco/Simulation/output_1.txt", "w"); // check the output data in this file
+    data_out_0 = $fopen("output_0.txt", "w"); // check the output data in this file
+    data_out_1 = $fopen("output_1.txt", "w"); // check the output data in this file
 end
 
 // decode output ports
@@ -107,7 +107,7 @@ end
 
 integer chrys;
 
-always @ (posedge clk) if (proc.valr10 == 389) begin
+always @ (posedge clk) if (proc.valr10 == 386) begin
     $display("Info: end of program!");
     $finish;
 end

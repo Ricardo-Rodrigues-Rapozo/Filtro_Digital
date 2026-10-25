@@ -1,4 +1,3 @@
-#PRNAME proc_interp
 #NUBITS 32
 #NDSTAC 10
 #SDEPTH 10
@@ -7,7 +6,7 @@
 #NBMANT 23
 #NBEXPO 8
 #NUGAIN 128
-
+#FROUND 2
 void main()
 {
     // ----- Globais ----------

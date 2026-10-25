@@ -476,14 +476,16 @@ PAINEIS = [("tve", "TVE", "%", True),
            ("efas", "Erro de fase", "°", False)]
 
 
-def marcar_limite(ax, limite=TVE_LIM, x=1.4, ha="left"):
+def marcar_limite(ax, limite=TVE_LIM, x=1.4, ha="left", **kw):
     """Limite normativo de TVE. Vale 1 % nos ensaios estaticos e de rampa, e
     3 % no ensaio de modulacao. `x`/`ha` reposicionam o rotulo quando ele
-    colidiria com a legenda."""
+    colidiria com a legenda, e o que vier em `kw` vai para o annotate (o
+    ensaio de modulacao usa um fundo branco, porque la ha curva passando do
+    limite e cruzando o rotulo)."""
     ax.axhline(limite, color=COR_LIM, ls="--", lw=1.1, zorder=6)
     ax.annotate(f"Limite IEC/IEEE 60255-118-1 ({limite:g} %)", xy=(x, limite),
                 xytext=(0, 4), textcoords="offset points", ha=ha,
-                va="bottom", fontsize=8, color=COR_LIM)
+                va="bottom", fontsize=8, color=COR_LIM, **kw)
 
 
 # ==========================================================================
@@ -636,8 +638,12 @@ def figura_estagios(estagios):
     ax.set_xlabel("Tempo dentro da janela analisada (s)")
     ax.set_ylabel("Diferença média entre SAPHO\ne Python, relativa")
     ax.grid(True, which="minor", linestyle=":", linewidth=0.4, alpha=0.25)
+    # O ensaio vai no titulo da legenda, como nas figuras de modulacao: as
+    # quatro figC sao graficamente identicas e so o rotulo as distingue.
     ax.legend(ncol=3, loc="lower left", bbox_to_anchor=(0, 1.01),
-              columnspacing=1.8, borderaxespad=0)
+              columnspacing=1.8, borderaxespad=0, alignment="left",
+              title=f"Ensaio off-nominal ({freqs[0]}–{freqs[-1]} Hz)",
+              title_fontsize=8.5)
     salvar(fig, "figC_divergencia_por_estagio.pdf")
 
 

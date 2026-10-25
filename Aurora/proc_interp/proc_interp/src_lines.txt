@@ -1,0 +1,376 @@
+-1 INTERNAL
+-2 void main();
+-3 END
+1 #NUBITS 32
+2 #NDSTAC 10
+3 #SDEPTH 10
+4 #NUIOIN 1
+5 #NUIOOU 5
+6 #NBMANT 23
+7 #NBEXPO 8
+8 #NUGAIN 128
+9 #FROUND 2
+10 void main()
+11 {
+12     // ----- Globais ----------
+13     int teste0=80;
+14     int cont_global = 0;                  // contador global de amostras processadas
+15     int teste=0;
+16     // ----- IIR Bessel pré ZC -----
+17     float b_sos[9] "b_sos.txt";           // coeficientes do numerador das 3 secoes SOS do IIR
+18     float a_sos[9] "a_sos.txt";           // coeficientes do denominador das 3 secoes SOS do IIR
+19 
+20     float x1[3]; x1[0] = 0.0; x1[1] = 0.0; x1[2] = 0.0; // buffer de entrada da secao 1 do IIR
+21     float y1[3]; y1[0] = 0.0; y1[1] = 0.0; y1[2] = 0.0; // buffer de saida da secao 1 do IIR
+22 
+23     float x2[3]; x2[0] = 0.0; x2[1] = 0.0; x2[2] = 0.0; // buffer de entrada da secao 2 do IIR
+24     float y2[3]; y2[0] = 0.0; y2[1] = 0.0; y2[2] = 0.0; // buffer de saida da secao 2 do IIR
+25 
+26     float x3[3]; x3[0] = 0.0; x3[1] = 0.0; x3[2] = 0.0; // buffer de entrada da secao 3 do IIR
+27     float y3[3]; y3[0] = 0.0; y3[1] = 0.0; y3[2] = 0.0; // buffer de saida da secao 3 do IIR
+28 
+29     int b_index = 0;                       // mantido do molde antigo; nao usado no IIR atual
+30     int k_idx = 0;                         // variavel auxiliar mantida do molde antigo
+31     float acc_b = 0.0;                     // acumulador auxiliar mantido do molde antigo
+32     float acc_a = 0.0;                     // acumulador auxiliar mantido do molde antigo
+33 
+34     // ----- Zero-Crossing -----
+35     float va              = 0.0;           // amostra anterior da saida do pre-filtro IIR
+36     float Tsc             = 1/60.0;        // tempo acumulado entre cruzamentos por zero
+37     float T1              = 0.0;           // correcao temporal do cruzamento anterior
+38     float fzc             = 60.0;           // frequencia estimada pelo zero-crossing
+39     float freq_amostragem = 15360.0;       // frequencia de amostragem do sinal
+40     float sig             = 0.0;           // produto va*acc usado para detectar troca de sinal
+41     float Nb              = 0.0;           // fator de interpolacao do cruzamento atual
+42     float T2              = 0.0;           // correcao temporal do cruzamento atual
+43     float Ts;                              // periodo de amostragem
+44     int atraso_amotras_filtro_pre_zc = 127; // atraso de grupo do IIR em 60 Hz
+45     float cont_zc         = 0.0;
+46     // ----- Media movel 256 -----
+47     float w_coeff = 0.00390625;        // coeficientes do filtro de media movel
+48     int w_index = 0;                       // indice auxiliar mantido do molde antigo
+49     float w_sum = 0.0;                     // soma auxiliar mantida do molde antigo
+50     float buffer_media_movel[256];         // buffer circular com amostras de fzc
+51     int buffer_media_movel_idex = 0;       // indice de escrita do buffer da media movel
+52     float fcc = 0.0;                       // frequencia filtrada pela media movel
+53     int w_media = 256;                     // numero de coeficientes da media movel
+54     int read_idx_mean = 0;                 // indice de leitura do buffer da media movel
+55     int w_index_mean = 0;                  // indice auxiliar mantido do molde antigo
+56     int p = 0;                             // contador do loop da media movel
+57     int b_index_mean = 0;                  // indice auxiliar mantido do molde antigo
+58     int atraso_amotras_media_movel = 128;  // atraso aproximado da media movel de 512 amostras
+59     float fvelho = 0.0;                    //  
+60 
+61     // ------- Filtro de Kalman ------
+62     // O estado do filtro e o DESVIO em relacao a nominal (dfreq = f - 60), nao a
+63     // frequencia absoluta. Como a translacao e constante, o 60 cancela na predicao
+64     // e no erro: P, Q, R, K0 e K1 ficam identicos ao caso absoluto. O ganho e de
+65     // resolucao: em float32, ULP(63 Hz) = 3.81e-6 contra ULP(3 Hz) = 2.38e-7, ou
+66     // seja 16x mais fino, o que evita que a correcao K0*erro seja absorvida pelo
+67     // arredondamento quando o ganho do Kalman cai.
+68     float f_nominal     = 60.0;
+69     float dfreq         = 0.0;             // estado: desvio da nominal, parte de 60 Hz
+70     float df            = 0.0;
+71     float p00           = 1000000.0;
+72     float p01           = 0.0;
+73     float p10           = 0.0;
+74     float p11           = 1000000.0;
+75     float q00           = 0.1 * ( ( 1/15360.0) *  (1/15360.0) * (1/15360.0) ) / 3.0;//Ts**3 / 3.0
+76     float q01           = 0.1 * ( ( 1/15360.0) *  (1/15360.0)  ) / 2.0;//Ts**2 / 2.0
+77     float q10           = 0.1 * ( ( 1/15360.0) *  (1/15360.0)  ) / 2.0;//Ts**2 / 2.0
+78     float q11           = 0.1 * 1/15360.0;///Ts
+79     float dfreq_pred    = 0.0;
+80     float df_pred       = 0.0;
+81     float R             = 20.0;
+82     int cont_kalman     = 0;
+83     int descarte_kalman = 1024;
+84     float erro          = 0.0;
+85     float p00_pred;
+86     float p01_pred;
+87     float p10_pred;
+88     float p11_pred;
+89     float y_kalman;
+90     float S_incerteza;
+91     float K0;
+92     float K1;
+93     float comp_dfreq = 0.0;
+94     float kah_u;
+95     float kah_t;
+96     
+97     // ----- Temporarias -----
+98     int j = 0;                             // contador auxiliar mantido do molde antigo
+99     int read_idx = 0;                      // indice auxiliar mantido do molde antigo
+100     float acc = 0.0;                       // saida atual do pre-filtro IIR
+101     float freq_instant = 60.0;             // frequencia nominal/auxiliar mantida do molde antigo
+102     float Tsc_total = 0.0;                 // variavel auxiliar mantida do molde antigo
+103     float denom = 0.0;                     // variavel auxiliar mantida do molde antigo
+104     float ESCALA = 1000.0;                 // escala auxiliar mantida do molde antigo
+105     float x;                               // amostra atual do sinal de entrada normalizado
+106     float y;                               // amostra interpolada na saida do Farrow
+107     float x_atrasado = 0.0;                // sinal de entrada atrasado para alinhar com a frequencia
+108 
+109     // ------ atraso de amostras do sinal ---------
+110     int c_index = 0;                       // indice circular do buffer de atraso do sinal
+111     int read_c_idx = 0;                    // indice auxiliar mantido do molde antigo
+112     int k;                                 // contador auxiliar mantido do molde antigo
+113     float buffer_atraso_x[255];            // buffer circular que atrasa x em atraso_geral amostras
+114 
+115     // ----- Prefiltro - B-Spline -----
+116     float num_pre_BSP[6];                  // numerador do pre-filtro B-Spline
+117     float den_pre_BSP[2];                  // denominador do pre-filtro B-Spline
+118     float buffer_entrada_prefiltro[6];     // historico de entrada do pre-filtro B-Spline
+119     float buffer_saida_prefiltro[2];       // historico de saida do pre-filtro B-Spline
+120     float dot_result;                      // resultado da parte FIR do pre-filtro B-Spline
+121     float freq_smoothed;                   // frequencia suavizada usada no interpolador
+122     int atraso_geral;                      // atraso aplicado ao sinal x antes do B-Spline
+123     atraso_geral = 255;   //sugestão de mudar para 255                 // 127 IIR + 128 ZC + 128 media movel
+124 
+125     // ----- Farrow -----
+126     float buffer_entrada_farrow[4];        // quatro amostras usadas pela estrutura Farrow
+127     float H0, H1, H2, H3;                  // coeficientes polinomiais do interpolador B-Spline
+128 
+129     // ----- Interpolador -----
+130     float lambda_val;                      // passo de interpolacao: 60/frequencia
+131     float alfa = 0.0;                      // fase fracionaria do interpolador
+132     int cnt = 0;                           // contador para liberar a saida apos encher buffers
+133     float buffer_freq[7];                  // buffer que atrasa a frequencia em 6 amostras
+134     buffer_freq[0] = 0.0;
+135     buffer_freq[1] = 0.0;
+136     buffer_freq[2] = 0.0;
+137     buffer_freq[3] = 0.0;
+138     buffer_freq[4] = 0.0;
+139     buffer_freq[5] = 0.0;
+140     buffer_freq[6] = 0.0;
+141     float freq_atrasada;                   // frequencia apos atraso local para o Farrow
+142 
+143     num_pre_BSP[5] = -0.00222058;
+144     num_pre_BSP[4] =  0.00828731;
+145     num_pre_BSP[3] = -0.03092866;
+146     num_pre_BSP[2] =  0.11542732;
+147     num_pre_BSP[1] = -0.43078062;
+148     num_pre_BSP[0] =  1.60769515;
+149     den_pre_BSP[0] = 1.0;
+150     den_pre_BSP[1] = 0.26794919;
+151 
+152     return;
+153     //while (1)
+154     #PRACA
+155     //{
+156         x = in(0) / 32768.0; // req_in
+157 
+158         // ========== IIR PRE-FILTER ZERO-CROSSING ==========
+159         x1[0] = x;
+160 
+161         y1[0] = b_sos[0]*x1[0] + b_sos[1]*x1[1] + b_sos[2]*x1[2]
+162               - a_sos[1]*y1[1] - a_sos[2]*y1[2];
+163 
+164         x1[2] = x1[1];  x1[1] = x1[0];
+165         y1[2] = y1[1];  y1[1] = y1[0];
+166 
+167         x2[0] = y1[0];
+168 
+169         y2[0] = b_sos[3]*x2[0] + b_sos[4]*x2[1] + b_sos[5]*x2[2]
+170               - a_sos[4]*y2[1] - a_sos[5]*y2[2];
+171 
+172         x2[2] = x2[1];  x2[1] = x2[0];
+173         y2[2] = y2[1];  y2[1] = y2[0];
+174 
+175         x3[0] = y2[0];
+176 
+177         y3[0] = b_sos[6]*x3[0] + b_sos[7]*x3[1] + b_sos[8]*x3[2]
+178               - a_sos[7]*y3[1] - a_sos[8]*y3[2];
+179 
+180         x3[2] = x3[1];  x3[1] = x3[0];
+181         y3[2] = y3[1];  y3[1] = y3[0];
+182 
+183         acc = y3[0];
+184 
+185         //fout(5, acc * 1000000);
+186 
+187         // ========== ZERO-CROSSING ==========
+188         Ts = (1.0 / freq_amostragem);
+189         sig = va * acc;
+190         cont_zc = cont_zc + 1;
+191         //Tsc = Ts + Tsc;
+192         Tsc = cont_zc *Ts;
+193         if(sig < 0)
+194         {
+195             Nb = acc / (acc - va);
+196             T2 = Nb * Ts;
+197             Tsc = Tsc + T1 - T2;
+198             fzc = 1 / (2*Tsc);
+199             T1 = T2;
+200             Tsc = 0.0;
+201             cont_zc = 0.0;
+202         }
+203 
+204         va = acc;
+205         fout(1, fzc * 1000000);
+206 
+207 
+208         // ============================ DESCARTE DE AMOSTRAS ================= //
+209         if(cont_kalman >= descarte_kalman)
+210         {
+211 
+212             // ========== FILTRO DE Kalman ==========
+213             // Estado em desvio da nominal: o termo constante f_nominal cancela na
+214             // predicao e no erro, entao a recursao abaixo e a mesma do caso absoluto.
+215             //dfreq_pred = dfreq + Ts * df;
+216             kah_u      = Ts * df - comp_dfreq;
+217             kah_t      = dfreq + kah_u;
+218             comp_dfreq = (kah_t - dfreq) - kah_u;
+219             dfreq_pred = kah_t;
+220 
+221             df_pred = df;
+222             p00_pred = p00 + Ts * p10 + Ts * p01 + Ts * Ts * p11 + q00;
+223             p01_pred = p01 + Ts * p11 + q01;
+224             p10_pred = p10 + Ts * p11 + q10;
+225             p11_pred = p11 + q11;
+226 
+227             y_kalman = fzc - f_nominal;   // medida convertida para desvio
+228 
+229             erro = y_kalman - dfreq_pred;
+230 
+231             S_incerteza = p00_pred + R;
+232 
+233             K0 = p00_pred / S_incerteza;
+234             K1 = p10_pred / S_incerteza;
+235             //dfreq = dfreq_pred + K0 * erro;
+236             kah_u      = K0 * erro - comp_dfreq;
+237             kah_t      = dfreq_pred + kah_u;
+238             comp_dfreq = (kah_t - dfreq_pred) - kah_u;
+239             dfreq      = kah_t;
+240             df         = df_pred + K1 * erro;
+241 
+242 
+243             p00 = (1.0 - K0) * p00_pred;
+244             p01 = (1.0 - K0) * p01_pred;
+245             p10 = p10_pred - K1 * p00_pred;
+246             p11 = p11_pred - K1 * p01_pred;
+247 
+248 
+249             fcc = f_nominal + dfreq;      // volta para Hz absoluto na saida
+250 
+251             fout(2, dfreq * 1000000);   // desvio, nao o absoluto: soma-se 60 Hz na analise
+252 
+253     
+254             // ============================== Estrutura B-Spline ====================================== //
+255 
+256             // ============================== atraso sinal x ============================== //
+257             if (atraso_geral > 0)
+258             {
+259                 x_atrasado = buffer_atraso_x[c_index];
+260 
+261                 buffer_atraso_x[c_index] = x;
+262 
+263                 c_index = c_index + 1;
+264 
+265                 if (c_index >= atraso_geral)
+266                 {
+267                     c_index = 0;
+268                 }
+269             }
+270             else
+271             {
+272                 x_atrasado = x;
+273             }
+274 
+275 
+276             // ============================ DESCARTE DE AMOSTRAS ================= //
+277             if(cont_global >= 307200)
+278             {
+279                 // ============================ PREFILTRO ============================ //
+280                 buffer_entrada_prefiltro[0] = buffer_entrada_prefiltro[1];
+281                 buffer_entrada_prefiltro[1] = buffer_entrada_prefiltro[2];
+282                 buffer_entrada_prefiltro[2] = buffer_entrada_prefiltro[3];
+283                 buffer_entrada_prefiltro[3] = buffer_entrada_prefiltro[4];
+284                 buffer_entrada_prefiltro[4] = buffer_entrada_prefiltro[5];
+285                 buffer_entrada_prefiltro[5] = x_atrasado;
+286 
+287                 dot_result = buffer_entrada_prefiltro[0] * num_pre_BSP[0] +
+288                             buffer_entrada_prefiltro[1] * num_pre_BSP[1] +
+289                             buffer_entrada_prefiltro[2] * num_pre_BSP[2] +
+290                             buffer_entrada_prefiltro[3] * num_pre_BSP[3] +
+291                             buffer_entrada_prefiltro[4] * num_pre_BSP[4] +
+292                             buffer_entrada_prefiltro[5] * num_pre_BSP[5];
+293 
+294                 buffer_saida_prefiltro[1] = dot_result - den_pre_BSP[1]*buffer_saida_prefiltro[0];
+295                 buffer_saida_prefiltro[0] = buffer_saida_prefiltro[1];
+296 
+297                 // ============================ FARROW ============================ //
+298                 buffer_entrada_farrow[0] = buffer_entrada_farrow[1];
+299                 buffer_entrada_farrow[1] = buffer_entrada_farrow[2];
+300                 buffer_entrada_farrow[2] = buffer_entrada_farrow[3];
+301                 buffer_entrada_farrow[3] = buffer_saida_prefiltro[1];
+302 
+303                 freq_smoothed = fcc;
+304 
+305                 // ============================== atraso freq_mean ============================== //
+306                 buffer_freq[0] = buffer_freq[1];
+307                 buffer_freq[1] = buffer_freq[2];
+308                 buffer_freq[2] = buffer_freq[3];
+309                 buffer_freq[3] = buffer_freq[4];
+310                 buffer_freq[4] = buffer_freq[5];
+311                 buffer_freq[5] = buffer_freq[6];
+312                 buffer_freq[6] = freq_smoothed;
+313 
+314                 freq_atrasada = buffer_freq[0];
+315 
+316                 if(freq_atrasada != 0.0)
+317                 {
+318                     lambda_val = 60.0 / freq_atrasada;
+319                 }
+320                 else
+321                 {
+322                     lambda_val = 0.0;
+323                 }
+324 
+325                 fout(3, x_atrasado * 1000000);
+326                //fout(4, freq_smoothed * 1000000);    // ABSOLUTO: alimenta a FIFO16x32_freq
+327                 fout(4, (dfreq + 10.0) * 1000000);
+328                 y = 0.0;
+329                 if (cnt > 6)
+330                 {
+331                     while(alfa < 1.0)
+332                     {
+333                         H0 = (-0.1666666667*buffer_entrada_farrow[0])
+334                         + (0.5*buffer_entrada_farrow[1])
+335                         + (-0.5*buffer_entrada_farrow[2])
+336                         + (0.1666666667*buffer_entrada_farrow[3]);
+337 
+338                         H1 = (0.5*buffer_entrada_farrow[0])
+339                         - (buffer_entrada_farrow[1])
+340                         + (0.5*buffer_entrada_farrow[2]);
+341 
+342                         H2 = (-0.5*buffer_entrada_farrow[0])
+343                         + (0.5*buffer_entrada_farrow[2]);
+344 
+345                         H3 = (0.1666666667*buffer_entrada_farrow[0])
+346                         + (0.6666666667*buffer_entrada_farrow[1])
+347                         + (0.1666666667*buffer_entrada_farrow[2]);
+348 
+349                         y = ((H0 * alfa + H1) * alfa + H2) * alfa + H3;
+350                         fout(0, y * 1000000);
+351                         alfa = alfa + lambda_val;
+352                     }
+353 
+354                     alfa = alfa - 1.0;
+355                 }
+356                 else
+357                 {
+358                     cnt = cnt + 1;
+359                 }
+360             }
+361 
+362             if(cont_global < 348160)
+363             {
+364                 cont_global = cont_global + 1;
+365             }
+366         }
+367         if(cont_kalman < 2000)
+368         {
+369             cont_kalman = cont_kalman + 1;
+370         }
+371         
+372     //}
+373 }

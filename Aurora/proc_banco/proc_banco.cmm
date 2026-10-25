@@ -1,4 +1,3 @@
-#PRNAME proc_banco
 #NUBITS 32
 #NDSTAC 5
 #SDEPTH 5
@@ -8,6 +7,7 @@
 #NBEXPO 8
 #FFTSIZ 8
 #NUGAIN 128
+#FROUND 2
 
 comp E0[256];
 comp wpv[128] "wpv.txt"; 
@@ -82,7 +82,7 @@ void main()
 
     M = 256;
     fft_limit=M;
-    sample_count = (M - 1);
+    sample_count = (M - 2);   // era (M - 1): no compilador novo o 1o in() volta 0, decimar uma passada depois
     output_count = 0;
     vector_count = 0;
     buffer_head = 0;

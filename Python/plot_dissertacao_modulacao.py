@@ -16,8 +16,10 @@ Sao quatro ensaios, dois de cada tipo de modulacao, todos com 1600 ciclos:
 Cada um esta num commit, lido com `git show`, que nao toca a arvore de
 trabalho.
 
-Saida: dois PDFs vetoriais em
+Saida: PDFs vetoriais em
 C:\\Users\\Ricardo\\Documents\\plotsDissertacao\\modulacao
+    fig_modulacao_<tipo>_fm<fm>.pdf   um por ensaio (media e maximo)
+    figC_modulacao_<tipo>.pdf         divergencia por estagio, as duas fm
 
 Uso:
     python plot_dissertacao_modulacao.py            # usa cache quando existir
@@ -32,6 +34,7 @@ import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 from matplotlib.lines import Line2D
+from matplotlib.patches import Patch
 
 import plot_dissertacao_offnominal as base
 from sinaisIEC60255_118 import modulation
@@ -132,46 +135,66 @@ def salvar(fig, nome):
 
 
 # ==========================================================================
-# Figura: um arquivo por tipo de modulacao, com as duas frequencias
+# Figura: um arquivo por ensaio (tipo de modulacao x frequencia de modulacao)
 # ==========================================================================
-def figura(tipo, dados):
-    fms = sorted(fm for (t, fm) in ENSAIOS if t == tipo)
+def figura(tipo, fm, res):
+    """Media e envelope ate o maximo, no formato da figA do off-nominal.
+
+    Uma figura por frequencia de modulacao, e nao as duas no mesmo eixo: com
+    fm ocupando o traco nao sobrava recurso visual para separar media de
+    maximo. Aqui a cor volta a significar so a implementacao, a linha e a
+    media sobre os N_COMUM frames e a faixa vai dela ate o maximo do ensaio,
+    com a borda fina da faixa sendo a propria curva de maximo.
+    """
     fig, axs = plt.subplots(3, 1, figsize=(6.3, 6.4), sharex=True)
 
     for ax, (chave, nome, unid, com_limite) in zip(axs, PAINEIS):
-        for fm in fms:
-            res = dados[(tipo, fm)]
-            for quem, cor in (("sa", base.COR_SAPHO), ("py", base.COR_PY)):
-                m = np.abs(res[f"{chave}_{quem}"][IDX]).mean(axis=1)
-                ax.plot(H, m, color=cor, lw=1.5, ls=ESTILO_FM[fm])
+        topo = 0.0
+        for quem, cor in (("sa", base.COR_SAPHO), ("py", base.COR_PY)):
+            v = np.abs(res[f"{chave}_{quem}"][IDX])
+            med, mx = v.mean(axis=1), v.max(axis=1)
+            # Python tracejado por cima, como na figA: no painel de magnitude
+            # as duas curvas coincidem, e isso precisa ficar visivel.
+            ls = "-" if quem == "sa" else (0, (5, 2))
+            ax.fill_between(H, med, mx, color=cor, alpha=0.16, linewidth=0)
+            ax.plot(H, mx, color=cor, lw=0.8, alpha=0.55, ls=ls)
+            ax.plot(H, med, color=cor, lw=1.6, ls=ls)
+            topo = max(topo, mx.max())
 
-        ax.set_ylabel(f"{nome} médio ({unid})")
+        ax.set_ylabel(f"{nome} ({unid})")
         ax.set_xlim(0, 51)
         ax.set_ylim(bottom=0)
         ax.margins(y=0.12)
 
         if com_limite:
-            base.marcar_limite(ax, TVE_LIM_MOD, x=50.6, ha="right")
-            # Folga acima do limite para caber o rotulo e a legenda: aqui o
-            # limite (3 %) fica bem acima dos dados, entao ele e quem manda
-            # no topo do eixo.
-            ax.set_ylim(0, TVE_LIM_MOD * 1.35)
+            # Fundo branco no rotulo: em ka com fm = 5 Hz as curvas de maximo
+            # passam dos 3 % e cruzariam o texto. A legenda ocupa o resto da
+            # faixa superior, entao nao ha para onde mover o rotulo.
+            base.marcar_limite(ax, TVE_LIM_MOD, x=50.6, ha="right",
+                               bbox=dict(facecolor="white", edgecolor="none",
+                                         alpha=0.85, pad=1.2))
+            # O limite (3 %) manda no topo do eixo, exceto quando o maximo o
+            # ultrapassa - o que acontece em ka com fm = 5 Hz.
+            ax.set_ylim(0, max(TVE_LIM_MOD * 1.35, topo * 1.15))
 
     axs[-1].set_xlabel("Componentes harmônicas")
     axs[-1].set_xticks([1, 10, 20, 30, 40, 50])
 
-    # Legenda em duas partes: a cor diz a implementacao, o traco diz o fm.
+    # A cor diz a implementacao; a faixa, o quanto o pior frame se afasta da
+    # media. O ensaio (fm) vai no titulo da legenda, ja que agora cada figura
+    # e de um so ensaio.
     handles = [
-        Line2D([], [], color=base.COR_SAPHO, lw=1.8, label="SAPHO"),
-        Line2D([], [], color=base.COR_PY, lw=1.8, label="Modelo em Python"),
-    ] + [Line2D([], [], color=base.COR_TINTA, lw=1.5, ls=ESTILO_FM[fm],
-                label=f"$f_m$ = {fm:g} Hz".replace(".", ","))
-         for fm in fms]
+        Line2D([], [], color=base.COR_SAPHO, lw=1.8, label="SAPHO — média"),
+        Patch(facecolor=base.COR_SAPHO, alpha=0.16, label="SAPHO — até o máximo"),
+        Line2D([], [], color=base.COR_PY, lw=1.8, ls="--", label="Python — média"),
+        Patch(facecolor=base.COR_PY, alpha=0.16, label="Python — até o máximo"),
+    ]
     axs[0].legend(handles=handles, ncol=2, loc="upper left", columnspacing=1.4,
-                  handlelength=2.4)
+                  handlelength=1.9, title=f"$f_m$ = {fm:g} Hz".replace(".", ","),
+                  title_fontsize=8.5)
 
     fig.subplots_adjust(hspace=0.12)
-    salvar(fig, f"fig_modulacao_{tipo}.pdf")
+    salvar(fig, f"fig_modulacao_{tipo}_fm{fm:g}".replace(".", "") + ".pdf")
 
 
 # ==========================================================================
@@ -216,8 +239,11 @@ def figura_estagios(tipo, estagios):
     handles += [Line2D([], [], color=base.COR_TINTA, lw=1.4, ls=ESTILO_FM[fm],
                        label=f"$f_m$ = {fm:g} Hz".replace(".", ","))
                 for fm in fms]
+    nome_ensaio, profundidade = TIPOS[tipo]
     ax.legend(handles=handles, ncol=3, loc="lower left", bbox_to_anchor=(0, 1.01),
-              columnspacing=1.4, borderaxespad=0)
+              columnspacing=1.4, borderaxespad=0, alignment="left",
+              title=f"Ensaio de {nome_ensaio.lower()} ({profundidade})",
+              title_fontsize=8.5)
     salvar(fig, f"figC_modulacao_{tipo}.pdf")
 
 
@@ -256,7 +282,8 @@ def main():
 
     print("\nGerando figuras ...")
     for tipo in ("ka", "kx"):
-        figura(tipo, dados)
+        for fm in sorted(fm for (t, fm) in ENSAIOS if t == tipo):
+            figura(tipo, fm, dados[(tipo, fm)])
         figura_estagios(tipo, estagios)
 
 

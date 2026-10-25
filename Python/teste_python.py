@@ -91,8 +91,8 @@ ka = 0.0
 #=========================================================================================
 
 #x, Xr, fr, ROCOFr = signal_frequency(f1, 1600*Nppc, f0, Fs, Frep, hmax, hmag, SNR)
-#x, Xr, fr, ROCOFr = frequency_ramp(Rf, 1820*Nppc, f0, fa, Fs, Frep, hmax, hmag, SNR)
-x, Xr, fr, ROCOFr = modulation(fm, kx, ka, 1600*Nppc, f0, Fs, Frep, hmax, hmag, SNR)
+x, Xr, fr, ROCOFr = frequency_ramp(Rf, 1820*Nppc, f0, fa, Fs, Frep, hmax, hmag, SNR)
+#x, Xr, fr, ROCOFr = modulation(fm, kx, ka, 1600*Nppc, f0, Fs, Frep, hmax, hmag, SNR)
 
 
 # Salva o sinal gerado em arquivo de texto para uso no SAPHO
@@ -132,10 +132,11 @@ plt.show(block=False)
 
 f_zc_m, zc_m_delay, f_zc, zc_delay, total_delay = estima_f_zc(x, 1/Fs, Nppc, plot_level=0)
 
-tam = min(len(f_zc), len(fr), len(f_zc_sapho))
+# f_zc_sapho NAO entra no tam: saida_interp1 muda de conteudo/tamanho conforme o
+# fout(1) do .cmm, e cortar f_zc por ele encurtava todo o pipeline Python.
+tam = min(len(f_zc), len(fr))
 f_zc = f_zc[:tam]
 fr = fr[:tam]
-f_zc_sapho = f_zc_sapho[:tam]
 
 plt.figure(figsize=(14, 4))
 plt.plot(f_zc, marker="o", linewidth=0.8, markersize=3, color=COR_PY, label="f_zc")

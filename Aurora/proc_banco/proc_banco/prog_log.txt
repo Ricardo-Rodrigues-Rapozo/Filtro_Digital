@@ -1,0 +1,33 @@
+main temp 3
+main temp_i 3
+main frequencia_from_int 1
+main sample_count 1
+main output_count 1
+main M 1
+main idx 1
+main k 1
+main test_idx 1
+main reset_idx 1
+main oo 1
+main out_idx 1
+main mm 1
+main ii 1
+main x 2
+main acc 2
+main norm_factor 2
+main vector_count 2
+main buffer_head 1
+main fft_limit 1
+main freq_count 1
+main freq_decimada 1
+main freq_started 1
+main mmax 1
+main istep 1
+main m 1
+main ind 1
+main sind 1
+main q 1
+main j 1
+num_ins 387
+srcdir C:/Users/Ricardo/Documents/Dissertacao/Aurora/proc_banco
+lang C+-

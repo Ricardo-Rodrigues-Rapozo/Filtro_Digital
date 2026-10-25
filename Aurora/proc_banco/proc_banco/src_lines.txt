@@ -1,0 +1,228 @@
+-1 INTERNAL
+-2 void main();
+-3 END
+1 #NUBITS 32
+2 #NDSTAC 5
+3 #SDEPTH 5
+4 #NUIOIN 2
+5 #NUIOOU 4 // numero de saídas do sapho para analisar
+6 #NBMANT 23
+7 #NBEXPO 8
+8 #FFTSIZ 8
+9 #NUGAIN 128
+10 #FROUND 2
+11 
+12 comp E0[256];
+13 comp wpv[128] "wpv.txt"; 
+14 
+15 /*
+16 void ifft(int N)
+17 {
+18     comp temp;
+19 
+20     int mmax = 1;
+21 
+22     while (mmax < N)
+23     {
+24         int istep = mmax*2;
+25         int    m  = 0;
+26         int  ind  = 0;
+27         int sind  = 0;
+28         while (m < mmax)
+29         {
+30             int k = m;
+31             while (k < N)
+32             {
+33                 int j   = k+mmax;
+34                 temp    = wpv[sind]*E0[j);
+35                 E0[j) =   E0[k) - temp;
+36                 E0[k) =   E0[k) + temp;
+37                 k       = k+istep;
+38                 ind++;
+39             }
+40             sind = ind;
+41             m++;
+42         }
+43         mmax = istep;
+44     }
+45 //} */
+46 
+47 
+48 void main()
+49 {   
+50 
+51     comp temp; // variavel da ifft
+52     int frequencia_from_int = 0;
+53     int sample_count = 0;
+54     int output_count = 0;
+55     float output_buffer_real[256];
+56     float output_buffer_imag[256];
+57 
+58     float buffer[256];
+59     float E[256][8];
+60 
+61     int M;
+62     int idx;
+63     int k;
+64     int test_idx;
+65     int reset_idx;
+66     int oo;
+67     int out_idx;
+68     int mm;  
+69     int ii; 
+70     float x;
+71     float acc;
+72     float norm_factor;
+73     float vector_count;
+74     int buffer_head;
+75     int fft_limit;
+76     int freq_count = 0;
+77     float Ehh[256][8] "Ehh.txt";
+78     int  freq_decimada;
+79     int freq_started = 0;
+80 
+81 
+82 
+83     M = 256;
+84     fft_limit=M;
+85     sample_count = (M - 2);   // era (M - 1): no compilador novo o 1o in() volta 0, decimar uma passada depois
+86     output_count = 0;
+87     vector_count = 0;
+88     buffer_head = 0;
+89     //return;
+90 	
+91 	// ===== LOOP PRINCIPAL =====
+92     return;
+93     #PRACA
+94     //while(1)
+95     //{
+96         //fout(2,0);
+97         fout(1,1);
+98         
+99 
+100          // -------------------- BUFFER CIRCULAR ------------------------------- // 
+101         buffer_head = buffer_head -1;        
+102         if(buffer_head < 0)
+103         {
+104             buffer_head = M - 1;
+105         }
+106         buffer[buffer_head] = in(0) / 1000000.0;
+107         //fout(2,1);
+108 
+109         frequencia_from_int = in(1);
+110 
+111         if(freq_started == 0)
+112         {
+113             if(frequencia_from_int > 0)
+114             {
+115                 fout(0,frequencia_from_int);
+116                 freq_started = 1;
+117                 freq_count = 0;
+118             }
+119         }
+120         else
+121         {
+122             freq_count = freq_count + 1;
+123             if(freq_count == 256)
+124             {
+125                 fout(0,frequencia_from_int);
+126                 freq_count = 0;
+127             }
+128         }
+129 
+130 
+131 
+132 
+133         //fout(2,frequencia_from_int);
+134 
+135 
+136          // ------------------- DECIMAÇÃO Banco --------------------------------- //        
+137 
+138         if(sample_count == (M - 1))
+139         {
+140             
+141             sample_count=0;
+142             mm = 0;
+143             ii = buffer_head;
+144             // ------------------ FILTRO POLIFASICO ----------------------------- // 
+145             while(mm<M)
+146             {  
+147                 E[mm][7] = E[mm][6];
+148 
+149                 E[mm][6] = E[mm][5];
+150 
+151                 E[mm][5] = E[mm][4];
+152 
+153                 E[mm][4] = E[mm][3];
+154 
+155                 E[mm][3] = E[mm][2];
+156                 //fout(12,(1000000*E[3][0]));
+157                 E[mm][2] = E[mm][1];
+158                 //fout(11,(1000000*E[2][0]));
+159                 E[mm][1] = E[mm][0];
+160                 //fout(10,(1000000*E[1][0]));
+161                 E[mm][0] = buffer[ii];
+162                 //fout(9,(1000000*E[0][0]));
+163 
+164                 E0[mm] =  Ehh[mm][0] * E[mm][0] + 
+165                         Ehh[mm][1] * E[mm][1] + 
+166                         Ehh[mm][2] * E[mm][2] + 
+167                         Ehh[mm][3] * E[mm][3] + 
+168                         Ehh[mm][4] * E[mm][4] + 
+169                         Ehh[mm][5] * E[mm][5] + 
+170                         Ehh[mm][6] * E[mm][6] + 
+171                         Ehh[mm][7] * E[mm][7];
+172                 mm = mm + 1;
+173                 ii = ii + 1;
+174                 if(ii >=M)
+175                 {
+176                     ii = 0;
+177                 }
+178                 //fout(2,2);  
+179             }
+180             //fout(2,3);
+181             // ----------------------------------- CALCULO DA IFFT -----------------------// 
+182             int mmax = 1;
+183             while (mmax < M)
+184             {
+185                 int istep = mmax * 2;
+186                 int m     = 0;
+187                 int ind   = 0;
+188                 int sind  = 0;
+189                 while (m < mmax)
+190                 {
+191                     int q = m;
+192                     while (q < M)
+193                     {
+194                         int j   = q+mmax;
+195                         temp    = wpv[sind]*E0[j);
+196                         E0[j) =   E0[q) - temp;
+197                         E0[q) =   E0[q) + temp;
+198                         q       = q+istep;
+199                         ind++;
+200                     }
+201                     sind = ind;
+202                     m++;
+203                 }
+204                 mmax = istep;
+205             }
+206             //fout(2,4);
+207             
+208             //out(0, frequencia_from_int);
+209             //iterar o valor que esta dentro do E0 ate o 50 
+210             while(vector_count <= 50)
+211             {
+212                 fout(0,real (1000000*E0[vector_count)));
+213                 fout(0,imag (1000000*E0[vector_count)));
+214                 vector_count = vector_count + 1; 
+215             }
+216             vector_count = 0;
+217             //fout(2,5);
+218         }
+219         else
+220         {
+221             sample_count = sample_count + 1;
+222         }
+223         fout(1,0);
+224     //}
+225 }

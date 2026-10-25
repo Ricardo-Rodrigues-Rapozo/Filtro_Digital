@@ -1,0 +1,689 @@
+0 NOP 
+1 LOD 80
+2 SET main_teste0
+3 LOD 0
+4 SET main_cont_global
+5 LOD 0
+6 SET main_teste
+7 LOD 0.0
+8 SET_V main_x1 0
+9 LOD 0.0
+10 SET_V main_x1 1
+11 LOD 0.0
+12 SET_V main_x1 2
+13 LOD 0.0
+14 SET_V main_y1 0
+15 LOD 0.0
+16 SET_V main_y1 1
+17 LOD 0.0
+18 SET_V main_y1 2
+19 LOD 0.0
+20 SET_V main_x2 0
+21 LOD 0.0
+22 SET_V main_x2 1
+23 LOD 0.0
+24 SET_V main_x2 2
+25 LOD 0.0
+26 SET_V main_y2 0
+27 LOD 0.0
+28 SET_V main_y2 1
+29 LOD 0.0
+30 SET_V main_y2 2
+31 LOD 0.0
+32 SET_V main_x3 0
+33 LOD 0.0
+34 SET_V main_x3 1
+35 LOD 0.0
+36 SET_V main_x3 2
+37 LOD 0.0
+38 SET_V main_y3 0
+39 LOD 0.0
+40 SET_V main_y3 1
+41 LOD 0.0
+42 SET_V main_y3 2
+43 LOD 0
+44 SET main_b_index
+45 LOD 0
+46 SET main_k_idx
+47 LOD 0.0
+48 SET main_acc_b
+49 LOD 0.0
+50 SET main_acc_a
+51 LOD 0.0
+52 SET main_va
+53 LOD 1.0
+54 P_LOD 60.0
+55 SF_DIV 
+56 NOP 
+57 F_QUO 
+58 SET main_Tsc
+59 LOD 0.0
+60 SET main_T1
+61 LOD 60.0
+62 SET main_fzc
+63 LOD 15360.0
+64 SET main_freq_amostragem
+65 LOD 0.0
+66 SET main_sig
+67 LOD 0.0
+68 SET main_Nb
+69 LOD 0.0
+70 SET main_T2
+71 LOD 127
+72 SET main_atraso_amotras_filtro_pre_zc
+73 LOD 0.0
+74 SET main_cont_zc
+75 LOD 0.00390625
+76 SET main_w_coeff
+77 LOD 0
+78 SET main_w_index
+79 LOD 0.0
+80 SET main_w_sum
+81 LOD 0
+82 SET main_buffer_media_movel_idex
+83 LOD 0.0
+84 SET main_fcc
+85 LOD 256
+86 SET main_w_media
+87 LOD 0
+88 SET main_read_idx_mean
+89 LOD 0
+90 SET main_w_index_mean
+91 LOD 0
+92 SET main_p
+93 LOD 0
+94 SET main_b_index_mean
+95 LOD 128
+96 SET main_atraso_amotras_media_movel
+97 LOD 0.0
+98 SET main_fvelho
+99 LOD 60.0
+100 SET main_f_nominal
+101 LOD 0.0
+102 SET main_dfreq
+103 LOD 0.0
+104 SET main_df
+105 LOD 1000000.0
+106 SET main_p00
+107 LOD 0.0
+108 SET main_p01
+109 LOD 0.0
+110 SET main_p10
+111 LOD 1000000.0
+112 SET main_p11
+113 LOD 1.0
+114 P_LOD 15360.0
+115 SF_DIV 
+116 NOP 
+117 F_QUO 
+118 P_LOD 1.0
+119 P_LOD 15360.0
+120 SF_DIV 
+121 NOP 
+122 F_QUO 
+123 SF_MLT 
+124 P_LOD 1.0
+125 P_LOD 15360.0
+126 SF_DIV 
+127 NOP 
+128 F_QUO 
+129 SF_MLT 
+130 F_MLT 0.1
+131 P_LOD 3.0
+132 SF_DIV 
+133 NOP 
+134 F_QUO 
+135 SET main_q00
+136 LOD 1.0
+137 P_LOD 15360.0
+138 SF_DIV 
+139 NOP 
+140 F_QUO 
+141 P_LOD 1.0
+142 P_LOD 15360.0
+143 SF_DIV 
+144 NOP 
+145 F_QUO 
+146 SF_MLT 
+147 F_MLT 0.1
+148 P_LOD 2.0
+149 SF_DIV 
+150 NOP 
+151 F_QUO 
+152 SET main_q01
+153 LOD 1.0
+154 P_LOD 15360.0
+155 SF_DIV 
+156 NOP 
+157 F_QUO 
+158 P_LOD 1.0
+159 P_LOD 15360.0
+160 SF_DIV 
+161 NOP 
+162 F_QUO 
+163 SF_MLT 
+164 F_MLT 0.1
+165 P_LOD 2.0
+166 SF_DIV 
+167 NOP 
+168 F_QUO 
+169 SET main_q10
+170 LOD 15360.0
+171 F_DIV 0.1
+172 NOP 
+173 F_QUO 
+174 SET main_q11
+175 LOD 0.0
+176 SET main_dfreq_pred
+177 LOD 0.0
+178 SET main_df_pred
+179 LOD 20.0
+180 SET main_R
+181 LOD 0
+182 SET main_cont_kalman
+183 LOD 1024
+184 SET main_descarte_kalman
+185 LOD 0.0
+186 SET main_erro
+187 LOD 0.0
+188 SET main_comp_dfreq
+189 LOD 0
+190 SET main_j
+191 LOD 0
+192 SET main_read_idx
+193 LOD 0.0
+194 SET main_acc
+195 LOD 60.0
+196 SET main_freq_instant
+197 LOD 0.0
+198 SET main_Tsc_total
+199 LOD 0.0
+200 SET main_denom
+201 LOD 1000.0
+202 SET main_ESCALA
+203 LOD 0.0
+204 SET main_x_atrasado
+205 LOD 0
+206 SET main_c_index
+207 LOD 0
+208 SET main_read_c_idx
+209 LOD 255
+210 SET main_atraso_geral
+211 LOD 0.0
+212 SET main_alfa
+213 LOD 0
+214 SET main_cnt
+215 LOD 0.0
+216 SET_V main_buffer_freq 0
+217 LOD 0.0
+218 SET_V main_buffer_freq 1
+219 LOD 0.0
+220 SET_V main_buffer_freq 2
+221 LOD 0.0
+222 SET_V main_buffer_freq 3
+223 LOD 0.0
+224 SET_V main_buffer_freq 4
+225 LOD 0.0
+226 SET_V main_buffer_freq 5
+227 LOD 0.0
+228 SET_V main_buffer_freq 6
+229 LOD -0.00222058
+230 SET_V main_num_pre_BSP 5
+231 LOD 0.00828731
+232 SET_V main_num_pre_BSP 4
+233 LOD -0.03092866
+234 SET_V main_num_pre_BSP 3
+235 LOD 0.11542732
+236 SET_V main_num_pre_BSP 2
+237 LOD -0.43078062
+238 SET_V main_num_pre_BSP 1
+239 LOD 1.60769515
+240 SET_V main_num_pre_BSP 0
+241 LOD 1.0
+242 SET_V main_den_pre_BSP 0
+243 LOD 0.26794919
+244 SET_V main_den_pre_BSP 1
+245 JMP fim
+246 INN 0
+247 I2F 
+248 P_LOD 32768.0
+249 SF_DIV 
+250 NOP 
+251 F_QUO 
+252 SET main_x
+253 SET_V main_x1 0
+254 LOD_V main_b_sos 0
+255 P_LOD_V main_x1 0
+256 SF_MLT 
+257 P_LOD_V main_b_sos 1
+258 P_LOD_V main_x1 1
+259 SF_MLT 
+260 SF_ADD 
+261 P_LOD_V main_b_sos 2
+262 P_LOD_V main_x1 2
+263 SF_MLT 
+264 SF_ADD 
+265 P_LOD_V main_a_sos 1
+266 P_LOD_V main_y1 1
+267 SF_MLT 
+268 SF_SU2 
+269 P_LOD_V main_a_sos 2
+270 P_LOD_V main_y1 2
+271 SF_MLT 
+272 SF_SU2 
+273 SET_V main_y1 0
+274 LOD_V main_x1 1
+275 SET_V main_x1 2
+276 LOD_V main_x1 0
+277 SET_V main_x1 1
+278 LOD_V main_y1 1
+279 SET_V main_y1 2
+280 LOD_V main_y1 0
+281 SET_V main_y1 1
+282 LOD_V main_y1 0
+283 SET_V main_x2 0
+284 LOD_V main_b_sos 3
+285 P_LOD_V main_x2 0
+286 SF_MLT 
+287 P_LOD_V main_b_sos 4
+288 P_LOD_V main_x2 1
+289 SF_MLT 
+290 SF_ADD 
+291 P_LOD_V main_b_sos 5
+292 P_LOD_V main_x2 2
+293 SF_MLT 
+294 SF_ADD 
+295 P_LOD_V main_a_sos 4
+296 P_LOD_V main_y2 1
+297 SF_MLT 
+298 SF_SU2 
+299 P_LOD_V main_a_sos 5
+300 P_LOD_V main_y2 2
+301 SF_MLT 
+302 SF_SU2 
+303 SET_V main_y2 0
+304 LOD_V main_x2 1
+305 SET_V main_x2 2
+306 LOD_V main_x2 0
+307 SET_V main_x2 1
+308 LOD_V main_y2 1
+309 SET_V main_y2 2
+310 LOD_V main_y2 0
+311 SET_V main_y2 1
+312 LOD_V main_y2 0
+313 SET_V main_x3 0
+314 LOD_V main_b_sos 6
+315 P_LOD_V main_x3 0
+316 SF_MLT 
+317 P_LOD_V main_b_sos 7
+318 P_LOD_V main_x3 1
+319 SF_MLT 
+320 SF_ADD 
+321 P_LOD_V main_b_sos 8
+322 P_LOD_V main_x3 2
+323 SF_MLT 
+324 SF_ADD 
+325 P_LOD_V main_a_sos 7
+326 P_LOD_V main_y3 1
+327 SF_MLT 
+328 SF_SU2 
+329 P_LOD_V main_a_sos 8
+330 P_LOD_V main_y3 2
+331 SF_MLT 
+332 SF_SU2 
+333 SET_V main_y3 0
+334 LOD_V main_x3 1
+335 SET_V main_x3 2
+336 LOD_V main_x3 0
+337 SET_V main_x3 1
+338 LOD_V main_y3 1
+339 SET_V main_y3 2
+340 LOD_V main_y3 0
+341 SET_V main_y3 1
+342 LOD_V main_y3 0
+343 SET main_acc
+344 LOD main_freq_amostragem
+345 F_DIV 1.0
+346 NOP 
+347 F_QUO 
+348 SET main_Ts
+349 LOD main_va
+350 F_MLT main_acc
+351 SET main_sig
+352 LOD 1.0
+353 F_ADD main_cont_zc
+354 SET main_cont_zc
+355 F_MLT main_Ts
+356 SET main_Tsc
+357 LOD 0.0
+358 F_LES main_sig
+359 JIZ __Lif1else
+360 LOD main_acc
+361 F_SU1 main_va
+362 F_DIV main_acc
+363 NOP 
+364 F_QUO 
+365 SET main_Nb
+366 F_MLT main_Ts
+367 SET main_T2
+368 LOD main_Tsc
+369 F_ADD main_T1
+370 F_SU1 main_T2
+371 SET main_Tsc
+372 LOD 2.0
+373 F_MLT main_Tsc
+374 SET __aux_var
+375 LOD 1.0
+376 P_LOD __aux_var
+377 SF_DIV 
+378 NOP 
+379 F_QUO 
+380 SET main_fzc
+381 LOD main_T2
+382 SET main_T1
+383 LOD 0.0
+384 SET main_Tsc
+385 LOD 0.0
+386 SET main_cont_zc
+387 LOD main_acc
+388 SET main_va
+389 LOD 1000000.0
+390 F_MLT main_fzc
+391 F2I 
+392 OUT 1
+393 LOD main_descarte_kalman
+394 LES main_cont_kalman
+395 LIN 
+396 JIZ __Lif2else
+397 LOD main_Ts
+398 F_MLT main_df
+399 F_SU1 main_comp_dfreq
+400 SET main_kah_u
+401 LOD main_dfreq
+402 F_ADD main_kah_u
+403 SET main_kah_t
+404 F_SU1 main_dfreq
+405 F_SU1 main_kah_u
+406 SET main_comp_dfreq
+407 LOD main_kah_t
+408 SET main_dfreq_pred
+409 LOD main_df
+410 SET main_df_pred
+411 LOD main_Ts
+412 F_MLT main_p10
+413 F_ADD main_p00
+414 P_LOD main_Ts
+415 F_MLT main_p01
+416 SF_ADD 
+417 P_LOD main_Ts
+418 F_MLT main_Ts
+419 F_MLT main_p11
+420 SF_ADD 
+421 F_ADD main_q00
+422 SET main_p00_pred
+423 LOD main_Ts
+424 F_MLT main_p11
+425 F_ADD main_p01
+426 F_ADD main_q01
+427 SET main_p01_pred
+428 LOD main_Ts
+429 F_MLT main_p11
+430 F_ADD main_p10
+431 F_ADD main_q10
+432 SET main_p10_pred
+433 LOD main_p11
+434 F_ADD main_q11
+435 SET main_p11_pred
+436 LOD main_fzc
+437 F_SU1 main_f_nominal
+438 SET main_y_kalman
+439 F_SU1 main_dfreq_pred
+440 SET main_erro
+441 LOD main_p00_pred
+442 F_ADD main_R
+443 SET main_S_incerteza
+444 F_DIV main_p00_pred
+445 NOP 
+446 F_QUO 
+447 SET main_K0
+448 LOD main_S_incerteza
+449 F_DIV main_p10_pred
+450 NOP 
+451 F_QUO 
+452 SET main_K1
+453 LOD main_K0
+454 F_MLT main_erro
+455 F_SU1 main_comp_dfreq
+456 SET main_kah_u
+457 LOD main_dfreq_pred
+458 F_ADD main_kah_u
+459 SET main_kah_t
+460 F_SU1 main_dfreq_pred
+461 F_SU1 main_kah_u
+462 SET main_comp_dfreq
+463 LOD main_kah_t
+464 SET main_dfreq
+465 LOD main_K1
+466 F_MLT main_erro
+467 F_ADD main_df_pred
+468 SET main_df
+469 LOD 1.0
+470 F_SU1 main_K0
+471 F_MLT main_p00_pred
+472 SET main_p00
+473 LOD 1.0
+474 F_SU1 main_K0
+475 F_MLT main_p01_pred
+476 SET main_p01
+477 LOD main_K1
+478 F_MLT main_p00_pred
+479 F_SU2 main_p10_pred
+480 SET main_p10
+481 LOD main_K1
+482 F_MLT main_p01_pred
+483 F_SU2 main_p11_pred
+484 SET main_p11
+485 LOD main_f_nominal
+486 F_ADD main_dfreq
+487 SET main_fcc
+488 LOD 1000000.0
+489 F_MLT main_dfreq
+490 F2I 
+491 OUT 2
+492 LOD 0
+493 GRE main_atraso_geral
+494 JIZ __Lif3else
+495 LOD main_c_index
+496 LDI main_buffer_atraso_x
+497 SET main_x_atrasado
+498 LOD main_c_index
+499 P_LOD main_x
+500 STI main_buffer_atraso_x
+501 LOD main_c_index
+502 ADD 1
+503 SET main_c_index
+504 LOD main_atraso_geral
+505 LES main_c_index
+506 LIN 
+507 JIZ __Lif4else
+508 LOD 0
+509 SET main_c_index
+510 JMP __Lif3end
+511 LOD main_x
+512 SET main_x_atrasado
+513 LOD 307200
+514 LES main_cont_global
+515 LIN 
+516 JIZ __Lif5else
+517 LOD_V main_buffer_entrada_prefiltro 1
+518 SET_V main_buffer_entrada_prefiltro 0
+519 LOD_V main_buffer_entrada_prefiltro 2
+520 SET_V main_buffer_entrada_prefiltro 1
+521 LOD_V main_buffer_entrada_prefiltro 3
+522 SET_V main_buffer_entrada_prefiltro 2
+523 LOD_V main_buffer_entrada_prefiltro 4
+524 SET_V main_buffer_entrada_prefiltro 3
+525 LOD_V main_buffer_entrada_prefiltro 5
+526 SET_V main_buffer_entrada_prefiltro 4
+527 LOD main_x_atrasado
+528 SET_V main_buffer_entrada_prefiltro 5
+529 LOD_V main_buffer_entrada_prefiltro 0
+530 P_LOD_V main_num_pre_BSP 0
+531 SF_MLT 
+532 P_LOD_V main_buffer_entrada_prefiltro 1
+533 P_LOD_V main_num_pre_BSP 1
+534 SF_MLT 
+535 SF_ADD 
+536 P_LOD_V main_buffer_entrada_prefiltro 2
+537 P_LOD_V main_num_pre_BSP 2
+538 SF_MLT 
+539 SF_ADD 
+540 P_LOD_V main_buffer_entrada_prefiltro 3
+541 P_LOD_V main_num_pre_BSP 3
+542 SF_MLT 
+543 SF_ADD 
+544 P_LOD_V main_buffer_entrada_prefiltro 4
+545 P_LOD_V main_num_pre_BSP 4
+546 SF_MLT 
+547 SF_ADD 
+548 P_LOD_V main_buffer_entrada_prefiltro 5
+549 P_LOD_V main_num_pre_BSP 5
+550 SF_MLT 
+551 SF_ADD 
+552 SET main_dot_result
+553 LOD_V main_den_pre_BSP 1
+554 P_LOD_V main_buffer_saida_prefiltro 0
+555 SF_MLT 
+556 F_SU2 main_dot_result
+557 SET_V main_buffer_saida_prefiltro 1
+558 LOD_V main_buffer_saida_prefiltro 1
+559 SET_V main_buffer_saida_prefiltro 0
+560 LOD_V main_buffer_entrada_farrow 1
+561 SET_V main_buffer_entrada_farrow 0
+562 LOD_V main_buffer_entrada_farrow 2
+563 SET_V main_buffer_entrada_farrow 1
+564 LOD_V main_buffer_entrada_farrow 3
+565 SET_V main_buffer_entrada_farrow 2
+566 LOD_V main_buffer_saida_prefiltro 1
+567 SET_V main_buffer_entrada_farrow 3
+568 LOD main_fcc
+569 SET main_freq_smoothed
+570 LOD_V main_buffer_freq 1
+571 SET_V main_buffer_freq 0
+572 LOD_V main_buffer_freq 2
+573 SET_V main_buffer_freq 1
+574 LOD_V main_buffer_freq 3
+575 SET_V main_buffer_freq 2
+576 LOD_V main_buffer_freq 4
+577 SET_V main_buffer_freq 3
+578 LOD_V main_buffer_freq 5
+579 SET_V main_buffer_freq 4
+580 LOD_V main_buffer_freq 6
+581 SET_V main_buffer_freq 5
+582 LOD main_freq_smoothed
+583 SET_V main_buffer_freq 6
+584 LOD_V main_buffer_freq 0
+585 SET main_freq_atrasada
+586 EQU 0.0
+587 LIN 
+588 JIZ __Lif6else
+589 LOD main_freq_atrasada
+590 F_DIV 60.0
+591 NOP 
+592 F_QUO 
+593 SET main_lambda_val
+594 JMP __Lif6end
+595 LOD 0.0
+596 SET main_lambda_val
+597 LOD 1000000.0
+598 F_MLT main_x_atrasado
+599 F2I 
+600 OUT 3
+601 LOD main_dfreq
+602 F_ADD 10.0
+603 P_LOD 1000000.0
+604 SF_MLT 
+605 F2I 
+606 OUT 4
+607 LOD 0.0
+608 SET main_y
+609 LOD 6
+610 GRE main_cnt
+611 JIZ __Lif7else
+612 LOD main_alfa
+613 F_GRE 1.0
+614 JIZ __Lwh1end
+615 LOD_V main_buffer_entrada_farrow 0
+616 F_MLT 0.1666666667
+617 F_NEG 
+618 P_LOD_V main_buffer_entrada_farrow 1
+619 F_MLT 0.5
+620 SF_ADD 
+621 P_LOD_V main_buffer_entrada_farrow 2
+622 F_MLT 0.5
+623 F_NEG 
+624 SF_ADD 
+625 P_LOD_V main_buffer_entrada_farrow 3
+626 F_MLT 0.1666666667
+627 SF_ADD 
+628 SET main_H0
+629 LOD_V main_buffer_entrada_farrow 0
+630 F_MLT 0.5
+631 P_LOD_V main_buffer_entrada_farrow 1
+632 SF_SU2 
+633 P_LOD_V main_buffer_entrada_farrow 2
+634 F_MLT 0.5
+635 SF_ADD 
+636 SET main_H1
+637 LOD_V main_buffer_entrada_farrow 0
+638 F_MLT 0.5
+639 F_NEG 
+640 P_LOD_V main_buffer_entrada_farrow 2
+641 F_MLT 0.5
+642 SF_ADD 
+643 SET main_H2
+644 LOD_V main_buffer_entrada_farrow 0
+645 F_MLT 0.1666666667
+646 P_LOD_V main_buffer_entrada_farrow 1
+647 F_MLT 0.6666666667
+648 SF_ADD 
+649 P_LOD_V main_buffer_entrada_farrow 2
+650 F_MLT 0.1666666667
+651 SF_ADD 
+652 SET main_H3
+653 LOD main_H0
+654 F_MLT main_alfa
+655 F_ADD main_H1
+656 F_MLT main_alfa
+657 F_ADD main_H2
+658 F_MLT main_alfa
+659 F_ADD main_H3
+660 SET main_y
+661 LOD 1000000.0
+662 F_MLT main_y
+663 F2I 
+664 OUT 0
+665 LOD main_alfa
+666 F_ADD main_lambda_val
+667 SET main_alfa
+668 JMP __Lwh1
+669 LOD main_alfa
+670 F_SU1 1.0
+671 SET main_alfa
+672 JMP __Lif7end
+673 LOD main_cnt
+674 ADD 1
+675 SET main_cnt
+676 LOD 348160
+677 LES main_cont_global
+678 JIZ __Lif8else
+679 LOD main_cont_global
+680 ADD 1
+681 SET main_cont_global
+682 LOD 2000
+683 LES main_cont_kalman
+684 JIZ __Lif9else
+685 LOD main_cont_kalman
+686 ADD 1
+687 SET main_cont_kalman
+688 JMP fim
